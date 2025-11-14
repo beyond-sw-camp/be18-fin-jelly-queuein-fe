@@ -47,7 +47,7 @@
 /* Left */
 .left {
   flex: 1;
-  padding: 40px 100px; /* 기존 80 → 40으로 줄임 */
+  padding: 40px 400px;
   display: flex;
   flex-direction: column;
   justify-content: center; /* 세로 가운데 정렬 유지 */
@@ -55,7 +55,7 @@
 }
 
 .title {
-  font-size: 52px;
+  font-size: 110px;
   font-weight: 700;
   color: #243540;
   margin-bottom: 14px;
