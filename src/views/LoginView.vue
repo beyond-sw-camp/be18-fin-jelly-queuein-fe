@@ -10,7 +10,7 @@
         <input type="password" placeholder="비밀번호" class="input" />
 
         <div class="options">
-          <label><input type="checkbox" /> 사용자가 기억하기</label>
+          <label><input type="checkbox" /> 사용자 기억하기</label>
           <a href="#" class="find-pw">비밀번호 찾기</a>
         </div>
 
