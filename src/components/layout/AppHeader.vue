@@ -6,7 +6,7 @@ const router = useRouter()
 
 async function logout() {
   try {
-    await api.post('/v1/auth/logout')
+    await api.post('/auth/logout')
 
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')

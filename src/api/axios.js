@@ -1,15 +1,13 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: '/api'
+  baseURL: '/api/v1'
 })
 
 // 요청 인터셉터 — Authorization 자동 추가
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('accessToken')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
