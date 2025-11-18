@@ -1,9 +1,15 @@
 export function setupGuards(router) {
   router.beforeEach((to, from, next) => {
+
+    // accessToken 없으면 localStorage 전체 초기화
+    if (!localStorage.getItem('accessToken')) {
+      localStorage.clear()
+    }
+
     const token = localStorage.getItem('accessToken')
     const role = localStorage.getItem('role')
 
-    // 보호된 페이지
+    // 보호된 페이지는 토큰 필요
     if (to.meta.requiresAuth && !token) {
       return next('/')
     }

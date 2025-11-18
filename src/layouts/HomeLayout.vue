@@ -1,19 +1,27 @@
 <!-- file: src/layouts/HomeLayout.vue -->
 <script setup>
+import { ref } from 'vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import { RouterView } from 'vue-router'
+
+const isSidebarOpen = ref(true)
+
+function toggleSidebar() {
+  isSidebarOpen.value = !isSidebarOpen.value
+}
 </script>
 
 <template>
   <div class="layout">
-    <AppHeader />
 
-    <div class="container">
-      <AppSidebar />
+    <AppHeader @toggle-sidebar="toggleSidebar" />
 
-      <main class="content-area">
+    <div class="main">
+      <AppSidebar :open="isSidebarOpen" />
+
+      <main class="content">
         <RouterView />
       </main>
     </div>
@@ -29,14 +37,17 @@ import { RouterView } from 'vue-router'
   height: 100vh;
 }
 
-.container {
+.main {
   display: flex;
   flex: 1;
+  overflow: hidden;
 }
 
-.content-area {
+/* 본문 영역 */
+.content {
   flex: 1;
-  padding: 20px;
+  background: #ffffff;
+  padding: 30px;
   overflow-y: auto;
 }
 </style>

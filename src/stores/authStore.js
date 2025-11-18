@@ -27,9 +27,22 @@ export const useAuthStore = defineStore('auth', {
       return data.role
     },
 
-    logout() {
-      localStorage.clear()
-      this.$reset()
+    async logout() {
+      try {
+        await authApi.logout()
+      } catch {}
+
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('role')
+
+      this.accessToken = null
+      this.role = null
+
+      window.location.replace('/')
     }
+
+
+
   }
 })

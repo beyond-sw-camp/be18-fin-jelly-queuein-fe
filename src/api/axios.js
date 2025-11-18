@@ -34,9 +34,7 @@ api.interceptors.response.use(
       originalRequest._retry = true
       const refreshToken = localStorage.getItem('refreshToken')
 
-      if (!refreshToken) {
-        localStorage.clear()
-        window.location.href = '/'
+      if (originalRequest.url.includes('/auth/logout')) {
         return Promise.reject(error)
       }
 

@@ -1,8 +1,13 @@
+<!-- file: src/components/layout/AppHeader.vue -->
 <script setup>
 import { useRouter } from 'vue-router'
 import api from '@/api/axios'
+import { ref } from 'vue'
 
 const router = useRouter()
+
+// localStorage 직접 접근하지 말고 미리 변수에 저장
+const role = ref(localStorage.getItem('role') || '')
 
 async function logout() {
   try {
@@ -25,7 +30,8 @@ async function logout() {
     <div class="title">QueueIn</div>
 
     <div class="right">
-      <span class="role">Role: {{ localStorage.getItem('role') }}</span>
+      <!-- 템플릿에서는 localStorage 사용 금지 -->
+      <span class="role">Role: {{ role }}</span>
 
       <button class="logout-btn" @click="logout">
         로그아웃
