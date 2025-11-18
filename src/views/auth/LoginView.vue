@@ -1,3 +1,40 @@
+<script setup>
+import { ref } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const email = ref('')
+const password = ref('')
+
+async function login() {
+  try {
+    const res = await axios.post('/api/v1/auth/login', {
+      email: email.value,
+      password: password.value
+    })
+
+    const data = res.data
+
+    if (data.mustChangePassword === true) {
+      localStorage.setItem('tempAccessToken', data.accessToken)
+      router.push('/change-password')
+      return
+    }
+
+    localStorage.setItem('accessToken', data.accessToken)
+    localStorage.setItem('refreshToken', data.refreshToken)
+
+    router.push('/app')
+
+  } catch (e) {
+    alert('로그인 실패')
+  }
+}
+</script>
+
+
 <template>
   <div class="login-layout">
     <!-- Left Section -->
@@ -5,9 +42,9 @@
       <div class="title">Queue In</div>
       <div class="subtitle">사내 일정 관리 시스템</div>
 
-      <form class="login-form">
-        <input type="text" placeholder="사번" class="input" />
-        <input type="password" placeholder="비밀번호" class="input" />
+      <form class="login-form" @submit.prevent="login">
+        <input v-model="email" type="text" placeholder="이메일" class="input" />
+        <input v-model="password" type="password" placeholder="비밀번호" class="input" />
 
         <div class="options">
           <label><input type="checkbox" /> 사용자 기억하기</label>
@@ -26,7 +63,7 @@
 
     <!-- Right Section -->
     <div class="right">
-      <img src="@/assets/img/qiinMain.png" class="hero-img" alt="calendar" />
+      <img src="../../assets/img/qiinMain.png" class="hero-img" alt="calendar" />
     </div>
 
     <!-- Brand -->
