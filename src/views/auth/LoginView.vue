@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
 import { useRouter } from 'vue-router'
+import api from '@/api/axios'
 
 const router = useRouter()
 
@@ -10,7 +10,7 @@ const password = ref('')
 
 async function login() {
   try {
-    const res = await axios.post('/api/v1/auth/login', {
+    const res = await api.post('/v1/auth/login', {
       email: email.value,
       password: password.value
     })
@@ -25,14 +25,17 @@ async function login() {
 
     localStorage.setItem('accessToken', data.accessToken)
     localStorage.setItem('refreshToken', data.refreshToken)
+    localStorage.setItem('role', data.role)
 
     router.push('/app')
 
   } catch (e) {
+    console.error(e)
     alert('로그인 실패')
   }
 }
 </script>
+
 
 
 <template>
@@ -51,7 +54,7 @@ async function login() {
           <a href="#" class="find-pw">비밀번호 찾기</a>
         </div>
 
-        <button type="button" class="login-btn">로그인</button>
+        <button type="submit" class="login-btn">로그인</button>
       </form>
 
       <div class="footer">
