@@ -6,7 +6,7 @@ import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import { RouterView } from 'vue-router'
 
-const isSidebarOpen = ref(true)
+const isSidebarOpen = ref(false)
 
 function toggleSidebar() {
   isSidebarOpen.value = !isSidebarOpen.value

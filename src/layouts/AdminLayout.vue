@@ -1,17 +1,24 @@
 <!-- file: src/layouts/AdminLayout.vue -->
 <script setup>
+import { ref } from 'vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import { RouterView } from 'vue-router'
+
+const sidebarOpen = ref(false)
+
+function toggleSidebar() {
+  sidebarOpen.value = !sidebarOpen.value
+}
 </script>
 
 <template>
   <div class="layout">
-    <AppHeader />
+    <AppHeader @toggle-sidebar="toggleSidebar" />
 
-    <div class="container">
-      <AppSidebar />
+    <div class="body">
+      <AppSidebar :open="sidebarOpen" />
 
       <main class="content">
         <RouterView />
@@ -29,7 +36,7 @@ import { RouterView } from 'vue-router'
   height: 100vh;
 }
 
-.container {
+.body {
   display: flex;
   flex: 1;
 }
@@ -37,6 +44,7 @@ import { RouterView } from 'vue-router'
 .content {
   flex: 1;
   padding: 30px;
+  background: white;
   overflow-y: auto;
 }
 </style>

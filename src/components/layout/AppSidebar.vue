@@ -2,41 +2,41 @@
 <script setup>
 import { computed } from 'vue'
 
+const props = defineProps({
+  open: { type: Boolean, default: true }
+})
+
 const role = localStorage.getItem('role')
 const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN')
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" :class="{ closed: !open }">
     <nav class="menu">
 
       <router-link to="/app" class="item">
         <img src="@/assets/icons/reserve.svg" class="icon" />
-        <span>예약 관리</span>
+        <span v-if="open">예약 관리</span>
       </router-link>
 
       <router-link to="/app/schedule" class="item">
         <img src="@/assets/icons/schedule.svg" class="icon" />
-        <span>일정 관리</span>
+        <span v-if="open">일정 관리</span>
       </router-link>
 
       <router-link to="/app/resource" class="item">
         <img src="@/assets/icons/resource.svg" class="icon" />
-        <span>자원 관리</span>
+        <span v-if="open">자원 관리</span>
       </router-link>
 
       <router-link to="/app/stats" class="item">
         <img src="@/assets/icons/stats.svg" class="icon" />
-        <span>정산 관리</span>
+        <span v-if="open">정산 관리</span>
       </router-link>
 
-      <router-link
-        v-if="isAdmin"
-        to="/admin"
-        class="item active-admin"
-      >
+      <router-link v-if="isAdmin" to="/admin" class="item admin">
         <img src="@/assets/icons/user.svg" class="icon" />
-        <span>유저 관리</span>
+        <span v-if="open">유저 관리</span>
       </router-link>
 
     </nav>
@@ -45,27 +45,34 @@ const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN')
 
 <style scoped>
 .sidebar {
-  width: 100px;
+  width: 200px;
   background: #f9f9f9;
+  padding: 25px 0;
   border-radius: 0 20px 20px 0;
-  padding: 20px 0;
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease;
+}
+
+/* 닫혔을 때 */
+.sidebar.closed {
+  width: 80px;
 }
 
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 35px;
 }
 
 .item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #777;
+  color: #444;
   text-decoration: none;
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .item:hover {
@@ -73,14 +80,14 @@ const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN')
 }
 
 .icon {
-  width: 26px;
-  height: 26px;
+  width: 40px;
+  height: 40px;
   margin-bottom: 6px;
 }
 
-.active-admin {
+.admin {
   background: #cfe3ca;
-  padding: 12px 0;
+  padding: 14px 0;
   border-radius: 6px;
 }
 </style>
