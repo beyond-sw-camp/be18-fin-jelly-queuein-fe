@@ -29,9 +29,15 @@ const router = createRouter({
     {
       path: '/app',
       component: HomeLayout,
-      meta: { requiresAuth: true },
+      // meta: { requiresAuth: true },
       children: [
-        { path: '', component: DashboardView }
+        { path: '', component: DashboardView },
+        
+        {
+          path: 'reservation/status',
+          component: () => import('@/views/app/reservation/UserReservations.vue'),
+          // meta: { requiresAuth: true }
+        }
       ]
     },
 
@@ -44,6 +50,7 @@ const router = createRouter({
         { path: '', component: AdminDashboard }
       ]
     },
+  
 
     { path: '/403', component: () => import('@/views/error/ForbiddenView.vue') },
     { path: '/:pathMatch(.*)*', component: () => import('@/views/error/NotFoundView.vue') }
