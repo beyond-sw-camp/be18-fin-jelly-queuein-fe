@@ -43,6 +43,11 @@ const router = createRouter({
           component: () => import('@/views/admin/category/CategoryManagement.vue'),
           meta: { minRole: 'MANAGER' },
         },
+        {
+          path: '/admin/assets',
+          component: () => import('@/views/admin/asset/AssetManagement.vue'),
+          meta: { requiresAuth: true, minRole: 'ADMIN' },
+        },
       ],
     },
 
