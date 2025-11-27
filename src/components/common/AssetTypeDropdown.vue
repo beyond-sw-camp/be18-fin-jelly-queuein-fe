@@ -2,8 +2,8 @@
   <select class="dropdown" :value="modelValue" @change="updateValue">
     <option value="" disabled>{{ placeholder }}</option>
 
-    <option value="SPACE">공간</option>
-    <option value="EQUIPMENT">장비</option>
+    <option value="STATIC">정적</option>
+    <option value="DYNAMIC">동적</option>
   </select>
 </template>
 

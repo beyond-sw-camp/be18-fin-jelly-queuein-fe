@@ -1,6 +1,15 @@
 import api from './axios'
 
 export const assetApi = {
+  // 생성
+  create: (data) => api.post('/assets', data),
+
+  // 수정
+  update: (id, data) => api.patch(`/assets/${id}`, data),
+
+  // 자원 상세 조회
+  getDetail: (id) => api.get(`/assets/${id}`),
+
   // 사옥(루트 레벨)
   getRoots: () => api.get('/assets/roots'),
 

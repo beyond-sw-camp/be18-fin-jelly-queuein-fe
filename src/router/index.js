@@ -38,15 +38,33 @@ const router = createRouter({
       meta: { requiresAuth: true, role: 'ADMIN' },
       children: [
         { path: '', component: AdminDashboard },
+
+        // 카테고리 관리자용 목록 조회
         {
           path: 'categories',
           component: () => import('@/views/admin/category/CategoryManagement.vue'),
           meta: { minRole: 'MANAGER' },
         },
+
+        // 자원 목록 조회
         {
-          path: '/admin/assets',
+          path: 'assets',
           component: () => import('@/views/admin/asset/AssetManagement.vue'),
-          meta: { requiresAuth: true, minRole: 'ADMIN' },
+          meta: { requiresAuth: true, minRole: 'MANAGER' },
+        },
+
+        // 자원 생성
+        {
+          path: 'assets/create',
+          component: () => import('@/views/admin/asset/AssetCreateView.vue'),
+          meta: { minRole: 'MANAGER' },
+        },
+
+        // 자원 수정
+        {
+          path: 'assets/:assetId/edit',
+          component: () => import('@/views/admin/asset/AssetEditView.vue'),
+          meta: { minRole: 'MANAGER' },
         },
       ],
     },

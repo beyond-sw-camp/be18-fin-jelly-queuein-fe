@@ -4,7 +4,7 @@
 
     <option value="AVAILABLE">사용 가능</option>
     <option value="UNAVAILABLE">사용 불가</option>
-    <option value="INSPECTING">점검 중</option>
+    <option value="MAINTENANCE">점검 중</option>
   </select>
 </template>
 
