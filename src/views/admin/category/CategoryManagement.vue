@@ -51,19 +51,25 @@
     </div>
 
     <!-- 생성 버튼 -->
-    <button class="create-btn" @click="createCategory">카테고리 생성</button>
+    <div>
+      <button class="create-btn" @click="openModal">카테고리 생성</button>
+
+      <CategoryCreateModal v-if="showModal" :onSubmit="createCategory" :onClose="closeModal" />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { categoryApi } from '@/api/categoryApi'
+import CategoryCreateModal from './CategoryCreateModal.vue'
 
 // 상태
 const categories = ref([])
 const page = ref(0)
 const size = ref(10)
 const totalPages = ref(1)
+const showModal = ref(false)
 
 // 날짜 포맷
 function formatDate(dateString) {
@@ -90,8 +96,26 @@ function changePage(newPage) {
 }
 
 // 버튼 클릭 이벤트 (모달 작업은 다음 단계)
-function createCategory() {
-  console.log('생성 버튼 클릭')
+async function createCategory(data) {
+  try {
+    await categoryApi.create(data)
+    alert('카테고리가 생성되었습니다.')
+
+    await loadCategories()
+
+    closeModal()
+  } catch (err) {
+    console.error(err)
+    alert('카테고리 생성 실패')
+  }
+}
+
+function openModal() {
+  showModal.value = true
+}
+
+function closeModal() {
+  showModal.value = false
 }
 
 function editCategory(item) {

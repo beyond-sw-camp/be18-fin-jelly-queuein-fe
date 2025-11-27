@@ -3,17 +3,16 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  open: { type: Boolean, default: true }
+  open: { type: Boolean, default: true },
 })
 
 const role = localStorage.getItem('role')
-const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN')
+const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN' || role === 'MANAGER')
 </script>
 
 <template>
   <aside class="sidebar" :class="{ closed: !open }">
     <nav class="menu">
-
       <router-link to="/app" class="item">
         <img src="@/assets/icons/reserve.svg" class="icon" />
         <span v-if="open">예약 관리</span>
@@ -24,7 +23,7 @@ const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN')
         <span v-if="open">일정 관리</span>
       </router-link>
 
-      <router-link to="/app/resource" class="item">
+      <router-link v-if="isAdmin" to="/admin/assets" class="item">
         <img src="@/assets/icons/resource.svg" class="icon" />
         <span v-if="open">자원 관리</span>
       </router-link>
@@ -38,7 +37,6 @@ const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN')
         <img src="@/assets/icons/user.svg" class="icon" />
         <span v-if="open">유저 관리</span>
       </router-link>
-
     </nav>
   </aside>
 </template>
