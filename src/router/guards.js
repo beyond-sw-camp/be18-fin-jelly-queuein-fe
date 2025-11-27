@@ -1,25 +1,42 @@
-// 역할 등급 정의
+console.log("[Guard] BEFORE", {
+  rememberEmail: localStorage.getItem("rememberEmail"),
+  accessToken: localStorage.getItem("accessToken"),
+  refreshToken: localStorage.getItem("refreshToken"),
+  role: localStorage.getItem("role")
+})
+
+
+
 const ROLE_LEVEL = {
-  'GENERAL': 1,
-  'MANAGER': 2,
-  'ADMIN': 3,
-  'MASTER': 4
+  GENERAL: 1,
+  MANAGER: 2,
+  ADMIN: 3,
+  MASTER: 4,
 }
 
 export function setupGuards(router) {
   router.beforeEach((to, from, next) => {
-
-    if (!localStorage.getItem('accessToken')) localStorage.clear()
+    console.log("[Guard] route:", to.path)
+    console.log("[Guard] rememberEmail:", localStorage.getItem("rememberEmail"))
 
     const token = localStorage.getItem('accessToken')
     const role = localStorage.getItem('role')
 
-    // 로그인 필요
+    // 1) 로그인 화면(“/”)일 때만 인증값 정리
+    if (to.path === '/') {
+      if (!token) {
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('role')
+      }
+    }
+
+    // 2) 인증이 필요한 페이지에 토큰 없이 접근 → 로그인으로 돌림
     if (to.meta.requiresAuth && !token) {
       return next('/')
     }
 
-    // 이미 로그인 했는데 로그인 페이지로 가면 리다이렉트
+    // 3) 로그인 후 "/"로 다시 가면 권한에 맞게 redirect
     if (to.path === '/' && token) {
       if (ROLE_LEVEL[role] >= ROLE_LEVEL['ADMIN']) {
         return next('/admin')
@@ -27,7 +44,7 @@ export function setupGuards(router) {
       return next('/app')
     }
 
-    // 권한 검증 (계층 구조 적용)
+    // 4) 권한 검증
     if (to.meta.minRole) {
       const required = to.meta.minRole
       if (ROLE_LEVEL[role] < ROLE_LEVEL[required]) {
@@ -37,4 +54,5 @@ export function setupGuards(router) {
 
     next()
   })
+
 }

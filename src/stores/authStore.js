@@ -8,9 +8,24 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   actions: {
-    async login(email, password) {
+    async login(email, password, rememberMe) {
+
+      console.log("[authStore.login] rememberMe:", rememberMe)
+      console.log("[authStore.login] BEFORE save, rememberEmail:", localStorage.getItem("rememberEmail"))
+
       const res = await authApi.login({ email, password })
       const data = res.data
+
+      if (rememberMe === true) {
+        console.log("[authStore.login] SAVING rememberEmail", email)
+        localStorage.setItem('rememberEmail', email)
+      } else {
+        console.log("[authStore.login] REMOVING rememberEmail")
+        //localStorage.removeItem('rememberEmail')
+      }
+
+      console.log("[authStore.login] AFTER save, rememberEmail:", localStorage.getItem("rememberEmail"))
+
 
       if (data.mustChangePassword) {
         localStorage.setItem('tempAccessToken', data.accessToken)
@@ -41,8 +56,5 @@ export const useAuthStore = defineStore('auth', {
 
       window.location.replace('/')
     }
-
-
-
   }
 })
