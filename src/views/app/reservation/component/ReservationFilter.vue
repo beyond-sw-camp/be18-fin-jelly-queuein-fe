@@ -2,11 +2,11 @@
   <el-row :gutter="12" class="filter-row">
 
     <el-col :span="4">
-      <el-date-picker 
-        v-model="date" 
-        type="date" 
-        placeholder="2025.10.20"
-        format="YYYY.MM.DD"
+      <el-date-picker
+        v-model="selectedDate"
+        type="date"
+        placeholder="날짜 선택"
+        @change="onDateSelect"
       />
     </el-col>
 
@@ -65,6 +65,15 @@ const assets = ref([
   { id: 1, name: "스튜디오 1" },
   { id: 2, name: "스튜디오 2" }
 ])
+
+
+const emit = defineEmits(['date-change'])
+const selectedDate = ref(new Date())
+
+const onDateSelect = (value) => {
+  selectedDate.value = value
+  emit('date-change', value)
+}
 </script>
 
 <style scoped>

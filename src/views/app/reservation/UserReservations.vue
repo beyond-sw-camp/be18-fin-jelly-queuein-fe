@@ -18,8 +18,9 @@
     <ReservationTabs />
   </div>
 
-  <ReservationFilters />
-  <ReservationTable />
+
+  <ReservationFilters @date-change="handleDateChange" />
+  <ReservationTable :date="selectedDate" />
 </template>
 
 
@@ -27,6 +28,11 @@
 import ReservationTabs from './component/ReservationTab.vue'
 import ReservationFilters from './component/ReservationFilter.vue'
 import ReservationTable from './component/UserReservationTable.vue'
+import { ref } from 'vue'
+const selectedDate = ref(new Date())
+const handleDateChange = (date) => {
+  selectedDate.value = date
+}
 </script>
 
 <style scoped>
