@@ -90,4 +90,12 @@ const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN' || role ===
   padding: 14px 0;
   border-radius: 6px;
 }
+
+ /* 사이드바에서 클릭 시 초록색으로 변경 */
+:deep(.router-link-active),
+:deep(.router-link-exact-active) {
+  background: #B6CEB4 !important;
+  border-radius: 12px;
+  color: #000 !important;
+}
 </style>
