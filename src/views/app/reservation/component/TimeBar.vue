@@ -1,185 +1,126 @@
 <template>
-  
-  <div class="timeline">
-
-    <div class="row">
-      <div class="row-label">시간</div>
-      <div class="hours">
-        <div v-for="h in 24" :key="h" class="hour-number">
-          {{ h }}
-        </div>
-      </div>
+  <div class="time-bar-wrapper">
+    <!-- 시간 라벨 -->
+    <div class="time-labels">
+      <div class="label">시간</div>
+      <div v-for="h in 24" :key="h" class="hour-label">{{ h }}</div>
     </div>
 
     <div class="divider"></div>
 
-    <div class="row">
-      <div class="row-label">예약 현황</div>
-
+    <!-- 예약 블록 -->
+    <div class="time-blocks">
+      <div class="label">예약 현황</div>
       <div
-        class="slots"
-        @mousedown="startDrag"
-        @mousemove="duringDrag"
-        @mouseup="endDrag"
-        @mouseleave="endDrag"
-      >
-        <div
-          v-for="(slot, i) in 24"
-          :key="i"
-          class="slot"
-          :class="{
-            reserved: isReserved(i + 1),
-            selected: selectedRange.includes(i + 1)
-          }"
-          @click.stop="handleClick(i + 1)"
-        ></div>
-      </div>
+        v-for="h in 24"
+        :key="h"
+        class="block"
+        :class="{
+          reserved: isReserved(h),
+          selected: selected.includes(h)
+        }"
+        @click="toggleHour(h)"
+      ></div>
     </div>
-
-    <div class="divider"></div>
-
   </div>
 </template>
-<script setup>
-import { ref } from "vue";
 
-const emit = defineEmits(["select-time"]);
+<script setup lang="ts">
+import { ref, defineProps, defineEmits, watch } from 'vue'
 
-const reserved = ref([
-  { start: 2, end: 8 },
-  { start: 20, end: 22 }
-]);
+interface Block {
+  label: string
+  type: 'reserved' | 'available'
+  start: number
+  end: number
+}
 
-const selectedRange = ref([]);
+const props = defineProps<{
+  blocks: Block[]
+  modelValue?: number[]
+}>()
 
-let isDragging = false;
-let dragStart = null;
-let moved = false;
+const emit = defineEmits(['update:modelValue'])
+const selected = ref<number[]>([...(props.modelValue || [])])
 
-const isReserved = (hour) =>
-  reserved.value.some((r) => hour >= r.start && hour <= r.end);
+// 부모가 v-model 업데이트하면 동기화
+watch(() => props.modelValue, val => selected.value = [...(val || [])])
 
-const startDrag = (e) => {
-  isDragging = true;
-  moved = false;
+// 예약 블록인지 확인
+const isReserved = (h: number) => props.blocks.some(b => b.type === 'reserved' && h >= b.start && h < b.end)
 
-  const index = getIndex(e);
-  if (!index || isReserved(index)) return;
-  dragStart = index;
-};
+// 연속 선택 토글
+const toggleHour = (h: number) => {
+  if (isReserved(h)) return
 
-const duringDrag = (e) => {
-  if (!isDragging || dragStart === null) return;
+  if (selected.value.length === 0) {
+    // 처음 선택
+    selected.value.push(h)
+  } else {
+    const min = Math.min(...selected.value)
+    const max = Math.max(...selected.value)
 
-  moved = true;
-  const index = getIndex(e);
-  if (!index || isReserved(index)) return;
-
-  const start = Math.min(dragStart, index);
-  const end = Math.max(dragStart, index);
-
-  for (let h = start; h <= end; h++) if (isReserved(h)) return;
-
-  selectedRange.value = [];
-  for (let h = start; h <= end; h++) selectedRange.value.push(h);
-};
-
-const endDrag = () => {
-  if (isDragging && moved && selectedRange.value.length > 0) {
-    const start = selectedRange.value[0];
-    const end = selectedRange.value[selectedRange.value.length - 1] + 1; // end는 종료시간이므로 +1
-    emit("select-time", { start, end });
-  }
-  isDragging = false;
-  dragStart = null;
-};
-
-const handleClick = (index) => {
-  if (moved) return;
-  if (isReserved(index)) return;
-
-  if (selectedRange.value.includes(index)) {
-    selectedRange.value = [];
-    emit("select-time", { start: null, end: null });
-    return;
+    if (h === min - 1) selected.value.unshift(h) // 앞쪽 확장
+    else if (h === max + 1) selected.value.push(h) // 뒤쪽 확장
+    else selected.value = [h] // 연속이 아니면 새로 시작
   }
 
-  selectedRange.value = [index];
-  emit("select-time", { start: index, end: index + 1 });
-};
-
-const getIndex = (e) => {
-  const rect = e.currentTarget.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  return Math.min(24, Math.max(1, Math.floor(x / (rect.width / 24)) + 1));
-};
+  emit('update:modelValue', selected.value)
+}
 </script>
 
 <style scoped>
-.timeline {
-  width: 100%;
+.time-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.row {
+.time-labels,
+.time-blocks {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
 }
 
-.row-label {
-  width: 90px;
-  background: #c7dbbf;
-  padding: 10px 0;
-  text-align: center;
+.label {
+  width: 70px;
   font-weight: 600;
+  background: #cfe3ca;
+  padding: 4px;
   border-radius: 4px;
-  margin-right: 12px;
-}
-
-.hours {
-  flex: 1;
-  display: flex;
-  justify-content: space-between;
-  color: #a4ba9f;
-  font-size: 14px;
-  padding-right: 8px;
-}
-
-.hour-number {
-  width: calc(100% / 24);
   text-align: center;
+  margin-right: 4px;
 }
 
-/* 슬롯 */
-.slots {
+.hour-label,
+.block {
   flex: 1;
+  height: 24px;
   display: flex;
-  height: 26px;
-  user-select: none;
-  gap: 6px; /* 🔥 원하는 간격으로 조절 */
+  justify-content: center;
+  align-items: center;
+  margin-right: 2px;
+  border-radius: 4px;
+  font-size: 12px;
 }
-.slot {
-  flex: 1;
-  background: #e7f0e2;
-  border-radius: 4px; /* 네모! */
+
+.block {
   cursor: pointer;
-  transition: background 0.15s;
+  background: #e6f0e6;
 }
 
-.slot.selected {
-  background: #b5d4ad;
-}
-
-.slot.reserved {
-  background: #bfbfbf !important;
+.block.reserved {
+  background: #ccc;
   cursor: not-allowed;
+}
+
+.block.selected {
+  background: #b6ceb4;
 }
 
 .divider {
   width: 100%;
-  border-bottom: 8px solid #eaeaea;
-  transform: scaleY(0.5);
-  margin: 7px 0;
+  border-bottom: 4px solid #eaeaea;
+  margin: 6px 0 16px 0;
 }
-
 </style>
