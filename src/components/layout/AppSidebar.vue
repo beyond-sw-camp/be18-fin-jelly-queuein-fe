@@ -15,6 +15,7 @@ const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN' || role ===
     <nav class="menu">
 
       <router-link to="/app/reservations/me" class="item">
+
         <img src="@/assets/icons/reserve.svg" class="icon" />
         <span v-if="open">예약 관리 </span>
       </router-link>
