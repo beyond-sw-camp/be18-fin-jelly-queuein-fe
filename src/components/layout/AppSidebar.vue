@@ -20,7 +20,7 @@ const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN' || role ===
         <span v-if="open">예약 관리 </span>
       </router-link>
 
-      <router-link to="/app/reservations/schedule" class="item">
+      <router-link to="/app/reservations/monthly" class="item">
         <img src="@/assets/icons/schedule.svg" class="icon" />
         <span v-if="open">일정 관리</span>
       </router-link>

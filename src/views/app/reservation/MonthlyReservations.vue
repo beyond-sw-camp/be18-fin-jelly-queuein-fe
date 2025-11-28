@@ -55,13 +55,47 @@ const calendarOptions = {
   plugins: [dayGridPlugin, timeGridPlugin],
   initialView: 'dayGridMonth',
   headerToolbar: false,
-  contentHeight: 650,
+  contentHeight: 490,
   displayEventTime: false,
-  events: []
+
+  events: [
+    {
+      title: '노트북',
+      start: '2025-10-01T09:00:00',
+      end: '2025-10-01T10:00:00'
+    }
+  ],
+
+  eventContent: (arg) => {
+    const d = arg.event.start;
+    const time = d ? d.toTimeString().slice(0, 5) : '';
+
+    return {
+      html: `
+        <div class="custom-event-chip">
+          <span>${time} ${arg.event.title}</span>
+        </div>
+      `
+    };
+  }
+
 }
+
+
+
 </script>
 
 <style>
+.custom-event-chip {
+  background: #e6f0ff;
+  color: #1677ff;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: inline-block;
+  font-weight: 600;
+}
+
 .calendar-top {
   display: flex;
   align-items: center;
@@ -71,7 +105,7 @@ const calendarOptions = {
 }
 
 .date-picker {
-  width: 160px;
+  width: 195px !important;
 }
 
 /* 월별/주별 버튼 스타일 */
@@ -96,5 +130,23 @@ const calendarOptions = {
   color: #000;
   border-color: #B6CEB4;
 }
+.custom-event-chip {
+  background: #e6f0ff !important;
+  color: #1677ff !important;
+}
+.fc-daygrid-day-frame {
+  min-height: 60px !important;
+}
+
+/* padding도 제거 (칩만 딱 붙게 하기 위해) */
+:deep(.fc-timegrid-event .fc-event-main-frame) {
+  padding: 0 !important;
+}
+
+/* 전체 클릭 영역이 투명해야 칩만 보임 */
+:deep(.fc-timegrid-event .fc-event-main) {
+  padding: 0 !important;
+}
+
 
 </style>
