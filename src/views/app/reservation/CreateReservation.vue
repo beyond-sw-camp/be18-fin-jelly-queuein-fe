@@ -13,7 +13,7 @@
       :date="'2025-01-01'"
       :reserver="'박채연'"
       :timeRange="timeRange"
-      :participants="selectedUser ? [selectedUser.name] : []"
+      :participants="selectedUsers.map(u => u.name)"
       note="1팀 회의용"
       @add="openParticipantModal"
     />
@@ -23,20 +23,23 @@
       <h2>예약 시간 선택</h2>
       <TimeBar 
         :blocks="timeBlocks" 
-        v-model="selectedHours" 
+        v-model="selectedHours"
       />
     </div>
 
-    <!-- 선택된 참여자 이름 -->
-    <div v-if="selectedUser" class="selected-user">
-      선택된 참여자: {{ selectedUser.name }}
-    </div>
+    <!-- 선택된 참여자 표시
+    <div v-if="selectedUsers.length" class="selected-users">
+      선택된 참여자: 
+      <span v-for="user in selectedUsers" :key="user.id" class="user-chip">
+        {{ user.name }}
+      </span>
+    </div> -->
 
     <!-- 참여자 선택 모달 -->
     <ParticipantModal
       :show="participantModalVisible"
       @close="participantModalVisible = false"
-      @select="onSelectParticipant"
+      @select="onSelectParticipants"
     />
 
     <!-- 예약 신청 버튼 -->
@@ -59,11 +62,7 @@ const timeBlocks = [
   { label: '예약 됨', type: 'reserved', start: 20, end: 24 }
 ]
 
-// 참여자 모달 상태
-const participantModalVisible = ref(false)
-const selectedUser = ref<{ id: number, name: string } | null>(null)
-
-// 선택된 시간 (부모 상태에서 관리)
+// 선택된 시간
 const selectedHours = ref<number[]>([])
 
 // 선택된 시간 범위를 BookingHeader에 표시
@@ -74,12 +73,16 @@ const timeRange = computed(() => {
   return `${String(start).padStart(2,'0')}:00 ~ ${String(end).padStart(2,'0')}:00`
 })
 
-// 참여자 모달 열기
-const openParticipantModal = () => participantModalVisible.value = true
+// 참여자 관련
+const participantModalVisible = ref(false)
+const selectedUsers = ref<{ id: number; name: string; email?: string }[]>([])
 
-// 참여자 선택 후
-const onSelectParticipant = (user: { id: number, name: string }) => {
-  selectedUser.value = user
+const openParticipantModal = () => {
+  participantModalVisible.value = true
+}
+
+const onSelectParticipants = (users: { id: number; name: string; email?: string }[]) => {
+  selectedUsers.value = users
   participantModalVisible.value = false
 }
 
@@ -89,15 +92,16 @@ const submitBooking = () => {
     alert("예약 시간을 선택해주세요.")
     return
   }
-  if (!selectedUser.value) {
+  if (!selectedUsers.value.length) {
     alert("참여자를 선택해주세요.")
     return
   }
 
   const payload = {
     assetId: 1, // 실제 선택된 자원 ID
-    reserver: selectedUser.value.name,
-    hours: selectedHours.value
+    reserver: "박채연",
+    hours: selectedHours.value,
+    participants: selectedUsers.value.map(u => u.id)
   }
 
   console.log("예약 신청 데이터:", payload)
@@ -122,8 +126,17 @@ const submitBooking = () => {
   margin-bottom: 20px;
 }
 
-.selected-user {
+.selected-users {
   margin: 10px 0;
   font-weight: 600;
+}
+
+.user-chip {
+  display: inline-block;
+  background: #b6ceb4;
+  padding: 4px 8px;
+  margin-right: 6px;
+  border-radius: 8px;
+  font-size: 13px;
 }
 </style>
