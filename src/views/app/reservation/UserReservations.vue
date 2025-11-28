@@ -1,6 +1,6 @@
 <template>
   <div class="header-row">
-    <h2>예약 현황 조회</h2>
+    <h2>사용자 예약 내용 조회</h2>
 
     <el-input
       v-model="search"
@@ -12,15 +12,21 @@
       </template>
     </el-input>
   </div>
-  <ReservationTabs />
+
+  <!-- 탭을 전체 폭으로 확장시키는 wrapper -->
+  <div class="tabs-full-row">
+    <ReservationTabs />
+  </div>
+
   <ReservationFilters />
   <ReservationTable />
 </template>
 
+
 <script setup>
 import ReservationTabs from './component/ReservationTab.vue'
 import ReservationFilters from './component/ReservationFilter.vue'
-import ReservationTable from './component/ReservationTable.vue'
+import ReservationTable from './component/UserReservationTable.vue'
 </script>
 
 <style scoped>
@@ -44,4 +50,14 @@ import ReservationTable from './component/ReservationTable.vue'
   font-weight: 600;
   margin-top: 10px;
 }
+
+.main-container {
+  width: 70%;
+}
+
+.content {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
 </style>

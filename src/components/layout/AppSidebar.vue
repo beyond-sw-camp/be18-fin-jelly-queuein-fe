@@ -14,12 +14,12 @@ const isAdmin = computed(() => role === 'MASTER' || role === 'ADMIN')
   <aside class="sidebar" :class="{ closed: !open }">
     <nav class="menu">
 
-      <router-link to="/app" class="item">
+      <router-link to="/app/reservations/me" class="item">
         <img src="@/assets/icons/reserve.svg" class="icon" />
         <span v-if="open">예약 관리</span>
       </router-link>
 
-      <router-link to="/app/schedule" class="item">
+      <router-link to="/app/reservations/schedule" class="item">
         <img src="@/assets/icons/schedule.svg" class="icon" />
         <span v-if="open">일정 관리</span>
       </router-link>

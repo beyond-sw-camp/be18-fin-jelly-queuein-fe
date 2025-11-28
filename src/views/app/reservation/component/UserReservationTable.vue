@@ -1,5 +1,5 @@
 <template>
-  <el-table :data="rows" border style="width: 100%">
+  <el-table :data="rows" border style="width: 100%" @row-click="openModal" highlight-current-row>
     <el-table-column type="selection" width="48" />
 
     <el-table-column prop="name" label="자원명" width="130" align="center"  />
@@ -28,14 +28,22 @@
   <div class="pagination">
     <el-pagination layout="prev, pager, next" :total="100" />
   </div>
+  <ReservationDetailModal
+    v-if="modalOpen"
+    :asset="selectedRow"
+    @close="modalOpen = false"
+    @start="startReservation"
+    @end="endReservation"
+  />
 </template>
-
 <script setup>
 import { ref } from 'vue'
 import StatusTag from './ReservationStatus.vue'
+import ReservationDetailModal from './ReservationDetailModal.vue'
 
 const rows = ref([
   {
+    id: 1,
     name: "스튜디오 1",
     type: "공간",
     category: "스튜디오",
@@ -45,6 +53,7 @@ const rows = ref([
     usage: "PENDING"
   },
   {
+    id: 2,
     name: "스튜디오 2",
     type: "공간",
     category: "스튜디오",
@@ -54,7 +63,25 @@ const rows = ref([
     usage: "APPROVED"
   }
 ])
+
+const modalOpen = ref(false)
+const selectedRow = ref(null)
+
+const openModal = (row, column) => {
+  if (column.type === "selection") return
+  selectedRow.value = row
+  modalOpen.value = true
+}
+
+const startReservation = (id) => {
+  console.log("사용 시작:", id)
+}
+
+const endReservation = (id) => {
+  console.log("사용 종료:", id)
+}
 </script>
+
 
 <style scoped>
 .pagination {

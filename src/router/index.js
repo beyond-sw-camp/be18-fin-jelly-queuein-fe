@@ -34,8 +34,28 @@ const router = createRouter({
         { path: '', component: DashboardView },
         
         {
-          path: 'reservation/status',
+          path: 'reservations/me',
           component: () => import('@/views/app/reservation/UserReservations.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/available-assets',
+          component: () => import('@/views/app/reservation/ReservableAssets.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/applied',
+          component: () => import('@/views/app/reservation/AppliedReservations.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/schedule',
+          component: () => import('@/views/app/reservation/MonthlyReservations.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/create',
+          component: () => import('@/views/app/reservation/CreateReservation.vue'),
           // meta: { requiresAuth: true }
         }
       ]
