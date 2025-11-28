@@ -2,6 +2,7 @@
 import { ref, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import Modal from '@/components/common/Modal.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -9,6 +10,7 @@ const auth = useAuthStore()
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
+const isLoading = ref(false)
 
 watch(rememberMe, v => console.log("rememberMe changed →", v))
 
@@ -40,12 +42,11 @@ onMounted(async () => {
 })
 
 async function login() {
+  if (isLoading.value) return
+  isLoading.value = true
+
   try {
-
-    console.log("before login() rememberMe:", rememberMe.value)
     const result = await auth.login(email.value, password.value, rememberMe.value)
-
-    console.log("after login() rememberEmail:", localStorage.getItem("rememberEmail"))
 
     if (result === 'CHANGE_PASSWORD') {
       router.push('/change-password')
@@ -61,6 +62,10 @@ async function login() {
   } catch (e) {
     console.error(e)
     alert('로그인 실패')
+  } finally {
+    setTimeout(() => {
+      isLoading.value = false
+    }, 500)
   }
 }
 </script>
@@ -96,7 +101,13 @@ async function login() {
           <a href="#" class="find-pw">비밀번호 찾기</a>
         </div>
 
-        <button type="submit" class="login-btn">로그인</button>
+        <button
+          type="submit"
+          class="login-btn"
+          :disabled="isLoading"
+        >
+          {{ isLoading ? '로그인 중 입니다...' : '로그인' }}
+        </button>
       </form>
 
       <div class="footer">
@@ -113,6 +124,11 @@ async function login() {
 
     <!-- Brand -->
     <div class="brand">QueueIn</div>
+    <!-- 로그인 중 모달 -->
+    <Modal :show="isLoading">
+      <div class="spinner"></div>
+      <p class="msg">로그인 중입니다...</p>
+    </Modal>
   </div>
 </template>
 
@@ -223,5 +239,27 @@ async function login() {
   right: 50px;
   font-size: 13px;
   color: #5c5c5c;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid #c8e0c3;
+  border-top-color: #243540;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 12px;
+}
+
+.msg {
+  text-align: center;
+  font-size: 15px;
+  color: #333;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
