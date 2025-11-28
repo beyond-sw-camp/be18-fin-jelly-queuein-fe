@@ -1,57 +1,56 @@
 <template>
   <el-dialog
-    v-model="visible"
+    v-model="localVisible"
     width="60%"
     :show-close="false"
     class="reservation-dialog"
   >
     <!-- Header -->
     <div class="dialog-header">
-      <h2>{{ assetName }}</h2>
+      <h2>{{ safeAssetName }}</h2>
       <el-icon class="close-icon" @click="close"><Close /></el-icon>
     </div>
 
-    <!-- Content -->
+    <!-- Info Table -->
     <div class="info-table">
-
       <div class="row">
         <div class="cell label">자원 명</div>
-        <div class="cell">{{ assetName }}</div>
+        <div class="cell">{{ safeAssetName }}</div>
 
         <div class="cell label">예약 상태</div>
-        <div class="cell">{{ status }}</div>
+        <div class="cell">{{ safeStatus }}</div>
       </div>
 
       <div class="row">
         <div class="cell label">예약자</div>
-        <div class="cell">{{ reserver }}</div>
+        <div class="cell">{{ safeReserver }}</div>
 
         <div class="cell label">승인자</div>
-        <div class="cell">{{ approver }}</div>
+        <div class="cell">{{ safeApprover }}</div>
       </div>
 
       <div class="row">
         <div class="cell label">예약 날짜</div>
-        <div class="cell">{{ date }}</div>
+        <div class="cell">{{ safeDate }}</div>
 
         <div class="cell label">승인 / 거절 사유</div>
-        <div class="cell">{{ reason }}</div>
+        <div class="cell">{{ safeReason }}</div>
       </div>
 
       <div class="row">
         <div class="cell label">사용 시간</div>
-        <div class="cell">{{ useTime }}</div>
+        <div class="cell">{{ safeUseTime }}</div>
 
         <div class="cell label">참여자</div>
-        <div class="cell">{{ participant }}</div>
+        <div class="cell">{{ safeParticipant }}</div>
       </div>
 
       <div class="row">
         <div class="cell label">실제 사용 시간</div>
-        <div class="cell">{{ realUseTime }}</div>
+        <div class="cell">{{ safeRealUseTime }}</div>
 
         <div class="cell label">비고</div>
-        <div class="cell">{{ note }}</div>
+        <div class="cell">{{ safeNote }}</div>
       </div>
     </div>
 
@@ -62,8 +61,10 @@
   </el-dialog>
 </template>
 
+
 <script setup>
-import { Close } from "@element-plus/icons-vue";
+import { computed } from "vue"
+import { Close } from "@element-plus/icons-vue"
 
 const props = defineProps({
   visible: Boolean,
@@ -76,15 +77,32 @@ const props = defineProps({
   useTime: String,
   realUseTime: String,
   participant: String,
-  note: String
-});
+  note: String,
+})
 
-const emit = defineEmits(["update:visible"]);
+const safe = (v) => v ?? "-"
 
-const close = () => {
-  emit("update:visible", false);
-};
+const safeAssetName = computed(() => safe(props.assetName))
+const safeStatus = computed(() => safe(props.status))
+const safeReserver = computed(() => safe(props.reserver))
+const safeApprover = computed(() => safe(props.approver))
+const safeDate = computed(() => safe(props.date))
+const safeReason = computed(() => safe(props.reason))
+const safeUseTime = computed(() => safe(props.useTime))
+const safeRealUseTime = computed(() => safe(props.realUseTime))
+const safeParticipant = computed(() => safe(props.participant))
+const safeNote = computed(() => safe(props.note))
+
+const emit = defineEmits(["update:visible"])
+
+const localVisible = computed({
+  get: () => props.visible,
+  set: (v) => emit("update:visible", v),
+})
+
+const close = () => emit("update:visible", false)
 </script>
+
 
 <style scoped>
 .reservation-dialog ::v-deep(.el-dialog__body) {
@@ -116,7 +134,6 @@ const close = () => {
   border-radius: 10px;
 }
 
-/* Each row is 4 columns (label/value + label/value) */
 .row {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr 2fr;
@@ -134,6 +151,7 @@ const close = () => {
   color: white;
   text-align: center;
 }
+
 .dialog-footer {
   display: flex;
   justify-content: center;

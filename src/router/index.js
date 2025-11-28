@@ -48,8 +48,13 @@ const router = createRouter({
           // meta: { requiresAuth: true }
         },
         {
-          path: 'reservations/schedule',
+          path: 'reservations/monthly',
           component: () => import('@/views/app/reservation/MonthlyReservations.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/weekly',
+          component: () => import('@/views/app/reservation/WeeklyReservations.vue'),
           // meta: { requiresAuth: true }
         },
         {
