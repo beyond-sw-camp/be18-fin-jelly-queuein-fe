@@ -1,6 +1,6 @@
 <template>
   <el-table
-    :data="rows"
+    :data="props.rows"
     border
     style="width: 100%"
     @row-click="goToDetail"
@@ -8,69 +8,74 @@
   >
     <el-table-column type="selection" width="48" />
 
-    <el-table-column prop="name" label="자원명" width="130" align="center" />
-    <el-table-column prop="type" label="자원 유형" width="110" align="center" />
-    <el-table-column prop="category" label="카테고리" width="110" align="center" />
+    <el-table-column prop="assetName" label="자원명" width="230" align="center" />
 
-    <el-table-column prop="status" label="자원 상태" width="120" align="center">
+    <!-- ✔ assetType -->
+    <el-table-column prop="assetType" label="자원 유형" width="210" align="center" />
+
+    <!-- ✔ categoryName -->
+    <el-table-column prop="categoryName" label="카테고리" width="210" align="center" />
+
+    <!-- ✔ reservable (문구로 표시) -->
+    <el-table-column prop="reservable" label="예약 가능 여부" width="150" align="center">
       <template #default="scope">
-        <StatusTag :status="scope.row.status" />
+        <StatusTag :status="scope.row.reservable ? 'AVAILABLE' : 'UNAVAILABLE'" />
       </template>
     </el-table-column>
 
-    <el-table-column prop="approval" label="승인 여부" width="120" align="center" />
-    <el-table-column prop="time" label="예약 시작/종료 시간" width="200" align="center" />
-    <el-table-column prop="time" label="실제 시작/종료 시간" width="200" align="center" />
-
-    <el-table-column prop="usage" label="예약 상태" min-width="150" align="center">
+    <!-- ✔ needsApproval -->
+    <el-table-column prop="needsApproval" label="승인 필요" width="120" align="center">
       <template #default="scope">
-        <StatusTag :status="scope.row.usage" />
+        {{ scope.row.needsApproval ? "예" : "아니오" }}
+      </template>
+    </el-table-column>
+
+    <el-table-column label="예약하기" min-width="150" align="center">
+      <template #default="scope">
+      <el-button
+        class="reserve-btn"
+        size="small"
+        @click.stop="goToDetail(scope.row, {})"
+      >
+        예약
+      </el-button>
+
       </template>
     </el-table-column>
   </el-table>
 
   <div class="pagination">
-    <el-pagination layout="prev, pager, next" :total="100" />
+    <el-pagination
+      layout="prev, pager, next"
+      :total="total"
+      @current-change="(page) => emit('page-change', page - 1)"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import StatusTag from './ReservationStatus.vue'
+import { useRouter } from 'vue-router'
+
+const props = defineProps({
+  rows: {
+    type: Array,
+    required: true
+  },
+  total: {
+    type: Number,
+    required: true
+  }
+})
+// ⭐ 부모가 받을 이벤트 선언
+const emit = defineEmits(['page-change'])
 
 const router = useRouter()
 
-const rows = ref([
-  {
-    id: 1,
-    name: "스튜디오 1",
-    type: "공간",
-    category: "스튜디오",
-    status: "AVAILABLE",
-    approval: "-",
-    time: "11:00 - 12:00",
-    usage: "PENDING"
-  },
-  {
-    id: 2,
-    name: "스튜디오 2",
-    type: "공간",
-    category: "스튜디오",
-    status: "AVAILABLE",
-    approval: "-",
-    time: "11:00 - 12:00",
-    usage: "APPROVED"
-  }
-])
-
-// 🔥 모달 버전과 똑같이 구조 유지하면서 router 이동만 적용
+// ✔ 상세 이동
 const goToDetail = (row, column) => {
-  // ✔ selection 컬럼 누르면 이동하지 않음
   if (column.type === 'selection') return
-
-  // ✔ id 기반 상세 페이지 이동
-  router.push(`/app/reservations/create?assetId=${row.id}`)
+  router.push(`/app/reservations/create?assetId=${row.assetId}`)
 }
 </script>
 
@@ -80,4 +85,20 @@ const goToDetail = (row, column) => {
   justify-content: center;
   margin-top: 20px;
 }
+
+.reserve-btn {
+  border: 1px solid #409EFF;   /* 파란 테두리 */
+  background-color: #ecf5ff !important; /* 연한 파랑 배경 */
+  color: #409EFF;              /* 파란 글씨 */
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-weight: 500;
+}
+
+.reserve-btn:hover {
+  background-color: #d9ecff !important; /* hover 시 조금 더 진한 연파랑 */
+  border-color: #409EFF;
+  color: #409EFF;
+}
+
 </style>

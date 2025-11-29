@@ -1,50 +1,88 @@
 <template>
   <el-row :gutter="12" class="filter-row">
 
+    <!-- 날짜 선택 -->
     <el-col :span="4">
       <el-date-picker
-        v-model="selectedDate"
+        v-model="filters.date"
         type="date"
         placeholder="날짜 선택"
-        @change="onDateSelect"
+        format="YYYY-MM-DD"
+        value-format="YYYY-MM-DD"
+        @change="emitChange"
       />
     </el-col>
 
+    <!-- 자원 유형 -->
     <el-col :span="4">
-      <el-select v-model="type" placeholder="자원 유형">
-        <el-option label="공간" value="SPACE" />
-        <el-option label="장비" value="EQUIP" />
+      <el-select
+        v-model="filters.assetType"
+        placeholder="자원 유형"
+        @change="emitChange"
+      >
+        <el-option label="정적(고정)" value="STATIC" />
+        <el-option label="동적(이동)" value="DYNAMIC" />
       </el-select>
     </el-col>
 
+    <!-- 자원 상태 -->
     <el-col :span="4">
-      <el-select v-model="asset" placeholder="자원 상태">
-        <el-option 
-          v-for="a in assets" 
-          :key="a.id"
-          :label="a.name"
-          :value="a.id" 
+      <el-select
+        v-model="filters.assetStatus"
+        placeholder="자원 상태"
+        @change="emitChange"
+      >
+        <el-option label="사용 가능" value="AVAILABLE" />
+        <el-option label="사용 불가" value="UNAVAILABLE" />
+        <el-option label="점검 중" value="MAINTENANCE" />
+      </el-select>
+    </el-col>
+
+    <!-- 카테고리 -->
+    <el-col :span="4">
+      <el-select
+        v-model="filters.categoryName"
+        placeholder="카테고리"
+        @change="emitChange"
+      >
+        <el-option
+          v-for="c in categories"
+          :key="c"
+          :label="c"
+          :value="c"
         />
       </el-select>
     </el-col>
 
+    <!-- 0계층 -->
     <el-col :span="4">
-      <el-select v-model="category" placeholder="카테고리">
-        <el-option label="스튜디오" value="studio" />
+      <el-select
+        v-model="filters.layerZero"
+        placeholder="0계층 선택"
+        @change="emitChange"
+      >
+        <el-option
+          v-for="l in layerZeroList"
+          :key="l"
+          :label="l"
+          :value="l"
+        />
       </el-select>
     </el-col>
 
+    <!-- 1계층 -->
     <el-col :span="4">
-      <el-select v-model="usage" placeholder="0계층 선택">
-        <el-option label="사용 가능" value="AVAILABLE" />
-        <el-option label="사용 불가" value="UNAVAILABLE" />
-      </el-select>
-    </el-col>
-
-    <el-col :span="4">
-      <el-select v-model="usage" placeholder="1계층 선택">
-        <el-option label="사용 가능" value="AVAILABLE" />
-        <el-option label="사용 불가" value="UNAVAILABLE" />
+      <el-select
+        v-model="filters.layerOne"
+        placeholder="1계층 선택"
+        @change="emitChange"
+      >
+        <el-option
+          v-for="l in layerOneList"
+          :key="l"
+          :label="l"
+          :value="l"
+        />
       </el-select>
     </el-col>
 
@@ -52,27 +90,30 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref } from "vue"
 
-const date = ref(null)
-const type = ref(null)
-const category = ref(null)
-const usage = ref(null)
-const search = ref("")
+// 부모에게 필터 변경 emit
+const emit = defineEmits(["change"])
 
-const asset = ref(null)
-const assets = ref([
-  { id: 1, name: "스튜디오 1" },
-  { id: 2, name: "스튜디오 2" }
-])
+/* 필터 값 */
+const filters = ref({
+  date: "",
+  assetType: "",
+  assetStatus: "",
+  categoryName: "",
+  layerZero: "",
+  layerOne: ""
+})
 
+/* 실제 카테고리 & 계층은 API로 받을 가능성 있지만,
+   지금은 더미 데이터 유지 */
+const categories = ref(["사옥", "스튜디오", "카메라", "음향"])
+const layerZeroList = ref(["본사", "지점", "외부"])
+const layerOneList = ref(["1F", "2F", "3F", "A동", "B동"])
 
-const emit = defineEmits(['date-change'])
-const selectedDate = ref(new Date())
-
-const onDateSelect = (value) => {
-  selectedDate.value = value
-  emit('date-change', value)
+/* 값 변경 시 부모로 바로 emit */
+function emitChange() {
+  emit("change", { ...filters.value })
 }
 </script>
 

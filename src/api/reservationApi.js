@@ -4,11 +4,20 @@ export const reservationApi = {
   // 생성
   create: (data) => api.post('/assets', data),
 
+  getAssetDetail: (id) => api.get(`/assets/${id}`),
+
   // 수정
   update: (id, data) => api.patch(`/assets/${id}`, data),
 
+  // 위치(1 depth)
+  getOneDepth: (rootId) => api.get(`/assets/${rootId}/one-depth`),
+
+  // 자원 목록 조회 (descendants)
+  getDescendants: (params) => api.get('/assets/descendants', { params }),
+
+
   // 자원 상세 조회
-  getDetail: (id) => api.get(`/assets/${id}`),
+  getReservationDetail: (id) => api.get(`/reservations/${id}`),
 
   // 사용자 예약 조회
     getUserReservations: ({ page, size, date }) =>
@@ -16,10 +25,16 @@ export const reservationApi = {
         params: { page, size, date }
     }),
 
+  startUsing(id) {
+  return api.patch(`/reservations/${id}/check-in`)
+  },
 
-  // 위치(1 depth)
-  getOneDepth: (rootId) => api.get(`/assets/${rootId}/one-depth`),
+  endUsing(id) {
+    return api.patch(`/reservations/${id}/check-out`)
+  },
 
-  // 자원 목록 조회 (descendants)
-  getDescendants: (params) => api.get('/assets/descendants', { params }),
+  cancel(id) {
+    return api.patch(`/reservations/${id}/cancel`)
+  }
+
 }

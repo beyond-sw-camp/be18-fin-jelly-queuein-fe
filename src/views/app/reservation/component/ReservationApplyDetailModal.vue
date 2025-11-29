@@ -48,9 +48,11 @@
           <div class="label green">실제 사용 시간</div>
           <div class="value">
             <template v-if="asset?.actualStartAt">
-              {{ formatKoreaTime(asset.actualStartAt) }} ~ {{ formatKoreaTime(asset.actualEndAt) }}
+              {{ formatKoreaTime(asset?.actualStartAt) }} ~ {{ formatKoreaTime(asset?.actualEndAt) }}
             </template>
-            <template v-else>-</template>
+            <template v-else>
+              -
+            </template>
           </div>
         </div>
 
@@ -62,17 +64,6 @@
           <div class="value">{{ asset?.note ?? "-" }}</div>
         </div>
 
-      </div>
-
-      <!-- 하단 버튼 -->
-      <div class="footer" v-if="actionLabel">
-        <button 
-          class="footer-btn"
-          :disabled="isActionDisabled"
-          @click="onAction"
-        >
-          {{ actionLabel }}
-        </button>
       </div>
 
     </div>
@@ -87,17 +78,19 @@ const props = defineProps({
   asset: Object
 })
 
-const emit = defineEmits(["close", "start", "end"])
+const emit = defineEmits(["close"])
 
 const close = () => emit("close")
 
 /* -------------------------------------------
-  🔵 Instant → 한국 HH:mm 변환
+  🔵 한국 시간 HH:mm 포맷터
 ------------------------------------------- */
 const formatKoreaTime = (instant) => {
   if (!instant) return "-"
+
   const date = new Date(instant)
   if (isNaN(date.getTime())) return "-"
+
   return date.toLocaleTimeString("ko-KR", {
     hour: "2-digit",
     minute: "2-digit",
@@ -110,56 +103,25 @@ const formatKoreaTime = (instant) => {
 ------------------------------------------- */
 const participantsText = computed(() => {
   const p = props.asset?.participants
+
   if (!p) return "-"
-  if (Array.isArray(p)) return p.length ? p.map(i => i.name ?? i).join(", ") : "-"
-  if (typeof p === "object") return p.name ?? "-"
+
+  if (Array.isArray(p)) {
+    if (p.length === 0) return "-"
+    return p
+      .map(item => typeof item === "string" ? item : item.name ?? "-")
+      .join(", ")
+  }
+
+  if (typeof p === "object") {
+    return p.name ?? "-"
+  }
+
   return p
 })
-
-/* -------------------------------------------
-   버튼 라벨
-------------------------------------------- */
-const normalizedUsage = computed(() =>
-  (props.asset?.usage ?? "").trim().toUpperCase()
-)
-
-const actionLabel = computed(() => {
-  switch (normalizedUsage.value) {
-    case "PENDING":
-      return "취소"
-    case "APPROVED":
-      return "사용 시작"
-    case "USING":
-    case "IN_USE":   // 서버 두 경우 모두 대응
-      return "사용 종료"
-    case "COMPLETED":
-      return "취소 불가"
-    default:
-      return null
-  }
-})
-
-const isActionDisabled = computed(() =>
-  ["COMPLETED"].includes(normalizedUsage.value)
-)
-
-/* -------------------------------------------
-   버튼 클릭 → 서버 요청 이벤트 + 모달 닫힘
-------------------------------------------- */
-const onAction = () => {
-  const usage = normalizedUsage.value
-
-  if (usage === "APPROVED") emit("start", props.asset.id)
-  if (usage === "USING" || usage === "IN_USE") emit("end", props.asset.id)
-  if (usage === "PENDING") emit("cancel", props.asset.id)
-
-  // 🔥 버튼 클릭 후 모달 자동 닫힘
-  emit("close")
-}
 </script>
 
 <style scoped>
-/* 그대로 유지 */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -215,29 +177,5 @@ const onAction = () => {
 .value {
   padding: 14px;
   background: #fafafa;
-}
-
-.footer {
-  display: flex;
-  justify-content: center;
-  margin-top: 30px;
-}
-
-.footer-btn {
-  padding: 10px 28px;
-  border-radius: 6px;
-  background: #ffffff;
-  border: 1.5px solid #d0d0d0;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.footer-btn:hover {
-  background: #f3f3f3;
-}
-
-.footer-btn:disabled {
-  cursor: not-allowed;
-  background: #eaeaea;
 }
 </style>

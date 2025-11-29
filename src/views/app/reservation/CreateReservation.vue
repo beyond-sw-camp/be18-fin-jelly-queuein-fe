@@ -9,14 +9,15 @@
     <!-- 자원 예약 정보 -->
     <h2>자원 예약</h2>
     <BookingHeader
-      :assetName="'카메라 1'"
-      :date="'2025-01-01'"
+      :assetName="assetInfo?.assetName"  
+      :date="date"
       :reserver="'박채연'"
       :timeRange="timeRange"
       :participants="selectedUsers.map(u => u.name)"
-      note="1팀 회의용"
+      note="1팀 회의"
       @add="openParticipantModal"
     />
+
 
     <!-- 예약 시간 선택 -->
     <div class="time-section">
@@ -46,68 +47,99 @@
     <ApplyButton @click="submitBooking" />
   </div>
 </template>
-
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import api from '@/api/axios'
+
 import TimeBar from './component/TimeBar.vue'
 import BookingHeader from './component/BookingHeader.vue'
 import ParticipantModal from './component/ParticipantModal.vue'
 import ApplyButton from './component/ApplyButton.vue'
 import ReservationTabs from './component/ReservationTab.vue'
 
-// 예약 가능한 시간 블록 예시
-const timeBlocks = [
-  { label: '예약 됨', type: 'reserved', start: 1, end: 11 },
-  { label: '예약 가능', type: 'available', start: 11, end: 13 },
-  { label: '예약 됨', type: 'reserved', start: 20, end: 24 }
-]
+const route = useRoute()
 
-// 선택된 시간
+// 목록 페이지에서 전달한 assetId와 date
+const assetId = Number(route.query.assetId)
+const date = route.query.date as string
+
+// 자원 정보
+const assetInfo = ref<any>(null)
+
+// 예약 가능 시간
+const timeBlocks = ref<any[]>([])
 const selectedHours = ref<number[]>([])
 
-// 선택된 시간 범위를 BookingHeader에 표시
+// 참여자
+const participantModalVisible = ref(false)
+const selectedUsers = ref<{ id: number; name: string }[]>([])
+
+// -------------------------------
+// 1️⃣ 자원 상세 조회 API
+// -------------------------------
+async function fetchAssetInfo() {
+  const res = await api.get(`/assets/${assetId}`)
+  assetInfo.value = res.data
+}
+
+// -------------------------------
+// 2️⃣ 예약 가능 시간 조회 API
+// -------------------------------
+async function fetchAvailableTimes() {
+  const res = await api.get(`/reservations/${assetId}/available-times`, {
+    params: { date }
+  })
+  timeBlocks.value = res.data.blocks
+}
+
+// -------------------------------
+// 선택 시간 → 시간 문자열로 변환
+// -------------------------------
 const timeRange = computed(() => {
   if (!selectedHours.value.length) return '-'
   const start = Math.min(...selectedHours.value)
   const end = Math.max(...selectedHours.value) + 1
+
   return `${String(start).padStart(2,'0')}:00 ~ ${String(end).padStart(2,'0')}:00`
 })
 
-// 참여자 관련
-const participantModalVisible = ref(false)
-const selectedUsers = ref<{ id: number; name: string; email?: string }[]>([])
-
-const openParticipantModal = () => {
-  participantModalVisible.value = true
-}
-
-const onSelectParticipants = (users: { id: number; name: string; email?: string }[]) => {
+// 모달
+const openParticipantModal = () => participantModalVisible.value = true
+const onSelectParticipants = (users: any[]) => {
   selectedUsers.value = users
   participantModalVisible.value = false
 }
 
-// 예약 신청
-const submitBooking = () => {
+// -------------------------------
+// 예약 생성 API
+// -------------------------------
+async function submitBooking() {
   if (!selectedHours.value.length) {
     alert("예약 시간을 선택해주세요.")
     return
   }
-  if (!selectedUsers.value.length) {
-    alert("참여자를 선택해주세요.")
-    return
-  }
+
+  const startHour = Math.min(...selectedHours.value)
+  const endHour = Math.max(...selectedHours.value) + 1
 
   const payload = {
-    assetId: 1, // 실제 선택된 자원 ID
     reserver: "박채연",
-    hours: selectedHours.value,
+    startAt: `${date}T${startHour.toString().padStart(2,'0')}:00:00`,
+    endAt: `${date}T${endHour.toString().padStart(2,'0')}:00:00`,
     participants: selectedUsers.value.map(u => u.id)
   }
 
-  console.log("예약 신청 데이터:", payload)
-  // 서버 요청 예시
-  // axios.post('/api/reservations', payload)
+  await api.post(`/reservations/${assetId}/instant-confirm`, payload)
 }
+
+// -------------------------------
+// 페이지 로딩 시 API 호출
+// -------------------------------
+onMounted(() => {
+  fetchAssetInfo()
+  fetchAvailableTimes()
+})
 </script>
 
 <style scoped>
