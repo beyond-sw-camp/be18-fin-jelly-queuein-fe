@@ -11,12 +11,12 @@
     <BookingHeader
       :assetName="assetInfo?.assetName || assetName"
       v-model:date="date"
-
+      v-model:note="note"
       :timeRange="timeRange"
       :participants="selectedUsers.map(u => u.name)"
-      note="1팀 회의"
       @add="openParticipantModal"
     />
+
 
 
 
@@ -78,6 +78,7 @@ const selectedHours = ref<number[]>([])
 // 참여자
 const participantModalVisible = ref(false)
 const selectedUsers = ref<{ id: number; name: string }[]>([])
+const note = ref("")
 
 // -------------------------------
 // 1️⃣ 자원 상세 조회 API

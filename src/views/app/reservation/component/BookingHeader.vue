@@ -47,8 +47,20 @@
     <!-- 비고 -->
     <div class="line-row">
       <div class="line-label">비고</div>
-      <div class="line-content">{{ note }}</div>
+      <div class="line-content">
+      <el-input
+        class="note-textarea"
+        type="textarea"
+        :model-value="note"
+        placeholder="비고를 입력하세요"
+        @input="onNoteInput"
+        rows="2"
+        style="max-width: 400px;"
+      />
+
+      </div>
     </div>
+
 
   </div>
 </template>
@@ -63,8 +75,11 @@ const props = defineProps({
   participants: Array,
   note: String
 });
+const emit = defineEmits(["add", "update:date", "update:note"])
 
-const emit = defineEmits(["add", "update:date"]);
+const onNoteInput = (v) => emit("update:note", v)
+
+
 
 const datePickerRef = ref(null);
 
@@ -172,6 +187,13 @@ const onAdd = () => emit("add");
   pointer-events: none;
   height: 0;
   width: 0;
+}
+
+.note-textarea ::v-deep .el-textarea__inner {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent; /* 필요 시 */
+  resize: none; /* 크기 조절 막기 — 선택사항 */
 }
 
 </style>
