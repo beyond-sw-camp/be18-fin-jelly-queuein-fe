@@ -86,23 +86,27 @@ const note = ref("")
 const today = new Date().toISOString().slice(0, 10)
 const date = ref<string>(route.query.date?.toString() ?? today)
 
-
 function convertToTimeBlocks(apiData) {
   const blocks = []
-
-  // 시간 슬롯 → 숫자로 변환
   const availableHours = new Set<number>()
 
   apiData.timeSlots.forEach(slot => {
-    const start = Number(slot.start.slice(0, 2))
-    const end = Number(slot.end.slice(0, 2))
+    // 1) start, end 숫자로 변환
+    let start = Number(slot.start.slice(0, 2))
+    let end = Number(slot.end.slice(0, 2))
 
-    for (let h = start; h < end; h++) {
-      availableHours.add(h)
+    // 2) end가 00이면 24로 변경 → 정상적인 범위로 조정
+    if (end === 0) end = 24
+
+    // 3) available 이 true 일 때만 availableHours 추가
+    if (slot.available) {
+      for (let h = start; h < end; h++) {
+        availableHours.add(h)
+      }
     }
   })
 
-  // 0~23 전체 시간 검사
+  // 4) 0~23 모든 시간대 생성
   for (let h = 0; h < 24; h++) {
     blocks.push({
       label: `${h}:00`,
@@ -114,6 +118,7 @@ function convertToTimeBlocks(apiData) {
 
   return blocks
 }
+
 const fetchAvailableTimes = async () => {
   const res = await reservationApi.getAvailableTimes(assetId, date.value)
 

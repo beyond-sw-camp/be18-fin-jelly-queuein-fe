@@ -12,7 +12,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-
+import { ElMessage } from 'element-plus'
 const router = useRouter()
 const route = useRoute()
 
@@ -37,7 +37,8 @@ function onTabClick(tab) {
       router.push('/app/reservations/available-assets')
       break
     case 'create':
-      router.push('/app/reservations/create')
+      active.value = getTabNameByRoute(route.path) // 탭 포커스도 원래대로 유지
+      ElMessage.warning('예약할 자원을 먼저 선택해주세요.')
       break
     case 'applied':
       router.push('/app/reservations/applied')
