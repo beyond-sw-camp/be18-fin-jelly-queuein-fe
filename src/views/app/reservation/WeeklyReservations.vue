@@ -6,62 +6,105 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import { reservationApi } from '@/api/reservationApi'
 
-// 주별 이벤트 리스트
 const events = ref([])
 
-// 현재 날짜(주 이동 기준 날짜)
-const currentDate = ref('2025-09-29')
+const currentDate = ref('2025-10-20')
 
-// mock 데이터 로드 함수
-async function fetchEvents(start, end) {
-  console.log("🔹 Fetching week events:", start, "~", end)
+async function fetchWeekReservations(start, end) {
+  const res = await reservationApi.getWeeklyReservations({
+    startDate: start,
+    endDate: end
+  })
 
-  // API 없을 때 mock 사용
-  events.value = [
-    { id: 1, title: "9:00 노트북", start: "2025-09-29T09:00:00", color: "#93c5fd" },
-    { id: 2, title: "10:00 노트북", start: "2025-09-29T10:00:00", color: "#93c5fd" },
-    { id: 3, title: "11:00 태블릿", start: "2025-09-30T11:00:00", color: "#fde68a" },
-    { id: 4, title: "11:00 태블릿", start: "2025-10-02T11:00:00", color: "#fde68a" },
-    { id: 5, title: "13:00 노트북", start: "2025-10-02T13:00:00", color: "#93c5fd" },
-    { id: 6, title: "11:00 태블릿", start: "2025-10-03T11:00:00", color: "#fde68a" }
-  ]
+  return res.data  // { reservations: [...] }
 }
 
-// FullCalendar 옵션
+function convertWeeklyToEvents(data) {
+  const list = []
+
+  data.reservations.forEach(day => {
+    day.reservations.forEach(r => {
+      const utc = new Date(r.startAt)
+      const local = new Date(utc.getTime() + 9 * 60 * 60 * 1000)
+
+      list.push({
+        id: r.reservationId,
+        title: `${local.toTimeString().slice(0,5)} ${r.assetName}`,
+        start: local,
+        color: '#93c5fd'
+      })
+    })
+  })
+
+  return list
+}
 const calendarOptions = ref({
   plugins: [timeGridPlugin, interactionPlugin, dayGridPlugin],
   initialView: 'timeGridWeek',
-  events,
-  initialDate: currentDate.value,
   allDaySlot: false,
-  slotMinTime: '08:00:00',
-  slotMaxTime: '20:00:00',
+  initialDate: currentDate.value,
+  events,
 
-  headerToolbar: false, // 직접 만든 UI 쓸 것이므로 숨김
+  eventContent: (arg) => {
+    const d = arg.event.start
+    const time = d ? d.toTimeString().slice(0, 5) : ''
 
-  datesSet(info) {
-    fetchEvents(info.startStr, info.endStr)
+    return {
+      html: `
+        <div class="custom-event-chip">
+          <span>${time} ${arg.event.title}</span>
+        </div>
+      `
+    }
   },
 
-  dateClick(info) {
-    console.log("📅 날짜 클릭:", info.dateStr)
+  datesSet: async (info) => {
+    const start = info.startStr
+    const end = info.endStr.slice(0, 10)
+
+    const json = await fetchWeekReservations(start, end)
+    events.value = convertWeeklyToEvents(json)
   },
 
-  eventClick(info) {
-    console.log("🎯 이벤트 클릭:", info.event)
-  }
+  headerToolbar: false,
 })
 
-// 첫 화면 로드 시 mock 데이터 로딩
-fetchEvents("2025-09-29", "2025-10-05")
 </script>
 
+
 <style>
-/* 필요한 경우 스타일 override */
+/* 기본 파란 event 박스 제거 */
+:deep(.fc-timegrid-event),
+:deep(.fc-v-event),
+:deep(.fc-timegrid-event-harness) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* event 내부 영역도 투명 처리 */
+:deep(.fc-timegrid-event .fc-event-main) {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* custom chip 스타일 */
+.custom-event-chip {
+  background: #e6f0ff !important;
+  color: #1677ff !important;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+
 </style>

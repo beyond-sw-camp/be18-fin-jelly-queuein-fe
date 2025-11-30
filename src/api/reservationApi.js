@@ -35,6 +35,14 @@ export const reservationApi = {
 
   cancel(id) {
     return api.patch(`/reservations/${id}/cancel`)
-  }
+  },
+
+  getMonthlyReservations: (yearMonth) =>
+  api.get('/reservations/monthly', { params: { yearMonth } }),
+
+    getWeeklyReservations: (date) =>
+  api.get('/reservations/weekly', { params: { date } })
+
+
 
 }

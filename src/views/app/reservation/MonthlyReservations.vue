@@ -28,47 +28,33 @@
     <FullCalendar ref="calendarRef" :options="calendarOptions" />
   </div>
 </template>
-
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
+import { reservationApi } from '@/api/reservationApi'
 
 const calendarRef = ref(null)
-const selectedDate = ref('2025-10-20')
+const today = new Date().toISOString().slice(0, 10)
+const selectedDate = ref(today)
 const currentView = ref('dayGridMonth')
 
-const onDateChange = (newDate) => {
-  const api = calendarRef.value.getApi()
-  api.gotoDate(newDate) // FullCalendar 날짜 이동
-}
 
-const changeView = (view) => {
-  const api = calendarRef.value.getApi()
-  api.changeView(view)
-  currentView.value = view
-  api.gotoDate(selectedDate.value) // 뷰 전환 시 날짜도 유지
-}
-
+/* ---------------------------
+   FullCalendar 옵션
+---------------------------- */
 const calendarOptions = {
   plugins: [dayGridPlugin, timeGridPlugin],
   initialView: 'dayGridMonth',
   headerToolbar: false,
   contentHeight: 490,
   displayEventTime: false,
-
-  events: [
-    {
-      title: '노트북',
-      start: '2025-10-01T09:00:00',
-      end: '2025-10-01T10:00:00'
-    }
-  ],
+  events: [],
 
   eventContent: (arg) => {
-    const d = arg.event.start;
-    const time = d ? d.toTimeString().slice(0, 5) : '';
+    const d = arg.event.start
+    const time = d ? d.toTimeString().slice(0, 5) : ''
 
     return {
       html: `
@@ -76,19 +62,101 @@ const calendarOptions = {
           <span>${time} ${arg.event.title}</span>
         </div>
       `
-    };
+    }
   }
-
 }
 
+/* ---------------------------
+   API 데이터 → FullCalendar event 변환
+---------------------------- */
+const convertReservationsToEvents = (data) => {
+  const events = []
 
+  data.reservations.forEach(day => {
+    day.reservations.forEach(r => {
+      const start = new Date(r.startAt)
+      const localStart = new Date(start.getTime() + 9 * 60 * 60 * 1000)
 
+      events.push({
+        id: r.reservationId,
+        title: r.assetName,
+        start: localStart
+      })
+    })
+  })
+
+  return events
+}
+
+/* ---------------------------
+   YYYY-MM-DD → YYYY-MM 변환
+---------------------------- */
+const getYearMonth = (dateStr) => dateStr.slice(0, 7)
+
+/* ---------------------------
+   API 호출하여 FullCalendar 갱신
+---------------------------- */
+const loadCalendarEvents = async () => {
+  const yearMonth = getYearMonth(selectedDate.value)
+
+  const res = await reservationApi.getMonthlyReservations(yearMonth)
+
+  console.log("RAW AXIOS DATA:", res.data)
+
+  const json =
+    res.data.reservations
+      ? res.data
+      : res.data.data?.reservations
+      ? res.data.data
+      : res.data.result?.reservations
+      ? res.data.result
+      : null
+
+  console.log("PARSED JSON:", json)
+
+  const api = calendarRef.value.getApi()
+
+  if (!json || !json.reservations) {
+    console.warn("❗ reservations 데이터를 찾을 수 없습니다")
+    api.removeAllEvents()
+    return
+  }
+
+  const events = convertReservationsToEvents(json)
+  console.log("EVENTS:", events)
+
+  api.removeAllEvents()
+  events.forEach(ev => api.addEvent(ev))
+}
+
+/* 날짜 변경 */
+const onDateChange = async (newDate) => {
+  const api = calendarRef.value.getApi()
+  selectedDate.value = newDate
+  api.gotoDate(newDate)
+  await loadCalendarEvents()
+}
+
+/* 뷰 변경 */
+const changeView = async (view) => {
+  const api = calendarRef.value.getApi()
+  currentView.value = view
+  api.changeView(view)
+  api.gotoDate(selectedDate.value)
+  await loadCalendarEvents()
+}
+
+/* 최초 로딩 */
+onMounted(() => {
+  loadCalendarEvents()
+})
 </script>
+
 
 <style>
 .custom-event-chip {
-  background: #e6f0ff;
-  color: #1677ff;
+  background: #e6f0ff !important;
+  color: #1677ff !important;
   padding: 4px 6px;
   border-radius: 6px;
   font-size: 12px;
@@ -108,7 +176,6 @@ const calendarOptions = {
   width: 195px !important;
 }
 
-/* 월별/주별 버튼 스타일 */
 .calendar-toggle {
   display: flex;
   gap: 8px;
@@ -130,23 +197,16 @@ const calendarOptions = {
   color: #000;
   border-color: #B6CEB4;
 }
-.custom-event-chip {
-  background: #e6f0ff !important;
-  color: #1677ff !important;
-}
+
 .fc-daygrid-day-frame {
   min-height: 60px !important;
 }
 
-/* padding도 제거 (칩만 딱 붙게 하기 위해) */
 :deep(.fc-timegrid-event .fc-event-main-frame) {
   padding: 0 !important;
 }
 
-/* 전체 클릭 영역이 투명해야 칩만 보임 */
 :deep(.fc-timegrid-event .fc-event-main) {
   padding: 0 !important;
 }
-
-
-</style>
+</style> 
