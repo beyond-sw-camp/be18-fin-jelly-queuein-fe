@@ -41,7 +41,7 @@
       v-model:visible="modalOpen"
       :asset="reservationDetail"
       @close="closeModal"
-      @save-reason="handleSaveReason"
+      @save-reason="onSaveReason"
     />
   </div>
 </template>
@@ -100,7 +100,7 @@ async function openDetailModal(reservationId) {
     const d = res.data
 
     reservationDetail.value = {
-      id: d.reservationId,                       // ← 원래 d.id
+      id: d.reservationId,                       
       version: d.version,
       name: d.assetName,
       status: d.reservationStatus,
@@ -153,6 +153,20 @@ async function handleSaveReason(reason) {
   } catch (err) {
     console.error("승인/거절 사유 저장 실패:", err)
   }
+}
+const onSaveReason = (reason) => {
+  const id = reservationDetail.value.id
+
+  // 테이블 row 찾아서 reason만 수정
+  const idx = tableData.value.findIndex(r => r.reservationId === id)
+  if (idx !== -1) {
+    tableData.value[idx].reason = reason
+  }
+
+  // 상세 데이터도 업데이트
+  reservationDetail.value.reason = reason
+
+  modalOpen.value = false
 }
 
 onMounted(() => {
