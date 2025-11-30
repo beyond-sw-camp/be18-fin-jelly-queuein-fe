@@ -53,20 +53,29 @@ const isReserved = (h: number) => props.blocks.some(b => b.type === 'reserved' &
 const toggleHour = (h: number) => {
   if (isReserved(h)) return
 
+  // ⭐ 이미 선택된 시간 클릭 → 해제
+  if (selected.value.includes(h)) {
+    selected.value = selected.value.filter(v => v !== h)
+    emit('update:modelValue', selected.value)
+    return
+  }
+
+  // ⭐ 선택된 것이 아무것도 없으면 처음 추가
   if (selected.value.length === 0) {
-    // 처음 선택
     selected.value.push(h)
   } else {
     const min = Math.min(...selected.value)
     const max = Math.max(...selected.value)
 
-    if (h === min - 1) selected.value.unshift(h) // 앞쪽 확장
-    else if (h === max + 1) selected.value.push(h) // 뒤쪽 확장
-    else selected.value = [h] // 연속이 아니면 새로 시작
+    // ⭐ 연속 확장
+    if (h === min - 1) selected.value.unshift(h)
+    else if (h === max + 1) selected.value.push(h)
+    else selected.value = [h]  // ⭐ 비연속 → 새로 시작
   }
 
   emit('update:modelValue', selected.value)
 }
+
 </script>
 
 <style scoped>
