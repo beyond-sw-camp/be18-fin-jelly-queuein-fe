@@ -63,7 +63,8 @@ const route = useRoute()
 
 // 목록 페이지에서 전달한 assetId와 date → params 로 변경!
 const assetId = Number(route.params.assetId)
-const date = route.params.date as string
+const today = new Date().toISOString().slice(0, 10)
+const date = ref(route.query.date?.toString() ?? today)
 
 
 const assetName = route.query.assetName?.toString() ?? ""

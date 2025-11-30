@@ -65,9 +65,13 @@ const props = defineProps({
   total: {
     type: Number,
     required: true
+  },
+    date: {
+    type: String,
+    required: true
   }
 })
-// ⭐ 부모가 받을 이벤트 선언
+// 부모가 받을 이벤트 선언
 const emit = defineEmits(['page-change'])
 
 const router = useRouter()
@@ -78,9 +82,11 @@ const goToDetail = (row) => {
     path: '/app/reservations/create',
     query: {
       assetId: row.assetId,
-      assetName: row.assetName
+      assetName: row.assetName,
+      date: props.date   
     }
   })
+
 }
 
 </script>

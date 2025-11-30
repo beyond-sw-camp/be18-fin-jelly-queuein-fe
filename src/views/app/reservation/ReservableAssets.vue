@@ -33,6 +33,7 @@
   <ReservationTable
     :rows="tableData"
     :total="total"
+    :date="searchParams.date"
     @page-change="(p) => {
       searchParams.page = p
       fetchReservableAssets()
@@ -81,7 +82,7 @@ async function fetchReservableAssets() {
     size: searchParams.value.size
   }
 
-  // 🔥 빈 문자열("")은 서버로 보내지 않도록 제거
+  // 빈 문자열("")은 서버로 보내지 않도록 제거
   Object.keys(params).forEach(key => {
     if (params[key] === '' || params[key] === undefined || params[key] === null) {
       delete params[key]
