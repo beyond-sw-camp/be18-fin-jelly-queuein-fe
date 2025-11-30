@@ -9,7 +9,7 @@
     <!-- 자원 예약 정보 -->
     <h2>자원 예약</h2>
     <BookingHeader
-      :assetName="assetInfo?.assetName"  
+      :assetName="assetInfo?.assetName || assetName"  
       :date="date"
       :reserver="'박채연'"
       :timeRange="timeRange"
@@ -17,6 +17,7 @@
       note="1팀 회의"
       @add="openParticipantModal"
     />
+
 
 
     <!-- 예약 시간 선택 -->
@@ -64,6 +65,8 @@ const route = useRoute()
 const assetId = Number(route.params.assetId)
 const date = route.params.date as string
 
+
+const assetName = route.query.assetName?.toString() ?? ""
 
 // 자원 정보
 const assetInfo = ref<any>(null)

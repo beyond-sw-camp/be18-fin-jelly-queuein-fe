@@ -72,11 +72,17 @@ const emit = defineEmits(['page-change'])
 
 const router = useRouter()
 
-// ✔ 상세 이동
-const goToDetail = (row, column) => {
-  if (column.type === 'selection') return
-  router.push(`/app/reservations/create?assetId=${row.assetId}`)
+
+const goToDetail = (row) => {
+  router.push({
+    path: '/app/reservations/create',
+    query: {
+      assetId: row.assetId,
+      assetName: row.assetName
+    }
+  })
 }
+
 </script>
 
 <style scoped>
