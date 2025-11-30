@@ -94,8 +94,14 @@ watch(
 
 // 날짜 선택 시 부모에게 전달
 const onDateChange = (v) => {
-  emit("update:date", v);
+  let str = "";
+
+  if (typeof v === "string") str = v;
+  else if (v instanceof Date) str = v.toISOString().slice(0, 10);
+
+  emit("update:date", str);
 };
+
 
 // 클릭 시 달력 열기
 const openDatePicker = () => {

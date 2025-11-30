@@ -1,18 +1,22 @@
 <template>
   <div class="time-bar-wrapper">
-    <!-- 시간 라벨 -->
     <div class="time-labels">
       <div class="label">시간</div>
-      <div v-for="h in 24" :key="h" class="hour-label">{{ h }}</div>
+      <div 
+        v-for="h in hours" 
+        :key="h"
+        class="hour-label"
+      >
+        {{ h  }}
+      </div>
     </div>
 
     <div class="divider"></div>
 
-    <!-- 예약 블록 -->
     <div class="time-blocks">
       <div class="label">예약 현황</div>
       <div
-        v-for="h in 24"
+        v-for="h in hours"
         :key="h"
         class="block"
         :class="{
@@ -23,6 +27,8 @@
       ></div>
     </div>
   </div>
+
+
 </template>
 
 <script setup lang="ts">
@@ -34,6 +40,9 @@ interface Block {
   start: number
   end: number
 }
+
+// ⭐ 반드시 여기 있어야 template에서 인식됨
+const hours = Array.from({ length: 24 }, (_, i) => i)
 
 const props = defineProps<{
   blocks: Block[]

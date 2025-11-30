@@ -49,7 +49,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/axios'
 
@@ -114,13 +114,16 @@ function convertToTimeBlocks(apiData) {
 
   return blocks
 }
-
-async function fetchAvailableTimes() {
+const fetchAvailableTimes = async () => {
   const res = await reservationApi.getAvailableTimes(assetId, date.value)
 
   timeBlocks.value = convertToTimeBlocks(res.data)
 }
 
+// 날짜 변경 시 자동으로 예약 가능 시간 갱신
+watch(() => date.value, () => {
+  fetchAvailableTimes()
+})
 
 
 // -------------------------------
