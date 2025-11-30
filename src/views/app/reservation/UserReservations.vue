@@ -21,7 +21,7 @@
     </div>
 
     <!-- 날짜 필터 -->
-    <ReservationFilters @date-change="handleDateChange" />
+    <ReservationFilters @change="handleDateChange" />
 
     <!-- 예약 목록 -->
     <ReservationTable 
@@ -77,10 +77,11 @@ const refreshTable = () => {
 }
 
 // 날짜 변경 handler
-const handleDateChange = (newDate) => {
-  selectedDate.value = newDate
+const handleDateChange = (filters) => {
+  selectedDate.value = filters.date
   refreshTable()
 }
+
 
 /* ------------------------------------
    상세 조회 API 호출

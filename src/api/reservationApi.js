@@ -43,7 +43,7 @@ export const reservationApi = {
     getWeeklyReservations: (date) =>
   api.get('/reservations/weekly', { params: { date } }),
 
-getAvailableTimes: (id, dateStr) =>
+  getAvailableTimes: (id, dateStr) =>
   api.get(`/reservations/${id}/available-times`, {
     params: { date: dateStr }
   })
