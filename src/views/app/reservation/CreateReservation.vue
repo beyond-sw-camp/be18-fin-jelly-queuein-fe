@@ -86,10 +86,40 @@ const note = ref("")
 const today = new Date().toISOString().slice(0, 10)
 const date = ref<string>(route.query.date?.toString() ?? today)
 
-const fetchAvailableTimes = async () => {
-  await reservationApi.getAvailableTimes(assetId, date.value)
+
+function convertToTimeBlocks(apiData) {
+  const blocks = []
+
+  // 시간 슬롯 → 숫자로 변환
+  const availableHours = new Set<number>()
+
+  apiData.timeSlots.forEach(slot => {
+    const start = Number(slot.start.slice(0, 2))
+    const end = Number(slot.end.slice(0, 2))
+
+    for (let h = start; h < end; h++) {
+      availableHours.add(h)
+    }
+  })
+
+  // 0~23 전체 시간 검사
+  for (let h = 0; h < 24; h++) {
+    blocks.push({
+      label: `${h}:00`,
+      type: availableHours.has(h) ? "available" : "reserved",
+      start: h,
+      end: h + 1
+    })
+  }
+
+  return blocks
 }
 
+async function fetchAvailableTimes() {
+  const res = await reservationApi.getAvailableTimes(assetId, date.value)
+
+  timeBlocks.value = convertToTimeBlocks(res.data)
+}
 
 
 
