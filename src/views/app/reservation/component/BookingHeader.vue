@@ -10,7 +10,17 @@
       <div class="info-value">{{ assetName }}</div>
 
       <div class="info-label">예약 날짜</div>
-      <div class="info-value">{{ date }}</div>
+
+      <!-- 숨겨진 date-picker -->
+      <el-date-picker
+        ref="datePickerRef"
+        v-model="internalDate"
+        type="date"
+        value-format="YYYY-MM-DD"
+        class="hidden-date-picker"
+        @change="onDateChange"
+      />
+
 
       <div class="info-label">예약자</div>
       <div class="info-value">{{ reserver }}</div>
@@ -42,8 +52,9 @@
 
   </div>
 </template>
-
 <script setup>
+import { ref, watch } from "vue";
+
 const props = defineProps({
   assetName: String,
   date: String,
@@ -53,9 +64,32 @@ const props = defineProps({
   note: String
 });
 
-const emit = defineEmits(["add"]);
+const emit = defineEmits(["add", "update:date"]);
+
+const datePickerRef = ref(null);
+
+// 내부 날짜 값 (props.date 복사)
+const internalDate = ref(props.date);
+
+// props 변화 → 내부 날짜 동기화
+watch(
+  () => props.date,
+  (v) => (internalDate.value = v)
+);
+
+// 날짜 선택 시 부모에게 전달
+const onDateChange = (v) => {
+  emit("update:date", v);
+};
+
+// 클릭 시 달력 열기
+const openDatePicker = () => {
+  datePickerRef.value?.handleOpen();
+};
+
 const onAdd = () => emit("add");
 </script>
+
 
 <style scoped>
 .reservation-header {
@@ -131,4 +165,13 @@ const onAdd = () => emit("add");
   border-bottom: 4px solid #eaeaea;
   margin: 6px 0 16px 0; /* 위쪽/아래쪽 이상적 간격 */
 }
+
+.hidden-date-picker {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  height: 0;
+  width: 0;
+}
+
 </style>

@@ -9,9 +9,9 @@
     <!-- 자원 예약 정보 -->
     <h2>자원 예약</h2>
     <BookingHeader
-      :assetName="assetInfo?.assetName || assetName"  
-      :date="date"
-      :reserver="'박채연'"
+      :assetName="assetInfo?.assetName || assetName"
+      v-model:date="date"
+
       :timeRange="timeRange"
       :participants="selectedUsers.map(u => u.name)"
       note="1팀 회의"
