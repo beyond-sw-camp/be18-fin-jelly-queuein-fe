@@ -37,6 +37,14 @@ export const reservationApi = {
     return api.patch(`/reservations/${id}/cancel`)
   },
 
+  approve(id) {
+    return api.patch(`/reservations/${id}/approve`)
+  },
+
+  reject(id) {
+    return api.patch(`/reservations/${id}/reject`)
+  },
+
   getMonthlyReservations: (yearMonth) =>
   api.get('/reservations/monthly', { params: { yearMonth } }),
 

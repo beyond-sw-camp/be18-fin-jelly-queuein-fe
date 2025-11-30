@@ -55,6 +55,7 @@ import ReservationFilters from "./component/ReservationFilter.vue"
 import ReservationTable from "./component/AppliedReservationTable.vue"
 import ReservationDetailModal from "./component/ReservationApplyDetailModal.vue"
 
+
 const searchParams = ref({
   date: "",
   applicantName: "",
@@ -76,7 +77,7 @@ const total = ref(0)
 
 const modalOpen = ref(false)
 const reservationDetail = ref(null)
-
+const currentUserName = ref("")
 function buildParams() {
   const params = {}
   Object.entries(searchParams.value).forEach(([key, value]) => {
@@ -130,17 +131,6 @@ function closeModal() {
   modalOpen.value = false
   reservationDetail.value = null
 }
-
-function onApprove(row) {
-  row.isApproved = "APPROVED"
-  row.respondentName = currentUserName.value
-}
-
-function onReject(row) {
-  row.isApproved = "REJECTED"
-  row.respondentName = currentUserName.value
-}
-
 async function handleSaveReason(reason) {
   try {
     await api.patch(`/reservations/${reservationDetail.value.id}/approve`, {
@@ -169,8 +159,55 @@ const onSaveReason = (reason) => {
   modalOpen.value = false
 }
 
-onMounted(() => {
-  searchParams.value.date = new Date().toISOString().slice(0, 10)
+async function onApprove(row) {
+  try {
+    await api.patch(`/reservations/${row.reservationId}/approve`, {
+      version: row.version,
+      approverName: currentUserName.value
+    })
+
+    // UI 반영
+    row.isApproved = "APPROVED"
+    row.respondentName = currentUserName.value
+
+    fetchAppliedReservations() // 전체 갱신
+  } catch (err) {
+    console.error("승인 실패:", err)
+  }
+}
+
+async function onReject(row) {
+  try {
+    await api.patch(`/reservations/${row.reservationId}/reject`, {
+      version: row.version,
+      approverName: currentUserName.value
+    })
+
+    // UI 반영
+    row.isApproved = "REJECTED"
+    row.respondentName = currentUserName.value
+
+    fetchAppliedReservations()
+  } catch (err) {
+    console.error("거절 실패:", err)
+  }
+}
+function getKSTDateString() {
+  const offset = 9 * 60 * 60 * 1000
+  const kst = new Date(Date.now() + offset)
+  return kst.toISOString().slice(0, 10)
+}
+
+onMounted(async() => {
+  searchParams.value.date = getKSTDateString()
+
+  try {
+    const res = await api.get("/users/me")
+    currentUserName.value = res.data.userName
+  } catch (e) {
+    console.error("유저 정보 조회 실패:", e)
+  }
+
   fetchAppliedReservations()
 })
 </script>
