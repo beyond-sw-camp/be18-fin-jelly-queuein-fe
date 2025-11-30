@@ -104,6 +104,8 @@ onMounted(() => {
   searchParams.value.date = today
   fetchReservableAssets()
 })
+
+
 </script>
 
 <style scoped>

@@ -18,7 +18,6 @@
 
     <ReservationTabs />
 
-    <!-- 필터 -->
     <ReservationFilters
       @change="(f) => {
         Object.assign(searchParams, f)
@@ -26,7 +25,6 @@
       }"
     />
 
-    <!-- 예약 목록 -->
     <ReservationTable
       :rows="tableData"
       :total="total"
@@ -39,11 +37,11 @@
       @reject="onReject"
     />
 
-    <!-- 상세 모달 -->
     <ReservationDetailModal
       v-model:visible="modalOpen"
       :asset="reservationDetail"
       @close="closeModal"
+      @save-reason="handleSaveReason"
     />
   </div>
 </template>
@@ -57,9 +55,6 @@ import ReservationFilters from "./component/ReservationFilter.vue"
 import ReservationTable from "./component/AppliedReservationTable.vue"
 import ReservationDetailModal from "./component/ReservationApplyDetailModal.vue"
 
-// ------------------------------
-// 검색 파라미터
-// ------------------------------
 const searchParams = ref({
   date: "",
   applicantName: "",
@@ -79,13 +74,9 @@ const searchParams = ref({
 const tableData = ref([])
 const total = ref(0)
 
-// ------------------------------
-// 상세 모달 관리
-// ------------------------------
 const modalOpen = ref(false)
 const reservationDetail = ref(null)
 
-// 빈값 제거
 function buildParams() {
   const params = {}
   Object.entries(searchParams.value).forEach(([key, value]) => {
@@ -95,7 +86,6 @@ function buildParams() {
   return params
 }
 
-// 목록 조회
 async function fetchAppliedReservations() {
   const params = buildParams()
   const res = await api.get("/reservations/pending", { params })
@@ -104,26 +94,27 @@ async function fetchAppliedReservations() {
   total.value = res.data.totalElements ?? 0
 }
 
-// ------------------------------
-// 상세 조회 → 모달
-// ------------------------------
 async function openDetailModal(reservationId) {
   try {
     const res = await api.get(`/reservations/${reservationId}`)
     const d = res.data
 
     reservationDetail.value = {
-      id: d.id,
+      id: d.reservationId,                       // ← 원래 d.id
+      version: d.version,
       name: d.assetName,
       status: d.reservationStatus,
       date: d.date,
-      reserver: d.reserverName,
-      approver: d.approverName,
-      time: `${d.startAt} ~ ${d.endAt}`,
-      realTime: d.actualStartAt 
-        ? `${d.actualStartAt} ~ ${d.actualEndAt}`
-        : "-",
-      participants: d.participant,
+      reserver: d.applicantName,
+      approver: d.respondentName,
+
+      startAt: d.startAt,
+      endAt: d.endAt,
+
+      actualStartAt: d.actualStartAt,
+      actualEndAt: d.actualEndAt,
+
+      participants: d.attendants,
       reason: d.reason,
       note: d.note,
       usage: d.reservationStatus
@@ -140,15 +131,28 @@ function closeModal() {
   reservationDetail.value = null
 }
 
-// ------------------------------
-// 승인 / 거절
-// ------------------------------
 function onApprove(row) {
-  console.log("승인 요청:", row)
+  row.isApproved = "APPROVED"
+  row.respondentName = currentUserName.value
 }
 
 function onReject(row) {
-  console.log("거절 요청:", row)
+  row.isApproved = "REJECTED"
+  row.respondentName = currentUserName.value
+}
+
+async function handleSaveReason(reason) {
+  try {
+    await api.patch(`/reservations/${reservationDetail.value.id}/approve`, {
+      version: reservationDetail.value.version,
+      reason: reason
+    })
+
+    reservationDetail.value.reason = reason
+    fetchAppliedReservations()
+  } catch (err) {
+    console.error("승인/거절 사유 저장 실패:", err)
+  }
 }
 
 onMounted(() => {

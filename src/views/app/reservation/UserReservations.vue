@@ -38,7 +38,9 @@
       @start="handleStart"
       @end="handleEnd"
       @cancel="handleCancel"
+      @save-note="handleSaveNote"   
     />
+
   </div>
 </template>
 
@@ -56,6 +58,13 @@ const search = ref("")
 
 // 기본 날짜 (오늘)
 const selectedDate = ref(new Date().toISOString().split("T")[0])
+
+const handleSaveNote = async (note) => {
+  if (!reservationDetail.value) return
+  reservationDetail.value.note = note
+  refreshTable()
+}
+
 
 // 모달 관련 상태
 const modalOpen = ref(false)
@@ -85,10 +94,10 @@ const openDetailModal = async (reservationId) => {
       id: d.id,
       name: d.assetName,
       status: d.reservationStatus,
-      usage: d.reservationStatus, // 버튼 로직용
+      usage: d.reservationStatus,
       isApproved: d.isApproved,
-      reserver: d.reserverName,
-      approver: d.approverName,
+      reserver: d.applicantName,
+      approver: d.respondentName,
       assetStatus: d.assetStatus,
       date: d.date,
 
@@ -97,6 +106,7 @@ const openDetailModal = async (reservationId) => {
       actualStartAt: d.actualStartAt,
       actualEndAt: d.actualEndAt,
 
+      // 🔥 participant 그대로 유지 (이 이름 절대 변경 X)
       participants: d.participant,
 
       reason: d.reason,
@@ -111,51 +121,44 @@ const openDetailModal = async (reservationId) => {
 }
 
 /* ------------------------------------
-   사용 시작
+   모달 액션 처리
 ------------------------------------ */
 const handleStart = async (id) => {
   try {
-    await reservationApi.startUsing(id)
+    await reservationApi.startReservation(id)
     modalOpen.value = false
     refreshTable()
-  } catch (e) {
-    console.error("사용 시작 실패:", e)
+  } catch (err) {
+    console.error("사용 시작 실패:", err)
   }
 }
 
-/* ------------------------------------
-   사용 종료
------------------------------------- */
 const handleEnd = async (id) => {
   try {
-    await reservationApi.endUsing(id)
+    await reservationApi.endReservation(id)
     modalOpen.value = false
     refreshTable()
-  } catch (e) {
-    console.error("사용 종료 실패:", e)
+  } catch (err) {
+    console.error("사용 종료 실패:", err)
   }
 }
 
-/* ------------------------------------
-   예약 취소
------------------------------------- */
 const handleCancel = async (id) => {
   try {
-    await reservationApi.cancel(id)
+    await reservationApi.cancelReservation(id)
     modalOpen.value = false
     refreshTable()
-  } catch (e) {
-    console.error("취소 실패:", e)
+  } catch (err) {
+    console.error("예약 취소 실패:", err)
   }
 }
 
-/* ------------------------------------
-   모달 닫기
------------------------------------- */
+/* 모달 닫기 */
 const closeModal = () => {
   modalOpen.value = false
-  reservationDetail.value = null
 }
+
+
 </script>
 
 <style scoped>

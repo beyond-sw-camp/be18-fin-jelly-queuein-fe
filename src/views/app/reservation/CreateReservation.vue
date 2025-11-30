@@ -60,9 +60,10 @@ import ReservationTabs from './component/ReservationTab.vue'
 
 const route = useRoute()
 
-// 목록 페이지에서 전달한 assetId와 date
-const assetId = Number(route.query.assetId)
-const date = route.query.date as string
+// 목록 페이지에서 전달한 assetId와 date → params 로 변경!
+const assetId = Number(route.params.assetId)
+const date = route.params.date as string
+
 
 // 자원 정보
 const assetInfo = ref<any>(null)

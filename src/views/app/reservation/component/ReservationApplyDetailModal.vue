@@ -50,20 +50,33 @@
             <template v-if="asset?.actualStartAt">
               {{ formatKoreaTime(asset?.actualStartAt) }} ~ {{ formatKoreaTime(asset?.actualEndAt) }}
             </template>
-            <template v-else>
-              -
-            </template>
+            <template v-else>-</template>
           </div>
         </div>
 
         <div class="row">
           <div class="label green">승인 / 거절 사유</div>
-          <div class="value">{{ asset?.reason ?? "-" }}</div>
+          <div class="value">
+            <el-input 
+              v-model="editedReason"
+              type="textarea"
+              rows="3"
+              placeholder="사유를 입력하세요"
+              class="reason-textarea"
+            />
+          </div>
 
           <div class="label green">비고</div>
-          <div class="value">{{ asset?.note ?? "-" }}</div>
+          <div class="value">
+            {{ asset?.note ?? "-" }}
+          </div>
         </div>
 
+      </div>
+
+      <div style="margin-top: 20px; text-align: right;">
+        <el-button @click="close">닫기</el-button>
+        <el-button type="primary" @click="saveReason">저장</el-button>
       </div>
 
     </div>
@@ -71,26 +84,42 @@
 </template>
 
 <script setup>
-import { computed } from "vue"
+import { ref, watch, computed } from "vue"
 
 const props = defineProps({
   visible: Boolean,
   asset: Object
 })
 
-const emit = defineEmits(["close"])
+const emit = defineEmits(["close", "save-reason"])
 
 const close = () => emit("close")
 
 /* -------------------------------------------
-  🔵 한국 시간 HH:mm 포맷터
+  사유(reason) 수정 상태
+------------------------------------------- */
+const editedReason = ref("")
+
+watch(
+  () => props.asset,
+  (val) => {
+    editedReason.value = val?.reason ?? ""
+  },
+  { immediate: true }
+)
+
+const saveReason = () => {
+  emit("save-reason", editedReason.value)
+  close()
+}
+
+/* -------------------------------------------
+  한국 시간 포맷
 ------------------------------------------- */
 const formatKoreaTime = (instant) => {
   if (!instant) return "-"
-
   const date = new Date(instant)
   if (isNaN(date.getTime())) return "-"
-
   return date.toLocaleTimeString("ko-KR", {
     hour: "2-digit",
     minute: "2-digit",
@@ -99,25 +128,16 @@ const formatKoreaTime = (instant) => {
 }
 
 /* -------------------------------------------
-   참여자 출력
+  참여자 이름 표시
+  attendants → attendantName 사용
 ------------------------------------------- */
 const participantsText = computed(() => {
-  const p = props.asset?.participants
+  const list = props.asset?.participants
+  if (!list || list.length === 0) return "-"
 
-  if (!p) return "-"
-
-  if (Array.isArray(p)) {
-    if (p.length === 0) return "-"
-    return p
-      .map(item => typeof item === "string" ? item : item.name ?? "-")
-      .join(", ")
-  }
-
-  if (typeof p === "object") {
-    return p.name ?? "-"
-  }
-
-  return p
+  return list
+    .map(a => a.attendantName)
+    .join(", ")
 })
 </script>
 
@@ -131,7 +151,6 @@ const participantsText = computed(() => {
   align-items: center;
   z-index: 999;
 }
-
 .modal {
   width: 800px;
   background: #fff;
@@ -139,43 +158,46 @@ const participantsText = computed(() => {
   padding: 30px 40px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
 }
-
 .close-btn {
   background: none;
   border: none;
   font-size: 22px;
   cursor: pointer;
 }
-
 .detail-table {
   width: 100%;
 }
-
 .row {
   display: grid;
   grid-template-columns: 180px 1fr 180px 1fr;
   border-bottom: 1px solid #eaeaea;
 }
-
 .label {
   padding: 14px;
   font-weight: 600;
   color: white;
 }
-
 .green {
   background: #7ba678;
 }
-
 .value {
   padding: 14px;
   background: #fafafa;
 }
+/* 텍스트 영역 테두리 제거 + 배경만 유지 */
+.reason-textarea ::v-deep(.el-textarea__inner) {
+  border: none !important;
+  box-shadow: none !important;
+  background: #fafafa !important;
+  resize: none; /* 원하면 제거 가능 */
+  padding: 10px 12px;
+  min-height: 80px;
+}
+
 </style>
