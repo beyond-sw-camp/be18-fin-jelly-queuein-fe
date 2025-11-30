@@ -12,6 +12,7 @@
       :assetName="assetInfo?.assetName || assetName"
       v-model:date="date"
       v-model:note="note"
+      :reserver="currentUserName"
       :timeRange="timeRange"
       :participants="selectedUsers.map(u => u.name)"
       @add="openParticipantModal"
@@ -155,6 +156,8 @@ const onSelectParticipants = (users: any[]) => {
   participantModalVisible.value = false
 }
 
+
+
 // -------------------------------
 // 예약 생성 API
 // -------------------------------
@@ -168,7 +171,7 @@ async function submitBooking() {
   const endHour = Math.max(...selectedHours.value) + 1
 
   const payload = {
-    reserver: "박채연",
+    reserver: currentUserName.value,
     startAt: `${date.value}T${startHour.toString().padStart(2,'0')}:00:00`,
     endAt: `${date.value}T${endHour.toString().padStart(2,'0')}:00:00`,
 
@@ -177,6 +180,18 @@ async function submitBooking() {
 
   await api.post(`/reservations/${assetId}/instant-confirm`, payload)
 }
+const currentUserName = ref("")
+
+onMounted(async () => {
+  try {
+    const res = await api.get("/users/me")
+    currentUserName.value = res.data.userName
+  } catch (e) {
+    console.error("유저 정보 조회 실패", e)
+  }
+
+  fetchAvailableTimes()
+})
 
 
 
