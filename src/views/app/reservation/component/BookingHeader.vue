@@ -97,7 +97,10 @@ const onDateChange = (v) => {
   let str = "";
 
   if (typeof v === "string") str = v;
-  else if (v instanceof Date) str = v.toISOString().slice(0, 10);
+  else if (v instanceof Date) {
+    const offset = v.getTimezoneOffset() * 60000;
+    str = new Date(v.getTime() - offset).toISOString().slice(0, 10);
+  }
 
   emit("update:date", str);
 };

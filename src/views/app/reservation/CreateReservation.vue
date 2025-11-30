@@ -74,6 +74,7 @@ const assetInfo = ref<any>(null)
 // 예약 가능 시간
 const timeBlocks = ref<any[]>([])
 const selectedHours = ref<number[]>([])
+console.log("route.query.date =", route.query.date)
 
 // 참여자
 const participantModalVisible = ref(false)
@@ -83,8 +84,13 @@ const note = ref("")
 // -------------------------------
 // 2️⃣ 예약 가능 시간 조회 API
 // -------------------------------
-const today = new Date().toISOString().slice(0, 10)
-const date = ref<string>(route.query.date?.toString() ?? today)
+const today = new Date().toLocaleDateString('en-CA')  
+
+const rawDate = route.query.date
+const initialDate =
+  Array.isArray(rawDate) ? rawDate[0] : rawDate
+
+const date = ref(initialDate || today)
 
 function convertToTimeBlocks(apiData) {
   const blocks = []
@@ -163,8 +169,9 @@ async function submitBooking() {
 
   const payload = {
     reserver: "박채연",
-    startAt: `${date}T${startHour.toString().padStart(2,'0')}:00:00`,
-    endAt: `${date}T${endHour.toString().padStart(2,'0')}:00:00`,
+    startAt: `${date.value}T${startHour.toString().padStart(2,'0')}:00:00`,
+    endAt: `${date.value}T${endHour.toString().padStart(2,'0')}:00:00`,
+
     participants: selectedUsers.value.map(u => u.id)
   }
 

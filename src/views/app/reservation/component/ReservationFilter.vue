@@ -90,14 +90,14 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { ref, watch } from "vue"
 
 // 부모에게 필터 변경 emit
 const emit = defineEmits(["change"])
-
+const today = new Date().toLocaleDateString('en-CA')
 /* 필터 값 */
 const filters = ref({
-  date: "",
+  date: today,
   assetType: "",
   assetStatus: "",
   categoryName: "",
@@ -111,10 +111,16 @@ const categories = ref(["사옥", "스튜디오", "카메라", "음향"])
 const layerZeroList = ref(["본사", "지점", "외부"])
 const layerOneList = ref(["1F", "2F", "3F", "A동", "B동"])
 
-/* 값 변경 시 부모로 바로 emit */
-function emitChange() {
-  emit("change", { ...filters.value })
-}
+
+
+watch(
+  () => filters.value.date,
+  () => {
+    emit("change", { ...filters.value })
+  },
+  { immediate: true } // ← 이 옵션이 매우 중요함!!
+)
+
 </script>
 
 <style scoped>

@@ -20,7 +20,8 @@
     }"
   />
   <ReservationFilters
-    @change="(f) => {
+    @change="(f) => { 
+      if (f.date) searchParams.date = f.date  
       searchParams.categoryName = f.categoryName
       searchParams.assetStatus = f.assetStatus
       searchParams.layerZero = f.layerZero
@@ -31,6 +32,7 @@
 
 
   <ReservationTable
+    @select="openCreatePage"
     :rows="tableData"
     :total="total"
     :date="searchParams.date"
@@ -65,6 +67,9 @@ const searchParams = ref({
 
 const tableData = ref([])
 const total = ref(0)
+const today = new Date().toISOString().slice(0, 10)
+searchParams.value.date = today
+
 
 
 async function fetchReservableAssets() {
@@ -99,9 +104,19 @@ async function fetchReservableAssets() {
 }
 
 
+function openCreatePage(asset) {
+  router.push({
+    path: `/app/reservations/create`,
+    query: {
+      assetId: asset.id,
+      date: searchParams.value.date
+    }
+  })
+}
 
 onMounted(() => {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = new Date().toLocaleDateString("en-CA")  // YYYY-MM-DD 형식 + 로컬(KST) 기준
+
   searchParams.value.date = today
   fetchReservableAssets()
 })
