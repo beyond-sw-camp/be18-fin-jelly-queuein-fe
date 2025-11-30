@@ -198,9 +198,7 @@ onMounted(async () => {
 // -------------------------------
 // 페이지 로딩 시 API 호출
 // -------------------------------
-onMounted(() => {
-  fetchAvailableTimes()
-})
+
 </script>
 
 <style scoped>

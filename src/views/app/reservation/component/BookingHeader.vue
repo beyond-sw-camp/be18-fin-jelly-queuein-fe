@@ -66,8 +66,7 @@
 </template>
 <script setup>
 import { ref, watch } from "vue";
-const token = localStorage.getItem("accessToken")
-JSON.parse(atob(token.split(".")[1]))
+
 const props = defineProps({
   assetName: String,
   date: String,
@@ -98,10 +97,7 @@ const onDateChange = (v) => {
   let str = "";
 
   if (typeof v === "string") str = v;
-  else if (v instanceof Date) {
-    const offset = v.getTimezoneOffset() * 60000;
-    str = new Date(v.getTime() - offset).toISOString().slice(0, 10);
-  }
+  else if (v instanceof Date) str = v.toISOString().slice(0, 10);
 
   emit("update:date", str);
 };
