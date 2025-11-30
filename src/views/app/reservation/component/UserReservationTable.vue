@@ -48,7 +48,7 @@
       </el-table-column>
 
       <!-- 예약 상태 -->
-      <el-table-column label="예약 상태" width="260" align="center">
+      <el-table-column label="예약 상태" min-width="150"  align="center">
         <template #default="{ row }">
           <StatusTag :status="row.reservationStatus" />
         </template>
@@ -176,4 +176,46 @@ const changePage = (newPage) => {
   justify-content: center;
   margin-top: 20px;
 }
+
+/* 테이블 가로 스크롤(유령 scrollbar) 제거 */
+.el-table__body-wrapper {
+  overflow-x: hidden !important;
+}
+
+.el-table table {
+  table-layout: fixed !important;
+}
+
+
+/* element-plus가 오른쪽에 자동으로 추가하는 여백 제거 */
+.el-table__inner-wrapper {
+  width: 100% !important;
+}
+/* 오른쪽 유령 여백 제거 */
+:deep(.el-table__inner-wrapper) {
+  width: 100% !important;
+}
+
+/* 가로 스크롤 강제 제거 */
+:deep(.el-table__body-wrapper) {
+  overflow-x: hidden !important;
+}
+
+/* 컬럼 width 계산 정확하게 */
+:deep(.el-table table) {
+  table-layout: fixed !important;
+}
+
+/* Element Plus가 자동으로 넣는 padding-right 제거 */
+:deep(.el-table__header-wrapper),
+:deep(.el-table__body-wrapper) {
+  padding-right: 0 !important;
+}
+
+/* 임의로 붙는 scrollbar placeholder 제거 */
+:deep(.el-table__footer-wrapper),
+:deep(.el-table__append-wrapper) {
+  padding-right: 0 !important;
+}
+
 </style>
