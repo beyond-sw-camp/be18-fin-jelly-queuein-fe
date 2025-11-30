@@ -75,19 +75,19 @@ const props = defineProps({
 const emit = defineEmits(['page-change'])
 
 const router = useRouter()
-
-
 const goToDetail = (row) => {
   router.push({
     path: '/app/reservations/create',
     query: {
       assetId: row.assetId,
       assetName: row.assetName,
-      date: props.date   
+      date: typeof props.date === "string"
+        ? props.date
+        : props.date.toISOString().slice(0, 10)
     }
   })
-
 }
+
 
 </script>
 

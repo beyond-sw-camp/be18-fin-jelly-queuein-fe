@@ -41,8 +41,12 @@ export const reservationApi = {
   api.get('/reservations/monthly', { params: { yearMonth } }),
 
     getWeeklyReservations: (date) =>
-  api.get('/reservations/weekly', { params: { date } })
+  api.get('/reservations/weekly', { params: { date } }),
 
+getAvailableTimes: (id, dateStr) =>
+  api.get(`/reservations/${id}/available-times`, {
+    params: { date: dateStr }
+  })
 
 
 }

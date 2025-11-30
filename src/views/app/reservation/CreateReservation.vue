@@ -58,15 +58,14 @@ import BookingHeader from './component/BookingHeader.vue'
 import ParticipantModal from './component/ParticipantModal.vue'
 import ApplyButton from './component/ApplyButton.vue'
 import ReservationTabs from './component/ReservationTab.vue'
+import { reservationApi } from '@/api/reservationApi'
 
 const route = useRoute()
 
 // 목록 페이지에서 전달한 assetId와 date → params 로 변경!
-const assetId = Number(route.params.assetId)
-const today = new Date().toISOString().slice(0, 10)
-const date = ref(route.query.date?.toString() ?? today)
+const assetId = Number(route.query.assetId) 
 
-
+const selectedDate = ref(route.query.date) 
 const assetName = route.query.assetName?.toString() ?? ""
 
 // 자원 정보
@@ -82,22 +81,17 @@ const selectedUsers = ref<{ id: number; name: string }[]>([])
 const note = ref("")
 
 // -------------------------------
-// 1️⃣ 자원 상세 조회 API
-// -------------------------------
-async function fetchAssetInfo() {
-  const res = await api.get(`/assets/${assetId}`)
-  assetInfo.value = res.data
-}
-
-// -------------------------------
 // 2️⃣ 예약 가능 시간 조회 API
 // -------------------------------
-async function fetchAvailableTimes() {
-  const res = await api.get(`/reservations/${assetId}/available-times`, {
-    params: { date }
-  })
-  timeBlocks.value = res.data.blocks
+const today = new Date().toISOString().slice(0, 10)
+const date = ref<string>(route.query.date?.toString() ?? today)
+
+const fetchAvailableTimes = async () => {
+  await reservationApi.getAvailableTimes(assetId, date.value)
 }
+
+
+
 
 // -------------------------------
 // 선택 시간 → 시간 문자열로 변환
@@ -139,11 +133,12 @@ async function submitBooking() {
   await api.post(`/reservations/${assetId}/instant-confirm`, payload)
 }
 
+
+
 // -------------------------------
 // 페이지 로딩 시 API 호출
 // -------------------------------
 onMounted(() => {
-  fetchAssetInfo()
   fetchAvailableTimes()
 })
 </script>
