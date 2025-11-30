@@ -92,7 +92,7 @@ const openDetailModal = async (reservationId) => {
     const d = res.data
 
     reservationDetail.value = {
-      id: d.id,
+      id: d.reservationId,
       name: d.assetName,
       status: d.reservationStatus,
       usage: d.reservationStatus,
@@ -126,7 +126,7 @@ const openDetailModal = async (reservationId) => {
 ------------------------------------ */
 const handleStart = async (id) => {
   try {
-    await reservationApi.startReservation(id)
+    await reservationApi.startUsing(id)
     modalOpen.value = false
     refreshTable()
   } catch (err) {
@@ -136,7 +136,7 @@ const handleStart = async (id) => {
 
 const handleEnd = async (id) => {
   try {
-    await reservationApi.endReservation(id)
+    await reservationApi.endUsing(id)
     modalOpen.value = false
     refreshTable()
   } catch (err) {
@@ -146,7 +146,7 @@ const handleEnd = async (id) => {
 
 const handleCancel = async (id) => {
   try {
-    await reservationApi.cancelReservation(id)
+    await reservationApi.cancel(id)
     modalOpen.value = false
     refreshTable()
   } catch (err) {
