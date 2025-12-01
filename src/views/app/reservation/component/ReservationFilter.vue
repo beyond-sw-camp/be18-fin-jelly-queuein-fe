@@ -44,7 +44,6 @@
     <el-col :span="4">
       <BuildingDropdown
         v-model="filters.layerZero"
-        placeholder="0계층 선택"
         @update:modelValue="onBuildingChange"
       />
     </el-col>
@@ -54,7 +53,6 @@
       <LocationDropdown
         v-model="filters.layerOne"
         :buildingId="filters.layerZero"
-        placeholder="1계층 선택"
         @update:modelValue="emitChange"
       />
     </el-col>
