@@ -48,17 +48,13 @@ async function login() {
   try {
     const result = await auth.login(email.value, password.value, rememberMe.value)
 
+    // 비밀번호 초기 변경 상황
     if (result === 'CHANGE_PASSWORD') {
       router.push('/change-password')
       return
     }
 
-    localStorage.setItem('accessToken', data.accessToken)
-    localStorage.setItem('refreshToken', data.refreshToken)
-    localStorage.setItem('role', data.role)
-    localStorage.setItem("userName", data.userName)
-
-    router.push('/app')
+    // result === role (예: MASTER, ADMIN, GENERAL)
     if (result === 'MASTER' || result === 'ADMIN') {
       router.push('/admin')
     } else {
@@ -74,6 +70,7 @@ async function login() {
     }, 500)
   }
 }
+
 </script>
 
 
