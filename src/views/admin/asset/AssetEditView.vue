@@ -9,7 +9,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AssetForm from './components/AssetForm.vue'
-import { assetApi } from '@/api/assetApi'
+import { assetApi } from '@/api/assetApi.js'
 
 const route = useRoute()
 const router = useRouter()
