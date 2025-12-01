@@ -154,33 +154,34 @@ async function saveChanges() {
       <DataTable
         :value="filteredMatrix"
         stripedRows
-        class="mt-3"
+        class="mt-3 permission-table"
       >
-        <!-- Permission -->
-        <Column header="Permission" field="name" style="width: 250px">
+        <!-- Permission Column -->
+        <Column header="Permission" field="name" style="width: 260px">
           <template #body="{ data }">
             <div class="perm-name">{{ data.name }}</div>
             <div class="perm-desc">{{ data.desc }}</div>
           </template>
         </Column>
 
-        <!-- 각 역할 Column -->
+        <!-- Role Columns -->
         <Column
           v-for="role in roles"
           :key="role.roleId"
           :header="role.roleName"
+          style="width: 140px; text-align: center"
         >
           <template #body="{ data }">
             <div class="toggle-wrap">
               <ToggleSwitch
                 v-model="data.roles[role.roleName]"
-                @click="toggleRole(data, role.roleName)"
+                @update:modelValue="toggleRole(data, role.roleName)"
               />
             </div>
           </template>
         </Column>
-
       </DataTable>
+
     </div>
 
     <!-- Save Button -->
@@ -251,10 +252,17 @@ async function saveChanges() {
   color: #777;
 }
 
+.permission-table .p-datatable-thead > tr > th {
+  text-align: center;
+  font-weight: 600;
+}
+
 .toggle-wrap {
   width: 100%;
+  height: 40px;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .save-wrap {

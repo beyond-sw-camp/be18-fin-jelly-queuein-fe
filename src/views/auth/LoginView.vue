@@ -11,6 +11,8 @@ const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const isLoading = ref(false)
+const errorMessage = ref("");
+const showError = ref(false);
 
 watch(rememberMe, v => console.log("rememberMe changed →", v))
 
@@ -41,7 +43,27 @@ onMounted(async () => {
   console.log("LOGIN VIEW MOUNTED!!")
 })
 
+function validate() {
+  if (!email.value) {
+    errorMessage.value = "이메일을 입력해주세요.";
+    showError.value = true;
+    return false;
+  }
+
+  if (!password.value) {
+    errorMessage.value = "비밀번호를 입력해주세요.";
+    showError.value = true;
+    return false;
+  }
+
+  showError.value = false;
+  return true;
+}
+
 async function login() {
+
+  if (!validate()) return;
+
   if (isLoading.value) return
   isLoading.value = true
 
@@ -63,7 +85,9 @@ async function login() {
 
   } catch (e) {
     console.error(e)
-    alert('로그인 실패')
+    errorMessage.value =
+      e.response?.data?.message || "로그인에 실패했습니다."
+    showError.value = true
   } finally {
     setTimeout(() => {
       isLoading.value = false
@@ -82,6 +106,9 @@ async function login() {
       <div class="subtitle">사내 일정 관리 시스템</div>
 
       <form class="login-form" autocomplete="off" @submit.prevent="login">
+        <div v-if="showError" class="error-box">
+          {{ errorMessage }}
+        </div>
         <input
           v-model="email"
           type="text"
@@ -258,6 +285,18 @@ async function login() {
   text-align: center;
   font-size: 15px;
   color: #333;
+}
+
+.error-box {
+  width: 100%;
+  max-width: 500px;
+  padding: 10px 14px;
+  background: #ffe5e5;
+  color: #b30000;
+  border: 1px solid #ffb3b3;
+  border-radius: 4px;
+  font-size: 13px;
+  margin-bottom: 10px;
 }
 
 @keyframes spin {
