@@ -171,9 +171,11 @@ async function submitBooking() {
   const endHour = Math.max(...selectedHours.value) + 1
 
   const payload = {
-    reserver: currentUserName.value,
-  startAt: `${date.value}T${startHour.toString().padStart(2,'0')}:00:00Z`,
-  endAt: `${date.value}T${endHour.toString().padStart(2,'0')}:00:00Z`,
+    applicantId: currentUserId.value,
+    attendantIds: selectedUsers.value.map(u => u.id),
+    assetName: assetName,  
+    startAt: `${date.value}T${startHour.toString().padStart(2,'0')}:00:00Z`,
+    endAt: `${date.value}T${endHour.toString().padStart(2,'0')}:00:00Z`,
 
     participants: selectedUsers.value.map(u => u.id)
   }
@@ -181,11 +183,12 @@ async function submitBooking() {
   await api.post(`/reservations/${assetId}/apply`, payload)
 }
 const currentUserName = ref("")
-
+const currentUserId = ref(null)
 onMounted(async () => {
   try {
     const res = await api.get("/users/me")
     currentUserName.value = res.data.userName
+    currentUserId.value = res.data.userId
   } catch (e) {
     console.error("유저 정보 조회 실패", e)
   }

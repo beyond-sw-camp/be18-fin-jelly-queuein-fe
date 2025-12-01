@@ -10,20 +10,20 @@
 
     <el-table-column prop="assetName" label="자원명" width="230" align="center" />
 
-    <!-- ✔ assetType -->
+    <!-- assetType -->
     <el-table-column prop="assetType" label="자원 유형" width="210" align="center" />
 
-    <!-- ✔ categoryName -->
+    <!-- categoryName -->
     <el-table-column prop="categoryName" label="카테고리" width="210" align="center" />
 
-    <!-- ✔ reservable (문구로 표시) -->
+    <!-- reservable (문구로 표시) -->
     <el-table-column prop="reservable" label="예약 가능 여부" width="150" align="center">
       <template #default="scope">
         <StatusTag :status="scope.row.reservable ? 'AVAILABLE' : 'UNAVAILABLE'" />
       </template>
     </el-table-column>
 
-    <!-- ✔ needsApproval -->
+    <!-- needsApproval -->
     <el-table-column prop="needsApproval" label="승인 필요" width="120" align="center">
       <template #default="scope">
         {{ scope.row.needsApproval ? "예" : "아니오" }}
@@ -78,8 +78,8 @@ const router = useRouter()
 const goToDetail = (row) => {
 
   const targetPath = row.needsApproval
-  ? '/app/reservations/create'   // 선착순
-  : '/app/reservations/apply' //신청
+  ? '/app/reservations/apply'   // 선착순
+  : '/app/reservations/create' //신청
   router.push({
     path: targetPath,
     query: {
