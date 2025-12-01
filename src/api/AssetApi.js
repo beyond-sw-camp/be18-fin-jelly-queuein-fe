@@ -7,6 +7,9 @@ export const assetApi = {
   // 수정
   update: (id, data) => api.patch(`/assets/${id}`, data),
 
+  // 삭제
+  delete: (id) => api.delete(`/assets/${id}`),
+
   // 자원 상세 조회
   getDetail: (id) => api.get(`/assets/${id}`),
 

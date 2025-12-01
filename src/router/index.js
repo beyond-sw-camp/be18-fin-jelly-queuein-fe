@@ -66,6 +66,13 @@ const router = createRouter({
           component: () => import('@/views/admin/asset/AssetEditView.vue'),
           meta: { minRole: 'MANAGER' },
         },
+
+        // 자원 상세 조회
+        {
+          path: 'assets/:assetId',
+          component: () => import('@/views/admin/asset/AssetDetailView.vue'),
+          meta: { requiresAuth: true, minRole: 'MANAGER' },
+        },
       ],
     },
 
