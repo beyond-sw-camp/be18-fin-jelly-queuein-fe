@@ -19,7 +19,7 @@ async function changePassword() {
 
   const token = localStorage.getItem('tempAccessToken')
 
-  await userApi.changeMyPassword(
+  await userApi.changeTempPassword(
     { newPassword: pw1.value },
     {
       headers: { Authorization: `Bearer ${token}` }

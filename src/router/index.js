@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
-import ChangePasswordView from '@/views/auth/ChangePasswordView.vue'
+import ChangeTempPasswordView from '@/views/auth/ChangeTempPasswordView.vue'
 import DashboardView from '@/views/app/DashboardView.vue'
 import HomeLayout from '@/layouts/HomeLayout.vue'
 import LoginView from '@/views/auth/LoginView.vue'
@@ -21,7 +21,7 @@ const router = createRouter({
       component: PublicLayout,
       children: [
         { path: '', component: LoginView },
-        { path: 'change-password', component: ChangePasswordView },
+        { path: 'change-password', component: ChangeTempPasswordView },
       ],
     },
 
