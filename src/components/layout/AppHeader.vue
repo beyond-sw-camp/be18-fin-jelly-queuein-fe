@@ -1,17 +1,55 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const emit = defineEmits(['toggle-sidebar'])
 
-// 경로 한글 변환
+// ===============================
+// 🧩 로그인 사용자 정보 가져오기
+// ===============================
+const role = localStorage.getItem('role') || '' 
+const name = (localStorage.getItem('userName') || '').trim()
+
+// ===============================
+// 🧑 이름 우선 표시 + 역할 보조 처리
+// ===============================
+const roleText = computed(() => {
+  if (name) return name  // DB 이름이 있으면 가장 우선!
+  return (
+    {
+      MASTER: '마스터',
+      ADMIN: '관리자',
+      MANAGER: '매니저',
+    }[role] || '사용자'
+  )
+})
+
+// ===============================
+// 👤 아바타 글자 (이름 첫글자 · 김민준 → 김)
+// ===============================
+const avatarText = computed(() => {
+  return name ? name.trim().charAt(0) : roleText.value.charAt(0)
+})
+
+// ===============================
+// 🔐 로그아웃
+// ===============================
+function logout() {
+  localStorage.removeItem('accessToken')
+  localStorage.removeItem('role')
+  localStorage.removeItem('name')
+  router.push('/')
+}
+
+// ===================================
+// 🧭 Breadcrumb 매핑 테이블
+// ===================================
 const breadcrumbMap = {
   assets: '자원',
-
-  // 세부 경로
-  list: '자원 목록 조회',   // ← 여기를 이렇게 바꾸면 됨!
+  list: '자원 목록 조회',
   create: '자원 등록',
   edit: '자원 수정',
 
@@ -24,18 +62,13 @@ const breadcrumbMap = {
   reservation: '예약 관리',
 }
 
-function logout() {
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('role')
-  router.push('/')
-}
-
-
-// 현재 경로를 Breadcrumb 형태로 변환
+// ===============================
+// 📌 Breadcrumb 생성
+// ===============================
 function getBreadcrumbHtml() {
   let segments = route.path.split('/').filter(Boolean)
 
-  // 기술 경로 제거
+  // 기술 경로 제거 (admin/app)
   if (segments[0] === 'admin' || segments[0] === 'app') {
     segments = segments.slice(1)
   }
@@ -44,19 +77,14 @@ function getBreadcrumbHtml() {
 
   const mapped = segments.map(seg => breadcrumbMap[seg] || seg)
 
-  // ✔ 첫 번째 항목도 일반 항목으로 처리
-  const result = mapped
+  return mapped
     .map(seg => `<span class="breadcrumb-item">${seg}</span>`)
     .join(`<span class="breadcrumb-divider"> / </span>`)
-
-  return result
 }
-
 </script>
 
 <template>
-  <header class="header" >
-    <!-- 좌측: 햄버거 + 로고 -->
+  <header class="header">
     <div class="left">
       <button class="menu-btn" @click="$emit('toggle-sidebar')">
         <i class="ri-menu-line"></i>
@@ -67,7 +95,6 @@ function getBreadcrumbHtml() {
       <div class="breadcrumb" v-html="getBreadcrumbHtml()"></div>
     </div>
 
-    <!-- 우측: 검색 + 알림 + 유저 + 헬프 + 로그아웃 -->
     <div class="right">
 
       <div class="search-box">
@@ -78,8 +105,8 @@ function getBreadcrumbHtml() {
       <i class="ri-notification-3-line icon"></i>
 
       <div class="profile">
-        <div class="avatar">C</div>
-        <span>관리자</span>
+        <div class="avatar">{{ avatarText }}</div>
+        <span>{{ roleText }}</span>
       </div>
 
       <i class="ri-question-line icon"></i>
@@ -107,6 +134,7 @@ function getBreadcrumbHtml() {
   z-index: 50;
 }
 
+/* LEFT */
 .left {
   display: flex;
   align-items: center;
@@ -126,23 +154,16 @@ function getBreadcrumbHtml() {
   cursor: pointer;
 }
 
-/* Breadcrumb 컨테이너 */
+/* Breadcrumb */
 .breadcrumb {
   font-size: 15px;
-  color: #777; /* 나머지는 은은하게 */
+  color: #777;
   margin-left: 50px;
 }
 
-/* 첫 번째 항목(루트 메뉴)을 선명한 검정으로 */
-::v-deep .breadcrumb span:first-child {
-  color: #000 ;
+::v-deep .breadcrumb-item:first-child {
+  color: #000;
   font-weight: 600;
-}
-
-/* ⭐ v-html 내부 요소에 스타일 적용 (scoped 문제 해결) */
-::v-deep .breadcrumb-main {
-  font-weight: 700;
-  color: #000000;
 }
 
 ::v-deep .breadcrumb-item {
@@ -151,10 +172,10 @@ function getBreadcrumbHtml() {
 
 ::v-deep .breadcrumb-divider {
   color: #aaa;
-  margin: 0 15px;   /* ← 간격 넓히기 */
+  margin: 0 15px;
 }
 
-/* Right 영역 */
+/* RIGHT */
 .right {
   display: flex;
   align-items: center;

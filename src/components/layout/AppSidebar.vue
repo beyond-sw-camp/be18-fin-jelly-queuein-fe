@@ -108,7 +108,7 @@ function isActiveStartsWith(basePath) {
   background: #f3f3f3;
   border-right: 1px solid #ddd;
 
-  padding-top: 100px;
+  padding-top: 70px;
   transition: width 0.25s ease;
   z-index: 30;
 }
