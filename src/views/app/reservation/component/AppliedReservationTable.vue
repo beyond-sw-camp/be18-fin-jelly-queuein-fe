@@ -21,7 +21,7 @@
     <!-- 예약 가능 여부 -->
     <el-table-column prop="isReservable" label="예약 가능 여부" min-width="150" align="center">
       <template #default="scope">
-        {{ scope.row.isReservable ? "가능" : "불가능" }}
+        {{ scope.row.reservable ? "가능" : "불가능" }}
       </template>
     </el-table-column>
 

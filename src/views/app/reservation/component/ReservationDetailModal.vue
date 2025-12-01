@@ -86,24 +86,22 @@ const props = defineProps({
   visible: Boolean,
   asset: Object
 })
+import dayjs from "dayjs"
+import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+const formatKoreaTime = (instant) => {
+  if (!instant) return "-"
+  return dayjs.utc(instant).tz("Asia/Seoul").format("HH:mm")
+}
 
 const emit = defineEmits(["close", "start", "end"])
 
 const close = () => emit("close")
 
-/* -------------------------------------------
-  🔵 Instant → 한국 HH:mm 변환
-------------------------------------------- */
-const formatKoreaTime = (instant) => {
-  if (!instant) return "-"
-  const date = new Date(instant)
-  if (isNaN(date.getTime())) return "-"
-  return date.toLocaleTimeString("ko-KR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  })
-}
 
 /* -------------------------------------------
    참여자 출력
@@ -153,7 +151,7 @@ const onAction = () => {
   if (usage === "USING" || usage === "IN_USE") emit("end", props.asset.id)
   if (usage === "PENDING") emit("cancel", props.asset.id)
 
-  // 🔥 버튼 클릭 후 모달 자동 닫힘
+  // 버튼 클릭 후 모달 자동 닫힘
   emit("close")
 }
 </script>

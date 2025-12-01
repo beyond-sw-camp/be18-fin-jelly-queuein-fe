@@ -85,6 +85,17 @@
 
 <script setup>
 import { ref, watch, computed } from "vue"
+import dayjs from "dayjs"
+import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+const formatKoreaTime = (instant) => {
+  if (!instant) return "-"
+  return dayjs.utc(instant).tz("Asia/Seoul").format("HH:mm")
+}
 
 const props = defineProps({
   visible: Boolean,
@@ -113,19 +124,6 @@ const saveReason = () => {
   close()
 }
 
-/* -------------------------------------------
-  한국 시간 포맷
-------------------------------------------- */
-const formatKoreaTime = (instant) => {
-  if (!instant) return "-"
-  const date = new Date(instant)
-  if (isNaN(date.getTime())) return "-"
-  return date.toLocaleTimeString("ko-KR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  })
-}
 
 /* -------------------------------------------
   참여자 이름 표시

@@ -83,7 +83,7 @@ const selectedUsers = ref<{ id: number; name: string }[]>([])
 const note = ref("")
 
 // -------------------------------
-// 2️⃣ 예약 가능 시간 조회 API
+//  예약 가능 시간 조회 API
 // -------------------------------
 const today = new Date().toLocaleDateString('en-CA')  
 
@@ -156,29 +156,50 @@ const onSelectParticipants = (users: any[]) => {
   participantModalVisible.value = false
 }
 
-
+function toUtcIso(date, hour) {
+  const local = new Date(`${date}T${String(hour).padStart(2, "0")}:00:00+09:00`);
+  return local.toISOString();
+}
 
 // -------------------------------
 // 예약 생성 API
 // -------------------------------
 async function submitBooking() {
+
   if (!selectedHours.value.length) {
     alert("예약 시간을 선택해주세요.")
     return
   }
-
+ 
+  
   const startHour = Math.min(...selectedHours.value)
-  const endHour = Math.max(...selectedHours.value) + 1
+  const endHourRaw = Math.max(...selectedHours.value) + 1
+
+  let endDateValue = date.value
+  let endHour = endHourRaw
+
+  if (endHourRaw === 24) {
+    const [y, m, d] = date.value.split("-").map(Number);
+    const nextDay = new Date(Date.UTC(y, m - 1, d + 1));
+    endDateValue = nextDay.toISOString().slice(0, 10); // yyyy-MM-dd
+    endHour = 0;
+  }
+
+  // --- KST(+09:00) → UTC ISO 변환 ---
+  const startAt = toUtcIso(date.value, startHour);
+  const endAt = toUtcIso(endDateValue, endHour);
 
   const payload = {
     applicantId: currentUserId.value,
     attendantIds: selectedUsers.value.map(u => u.id),
-    assetName: assetName,  
-    startAt: `${date.value}T${startHour.toString().padStart(2,'0')}:00:00Z`,
-    endAt: `${date.value}T${endHour.toString().padStart(2,'0')}:00:00Z`,
-
+    assetName: assetName,
+    startAt,
+    endAt,
     participants: selectedUsers.value.map(u => u.id)
-  }
+  };
+
+
+
 
   await api.post(`/reservations/${assetId}/instant-confirm`, payload)
 }

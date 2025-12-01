@@ -12,7 +12,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const goSchedule = () => {
-  router.push('/app/reservations/monthly')
+  router.push('/app/reservations/me')
 }
 </script>
 
