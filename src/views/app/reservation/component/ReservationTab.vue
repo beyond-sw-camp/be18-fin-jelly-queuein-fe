@@ -55,18 +55,30 @@ watch(
 )
 </script>
 <style>
-.tab-full-wrapper {
+/* 탭 전체 영역을 100% 폭으로 늘리기 */
+.reservation-tabs :deep(.el-tabs__header) {
   width: 100%;
-  display: block; 
 }
 
+.reservation-tabs :deep(.el-tabs__nav-wrap) {
+  width: 100%;
+}
+
+.reservation-tabs :deep(.el-tabs__nav-scroll) {
+  width: 100%;
+}
+
+/* 탭 목록을 flex로 전체 폭 사용하도록 */
 .reservation-tabs :deep(.el-tabs__nav) {
   display: flex !important;
   width: 100%;
 }
 
+/* 각 탭이 전체를 균등 분배(1/n) */
 .reservation-tabs :deep(.el-tabs__item) {
-  flex: 1;
+  flex: 1 !important;
   text-align: center;
+  justify-content: center;
 }
+
 </style>

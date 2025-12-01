@@ -76,8 +76,12 @@ const emit = defineEmits(['page-change'])
 
 const router = useRouter()
 const goToDetail = (row) => {
+
+  const targetPath = row.needsApproval
+  ? '/app/reservations/create'   // 선착순
+  : '/app/reservations/apply' //신청
   router.push({
-    path: '/app/reservations/create',
+    path: targetPath,
     query: {
       assetId: row.assetId,
       assetName: row.assetName,
