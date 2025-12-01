@@ -68,8 +68,8 @@ import { ref, watch } from "vue"
 import AssetTypeDropdown from "@/components/common/AssetTypeDropdown.vue"
 import AssetStatusDropdown from "@/components/common/AssetStatusDropdown.vue"
 import CategoryDropdown from "@/components/common/CategoryDropDownMenu.vue"
-import BuildingDropdown from "@/components/common/BuildingDropdownMenu.vue"
-import LocationDropdown from "@/components/common/LocationDropdownMenu.vue"
+import BuildingDropdown from "@/components/common/OneDepthDropDownMenu.vue"
+import LocationDropdown from "@/components/common/RootDropDownMenu.vue"
 
 // 부모에게 필터 변경 emit
 const emit = defineEmits(["change"])
