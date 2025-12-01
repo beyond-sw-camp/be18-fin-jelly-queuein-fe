@@ -53,6 +53,12 @@ async function login() {
       return
     }
 
+    localStorage.setItem('accessToken', data.accessToken)
+    localStorage.setItem('refreshToken', data.refreshToken)
+    localStorage.setItem('role', data.role)
+    localStorage.setItem("userName", data.userName)
+
+    router.push('/app')
     if (result === 'MASTER' || result === 'ADMIN') {
       router.push('/admin')
     } else {
