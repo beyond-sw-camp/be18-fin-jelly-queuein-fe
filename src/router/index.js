@@ -83,6 +83,16 @@ const router = createRouter({
             import('@/views/admin/category/CategoryManagement.vue'),
           meta: { minRole: 'MANAGER', title: '카테고리 관리' },
         },
+        
+
+        // 정산 - 자원 사용 기록 조회
+        {
+          path: 'settlement/usage-history',
+          component: () =>
+            import('@/views/admin/settlement/UsageHistory.vue'),
+          meta: { minRole: 'MANAGER', title: '자원 사용 기록' },
+        }
+
 
         // 다른 Admin 메뉴는 필요 시 추가 가능
       ],

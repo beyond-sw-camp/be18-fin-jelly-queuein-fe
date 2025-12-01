@@ -52,6 +52,7 @@ const breadcrumbMap = {
   list: '자원 목록 조회',
   create: '자원 등록',
   edit: '자원 수정',
+  'usage-history': '자원 사용 기록 조회',
 
   // 기타
   categories: '카테고리 관리',

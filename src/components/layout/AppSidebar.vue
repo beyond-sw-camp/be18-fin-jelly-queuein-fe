@@ -68,9 +68,9 @@ function isActiveStartsWith(basePath) {
       <!-- 정산 관리 -->
       <router-link
         v-if="isAdmin"
-        to="/admin/stats"
+        to="/admin/settlement/usage-history"
         class="item"
-        :class="{ active: isActiveStartsWith('/admin/stats') }"
+        :class="{ active: isActiveStartsWith('/admin/settlement') }"
         @click="$emit('close-sidebar')"
       >
         <img src="@/assets/icons/stats.svg" class="icon" />
