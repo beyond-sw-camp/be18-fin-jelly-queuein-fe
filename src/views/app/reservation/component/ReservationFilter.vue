@@ -1,7 +1,7 @@
 <template>
   <el-row :gutter="12" class="filter-row">
 
-    <!-- 날짜 선택 -->
+    <!-- 날짜 선택 (Element Plus 유지) -->
     <el-col :span="4">
       <el-date-picker
         v-model="filters.date"
@@ -15,75 +15,48 @@
 
     <!-- 자원 유형 -->
     <el-col :span="4">
-      <el-select
+      <AssetTypeDropdown
         v-model="filters.assetType"
         placeholder="자원 유형"
-        @change="emitChange"
-      >
-        <el-option label="정적(고정)" value="STATIC" />
-        <el-option label="동적(이동)" value="DYNAMIC" />
-      </el-select>
+        @update:modelValue="emitChange"
+      />
     </el-col>
 
     <!-- 자원 상태 -->
     <el-col :span="4">
-      <el-select
+      <AssetStatusDropdown
         v-model="filters.assetStatus"
         placeholder="자원 상태"
-        @change="emitChange"
-      >
-        <el-option label="사용 가능" value="AVAILABLE" />
-        <el-option label="사용 불가" value="UNAVAILABLE" />
-        <el-option label="점검 중" value="MAINTENANCE" />
-      </el-select>
+        @update:modelValue="emitChange"
+      />
     </el-col>
 
     <!-- 카테고리 -->
     <el-col :span="4">
-      <el-select
+      <CategoryDropdown
         v-model="filters.categoryName"
         placeholder="카테고리"
-        @change="emitChange"
-      >
-        <el-option
-          v-for="c in categories"
-          :key="c"
-          :label="c"
-          :value="c"
-        />
-      </el-select>
+        @update:modelValue="emitChange"
+      />
     </el-col>
 
-    <!-- 0계층 -->
+    <!-- 0계층 (사옥) -->
     <el-col :span="4">
-      <el-select
+      <BuildingDropdown
         v-model="filters.layerZero"
         placeholder="0계층 선택"
-        @change="emitChange"
-      >
-        <el-option
-          v-for="l in layerZeroList"
-          :key="l"
-          :label="l"
-          :value="l"
-        />
-      </el-select>
+        @update:modelValue="onBuildingChange"
+      />
     </el-col>
 
-    <!-- 1계층 -->
+    <!-- 1계층 (위치: 사옥 선택 시 활성화) -->
     <el-col :span="4">
-      <el-select
+      <LocationDropdown
         v-model="filters.layerOne"
+        :buildingId="filters.layerZero"
         placeholder="1계층 선택"
-        @change="emitChange"
-      >
-        <el-option
-          v-for="l in layerOneList"
-          :key="l"
-          :label="l"
-          :value="l"
-        />
-      </el-select>
+        @update:modelValue="emitChange"
+      />
     </el-col>
 
   </el-row>
@@ -92,10 +65,16 @@
 <script setup>
 import { ref, watch } from "vue"
 
+import AssetTypeDropdown from "@/components/common/AssetTypeDropdown.vue"
+import AssetStatusDropdown from "@/components/common/AssetStatusDropdown.vue"
+import CategoryDropdown from "@/components/common/CategoryDropDownMenu.vue"
+import BuildingDropdown from "@/components/common/BuildingDropdownMenu.vue"
+import LocationDropdown from "@/components/common/LocationDropdownMenu.vue"
+
 // 부모에게 필터 변경 emit
 const emit = defineEmits(["change"])
-const today = new Date().toLocaleDateString('en-CA')
-/* 필터 값 */
+const today = new Date().toLocaleDateString("en-CA")
+
 const filters = ref({
   date: today,
   assetType: "",
@@ -105,22 +84,23 @@ const filters = ref({
   layerOne: ""
 })
 
-/* 실제 카테고리 & 계층은 API로 받을 가능성 있지만,
-   지금은 더미 데이터 유지 */
-const categories = ref(["사옥", "스튜디오", "카메라", "음향"])
-const layerZeroList = ref(["본사", "지점", "외부"])
-const layerOneList = ref(["1F", "2F", "3F", "A동", "B동"])
+function emitChange() {
+  emit("change", { ...filters.value })
+}
 
+// 건물(0계층) 변경 시 위치 초기화 + emit
+function onBuildingChange(val) {
+  filters.value.layerZero = val
+  filters.value.layerOne = "" // 위치 초기화
+  emitChange()
+}
 
-
+// 날짜는 초기 로드시 바로 emit
 watch(
   () => filters.value.date,
-  () => {
-    emit("change", { ...filters.value })
-  },
-  { immediate: true } // ← 이 옵션이 매우 중요함!!
+  () => emitChange(),
+  { immediate: true }
 )
-
 </script>
 
 <style scoped>
