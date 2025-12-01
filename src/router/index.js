@@ -47,6 +47,41 @@ const router = createRouter({
       children: [
         { path: '', component: AdminDashboard },
 
+        // -------------------------
+        // 기본 이동: /admin → /admin/users
+        // -------------------------
+        { path: '', redirect: '/admin/users' },
+
+        // -------------------------
+        // 사용자 관리
+        // -------------------------
+        {
+          path: 'users',
+          component: () =>
+            import('@/views/admin/iam/user/UserManagement.vue'),
+          meta: { title: '사용자 관리', minRole: 'ADMIN' }
+        },
+
+        // -------------------------
+        // 역할 관리
+        // -------------------------
+        {
+          path: 'roles',
+          component: () =>
+            import('@/views/admin/iam/role/RoleManagement.vue'),
+          meta: { title: '역할 관리', minRole: 'ADMIN' }
+        },
+
+        // -------------------------
+        // 권한 관리
+        // -------------------------
+        {
+          path: 'permissions',
+          component: () =>
+            import('@/views/admin/iam/permission/PermissionManagement.vue'),
+          meta: { title: '권한 관리', minRole: 'ADMIN' }
+        },
+
         // ========== ⭐ 자원 관리 그룹 ==========
         {
           path: 'assets',

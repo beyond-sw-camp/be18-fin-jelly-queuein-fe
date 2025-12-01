@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { userApi } from '@/api/userApi'
+import { userApi } from '@/api/iam/userApi.js'
 
 const router = useRouter()
 
