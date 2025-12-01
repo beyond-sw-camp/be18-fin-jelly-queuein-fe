@@ -10,7 +10,7 @@ const emit = defineEmits(['toggle-sidebar'])
 // ===============================
 // 🧩 로그인 사용자 정보 가져오기
 // ===============================
-const role = localStorage.getItem('role') || '' 
+const role = localStorage.getItem('role') || ''
 const name = (localStorage.getItem('userName') || '').trim()
 
 // ===============================
