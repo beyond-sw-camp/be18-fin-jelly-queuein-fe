@@ -32,9 +32,7 @@ const router = createRouter({
       path: '/app',
       component: HomeLayout,
       meta: { requiresAuth: true },
-      children: [
-        { path: '', component: DashboardView },
-      ],
+      children: [{ path: '', component: DashboardView }],
     },
 
     // ---------------------------------------------------------
@@ -57,33 +55,42 @@ const router = createRouter({
 
             {
               path: 'list',
-              component: () =>
-                import('@/views/admin/asset/AssetManagement.vue'),
-              meta: { title: '자원 목록 조회', minRole: 'MANAGER' }
+              component: () => import('@/views/admin/asset/AssetManagement.vue'),
+              meta: { title: '자원 목록 조회', minRole: 'MANAGER' },
             },
             {
               path: 'create',
-              component: () =>
-                import('@/views/admin/asset/AssetCreateView.vue'),
-              meta: { title: '자원 등록', minRole: 'MANAGER' }
+              component: () => import('@/views/admin/asset/AssetCreateView.vue'),
+              meta: { title: '자원 등록', minRole: 'MANAGER' },
             },
             {
               path: ':assetId/edit',
-              component: () =>
-                import('@/views/admin/asset/AssetEditView.vue'),
-              meta: { title: '자원 수정', minRole: 'MANAGER' }
-            }
-          ]
+              component: () => import('@/views/admin/asset/AssetEditView.vue'),
+              meta: { title: '자원 수정', minRole: 'MANAGER' },
+            },
+          ],
         },
 
         // ========== 카테고리 관리 ==========
         {
           path: 'categories',
-          component: () =>
-            import('@/views/admin/category/CategoryManagement.vue'),
+          component: () => import('@/views/admin/category/CategoryManagement.vue'),
           meta: { minRole: 'MANAGER', title: '카테고리 관리' },
         },
 
+        // 자원 수정
+        {
+          path: 'assets/:assetId/edit',
+          component: () => import('@/views/admin/asset/AssetEditView.vue'),
+          meta: { minRole: 'MANAGER' },
+        },
+
+        // 자원 상세 조회
+        {
+          path: 'assets/:assetId',
+          component: () => import('@/views/admin/asset/AssetDetailView.vue'),
+          meta: { requiresAuth: true, minRole: 'MANAGER' },
+        },
         // 다른 Admin 메뉴는 필요 시 추가 가능
       ],
     },
