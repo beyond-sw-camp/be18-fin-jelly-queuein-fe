@@ -26,9 +26,9 @@
           <td>{{ formatDate(c.createdAt) }}</td>
           <td>{{ c.description }}</td>
           <td class="actions">
-            <button class="edit-btn" @click="editCategory(c)">수정</button>
+            <button class="edit-btn" @click.stop="editCategory(c)">수정</button>
             /
-            <button class="delete-btn" @click="deleteCategory(c)">삭제</button>
+            <button class="delete-btn" @click.stop="deleteCategory(c)">삭제</button>
           </td>
         </tr>
       </tbody>
@@ -52,24 +52,53 @@
 
     <!-- 생성 버튼 -->
     <div>
-      <button class="create-btn" @click="openModal">카테고리 생성</button>
+      <button class="create-btn" @click="openCreateModal">카테고리 생성</button>
 
-      <CategoryCreateModal v-if="showModal" :onSubmit="createCategory" :onClose="closeModal" />
+      <CategoryFormModal
+        v-if="showCreateModal"
+        title="카테고리 생성"
+        submitText="등록"
+        @submit="createCategory"
+        @close="showCreateModal = false"
+      />
     </div>
+
+    <CategoryFormModal
+      v-if="showEditModal"
+      title="카테고리 수정"
+      submitText="수정"
+      :initialData="editTarget"
+      @submit="updateCategory"
+      @close="showEditModal = false"
+    />
+
+    <ConfirmModal
+      v-if="showDeleteModal"
+      title="카테고리 삭제"
+      message="삭제하면 복구할 수 없습니다. 계속할까요?"
+      @confirm="confirmDelete"
+      @cancel="showDeleteModal = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { categoryApi } from '@/api/categoryApi'
-import CategoryCreateModal from './CategoryCreateModal.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import CategoryFormModal from './CategoryFormModal.vue'
 
 // 상태
 const categories = ref([])
 const page = ref(0)
 const size = ref(10)
 const totalPages = ref(1)
-const showModal = ref(false)
+const showCreateModal = ref(false)
+const showDeleteModal = ref(false)
+const showEditModal = ref(false)
+const editTarget = ref(null)
+
+const selectedCategory = ref(null)
 
 // 날짜 포맷
 function formatDate(dateString) {
@@ -103,27 +132,52 @@ async function createCategory(data) {
 
     await loadCategories()
 
-    closeModal()
+    closeCreateModal()
   } catch (err) {
     console.error(err)
     alert('카테고리 생성 실패')
   }
 }
 
-function openModal() {
-  showModal.value = true
+async function updateCategory(data) {
+  try {
+    await categoryApi.update(editTarget.value.categoryId, data)
+    alert('카테고리가 수정되었습니다.')
+
+    showEditModal.value = false
+    await loadCategories()
+  } catch (err) {
+    console.error(err)
+    alert('수정 실패')
+  }
 }
 
-function closeModal() {
-  showModal.value = false
+async function confirmDelete() {
+  try {
+    await categoryApi.delete(selectedCategory.value.categoryId)
+    showDeleteModal.value = false
+    loadCategories()
+  } catch (err) {
+    alert(err.response?.data?.message || '삭제 실패')
+  }
 }
 
-function editCategory(item) {
-  console.log('수정:', item)
+function openCreateModal() {
+  showCreateModal.value = true
 }
 
-function deleteCategory(item) {
-  console.log('삭제:', item)
+function closeCreateModal() {
+  showCreateModal.value = false
+}
+
+function editCategory(c) {
+  editTarget.value = { ...c }
+  showEditModal.value = true
+}
+
+function deleteCategory(c) {
+  selectedCategory.value = c
+  showDeleteModal.value = true
 }
 
 onMounted(loadCategories)
