@@ -195,6 +195,7 @@ async function submitBooking() {
     assetName: assetName,
     startAt,
     endAt,
+    description: note.value,  
     participants: selectedUsers.value.map(u => u.id)
   };
 

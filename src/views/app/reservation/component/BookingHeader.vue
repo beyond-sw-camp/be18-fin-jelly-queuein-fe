@@ -21,7 +21,6 @@
         @change="onDateChange"
       />
 
-
       <div class="info-label">예약자</div>
       <div class="info-value">{{ reserver }}</div>
 
@@ -29,7 +28,6 @@
       <div class="info-value">{{ timeRange }}</div>
     </div>
 
-    <!-- 추가된 구분선 (자원명 ~ 참여자 사이) -->
     <div class="divider"></div>
 
     <!-- 참여자 -->
@@ -37,7 +35,6 @@
       <div class="line-label">참여자</div>
       <div class="line-content">
         <el-button type="success" circle @click="onAdd">+</el-button>
-
         <div v-for="(p,i) in participants" :key="i" class="tag">
           {{ p }}
         </div>
@@ -48,22 +45,22 @@
     <div class="line-row">
       <div class="line-label">비고</div>
       <div class="line-content">
-      <el-input
-        class="note-textarea"
-        type="textarea"
-        :model-value="note"
-        placeholder="비고를 입력하세요"
-        @input="onNoteInput"
-        rows="2"
-        style="max-width: 400px;"
-      />
+        <el-input
+          class="note-textarea"
+          type="textarea"
+          :model-value="note"
+          placeholder="비고를 입력하세요"
+          @update:model-value="val => emit('update:note', val)"
 
+          rows="2"
+          style="max-width: 400px;"
+        />
       </div>
     </div>
 
-
   </div>
 </template>
+
 <script setup>
 import { ref, watch } from "vue";
 
@@ -75,41 +72,27 @@ const props = defineProps({
   participants: Array,
   note: String
 });
-const emit = defineEmits(["add", "update:date", "update:note"])
 
-const onNoteInput = (v) => emit("update:note", v)
-
-
+const emit = defineEmits(["add", "update:date", "update:note"]);
 
 const datePickerRef = ref(null);
-
-// 내부 날짜 값 (props.date 복사)
 const internalDate = ref(props.date);
 
-// props 변화 → 내부 날짜 동기화
-watch(
-  () => props.date,
-  (v) => (internalDate.value = v)
-);
+// props.date → 내부 동기화
+watch(() => props.date, v => internalDate.value = v);
 
-// 날짜 선택 시 부모에게 전달
+// 날짜 선택 시 부모로 전달
 const onDateChange = (v) => {
   let str = "";
-
   if (typeof v === "string") str = v;
   else if (v instanceof Date) str = v.toISOString().slice(0, 10);
-
   emit("update:date", str);
 };
 
-
-// 클릭 시 달력 열기
-const openDatePicker = () => {
-  datePickerRef.value?.handleOpen();
-};
-
+// 참여자 추가
 const onAdd = () => emit("add");
 </script>
+
 
 
 <style scoped>

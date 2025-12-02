@@ -52,18 +52,27 @@ const calendarOptions = {
   displayEventTime: false,
   events: [],
 
+  eventOverlap: false,
+  slotEventOverlap: false,
+  eventMaxStack: 1,
+
+  events: [],
   eventContent: (arg) => {
     const d = arg.event.start
     const time = d ? d.toTimeString().slice(0, 5) : ''
 
+    const count = arg.event.extendedProps.count ?? 1 // 다중 이벤트면 count 전달한다고 가정
+
     return {
       html: `
         <div class="custom-event-chip">
-          <span>${time} ${arg.event.title}</span>
+          <span class="event-title">${time} ${arg.event.title}</span>
+          ${count > 1 ? `<span class="event-badge">+${count - 1}</span>` : ""}
         </div>
       `
     }
   }
+
 }
 
 /* ---------------------------
@@ -154,15 +163,6 @@ onMounted(() => {
 
 
 <style>
-.custom-event-chip {
-  background: #e6f0ff !important;
-  color: #1677ff !important;
-  padding: 4px 6px;
-  border-radius: 6px;
-  font-size: 12px;
-  display: inline-block;
-  font-weight: 600;
-}
 
 .calendar-top {
   display: flex;
@@ -198,15 +198,114 @@ onMounted(() => {
   border-color: #B6CEB4;
 }
 
-.fc-daygrid-day-frame {
-  min-height: 60px !important;
+/* 1) 기본 이벤트 배경 제거 */
+:deep(.fc-event-bg),
+:deep(.fc-event-main) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-:deep(.fc-timegrid-event .fc-event-main-frame) {
-  padding: 0 !important;
+/* 2) timegrid 이벤트 기본 박스 제거 */
+:deep(.fc-timegrid-event) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-:deep(.fc-timegrid-event .fc-event-main) {
-  padding: 0 !important;
+/* 3) FullCalendar가 interaction layer로 넣는 파란 박스 제거 */
+:deep(.fc-timegrid-event-harness-inset) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
+
+/* 4) selection / mirror 이벤트 제거 (클릭/드래그 시 생기는 파란색) */
+:deep(.fc-event.fc-mirror),
+:deep(.fc-timegrid-selection) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+/* 1) 기본 파란 테두리 제거 */
+:deep(.fc-timegrid-event) {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* 2) 이벤트 내부 영역도 전부 제거 */
+:deep(.fc-event-main),
+:deep(.fc-event-bg) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 3) interaction / inset 레이어도 제거 */
+:deep(.fc-timegrid-event-harness-inset) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 이벤트 전체 박스를 덮도록 */
+.custom-event-chip {
+  width: 100% !important;
+  height: 100% !important;   /* ← 이게 핵심 */
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  box-sizing: border-box;
+  border-radius: 6px;
+
+  background: #e6f0ff; /* 네가 원하는 색 */
+  color: #1677ff;
+  font-weight: 600;
+}
+/* 기본 이벤트 배경(파란색) 완전히 투명하게 만들기 */
+:deep(.fc-event-bg),
+:deep(.fc-event-main),
+:deep(.fc-timegrid-event) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.custom-event-chip {
+  position: relative;             /* badge 기준점 */
+  width: 100%;
+  height: 100%;
+  background: #e6f0ff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #1677ff;
+}
+
+.event-title {
+  flex: 1;
+  white-space: nowrap;
+}
+
+/* 🎯 오른쪽 위에 작게 붙는 +3 뱃지 */
+.event-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #d9d9d9;
+  color: #333;
+  
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+
 </style> 
