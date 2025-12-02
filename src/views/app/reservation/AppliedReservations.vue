@@ -138,17 +138,15 @@ async function handleSaveReason(reason) {
     console.error("승인/거절 사유 저장 실패:", err)
   }
 }
-const onSaveReason = (reason) => {
-  const id = reservationDetail.value.id
-
-  // 테이블 row 찾아서 reason만 수정
-  const idx = tableData.value.findIndex(r => r.reservationId === id)
+const onSaveReason = ({ reservationId, reason }) => {
+  const idx = tableData.value.findIndex(r => r.reservationId === reservationId)
   if (idx !== -1) {
     tableData.value[idx].reason = reason
+    tableData.value[idx].respondentName = currentUserName.value   
   }
 
-  // 상세 데이터도 업데이트
   reservationDetail.value.reason = reason
+  reservationDetail.value.approver = currentUserName.value       // 상세에도 반영
 
   modalOpen.value = false
 }
@@ -157,7 +155,8 @@ async function onApprove(row) {
   try {
     await api.patch(`/reservations/${row.reservationId}/approve`, {
       version: row.version,
-      approverName: currentUserName.value
+      approverName: currentUserName.value,
+      reason: row.reason
     })
 
     // UI 반영
@@ -174,7 +173,8 @@ async function onReject(row) {
   try {
     await api.patch(`/reservations/${row.reservationId}/reject`, {
       version: row.version,
-      approverName: currentUserName.value
+      approverName: currentUserName.value,
+      reason: row.reason
     })
 
     // UI 반영

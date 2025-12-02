@@ -48,7 +48,7 @@
           <div class="label green">실제 사용 시간</div>
           <div class="value">
             <template v-if="asset?.actualStartAt">
-              {{ formatKoreaTime(asset?.actualStartAt) }} ~ {{ formatKoreaTime(asset?.actualEndAt) }}
+              {{ formatKoreaTime(asset.actualStartAt) }} ~ {{ formatKoreaTime(asset.actualEndAt) }}
             </template>
             <template v-else>-</template>
           </div>
@@ -56,27 +56,23 @@
 
         <div class="row">
           <div class="label green">승인 / 거절 사유</div>
-          <div class="value">
-            <el-input 
-              v-model="editedReason"
-              type="textarea"
-              rows="3"
-              placeholder="사유를 입력하세요"
-              class="reason-textarea"
-            />
-          </div>
+          <div class="value">{{ asset?.reason ?? "-" }}</div>
 
           <div class="label green">비고</div>
-          <div class="value">
-            {{ asset?.note ?? "-" }}
-          </div>
+          <div class="value">{{ asset?.note ?? "-" }}</div>
         </div>
 
       </div>
 
-      <div style="margin-top: 20px; text-align: right;">
-        <el-button @click="close">닫기</el-button>
-        <el-button type="primary" @click="saveReason">저장</el-button>
+      <!-- 하단 버튼 -->
+      <div class="footer" v-if="actionLabel">
+        <button 
+          class="footer-btn"
+          :disabled="isActionDisabled"
+          @click="onAction"
+        >
+          {{ actionLabel }}
+        </button>
       </div>
 
     </div>
@@ -84,7 +80,12 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from "vue"
+import { computed } from "vue"
+
+const props = defineProps({
+  visible: Boolean,
+  asset: Object
+})
 import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc"
 import timezone from "dayjs/plugin/timezone"
@@ -97,53 +98,66 @@ const formatKoreaTime = (instant) => {
   return dayjs.utc(instant).tz("Asia/Seoul").format("HH:mm")
 }
 
-const props = defineProps({
-  visible: Boolean,
-  asset: Object
-})
-
-const emit = defineEmits(["close", "save-reason"])
+const emit = defineEmits(["close", "start", "end"])
 
 const close = () => emit("close")
 
-/* -------------------------------------------
-  사유(reason) 수정 상태
-------------------------------------------- */
-const editedReason = ref("")
-
-watch(
-  () => props.asset,
-  (val) => {
-    editedReason.value = val?.reason ?? ""
-  },
-  { immediate: true }
-)
-
-const saveReason = () => {
-  emit("save-reason", {
-    reservationId: props.asset?.id,
-    reason: editedReason.value
-  })
-
-  close()
-}
-
 
 /* -------------------------------------------
-  참여자 이름 표시
-  attendants → attendantName 사용
+   참여자 출력
 ------------------------------------------- */
 const participantsText = computed(() => {
-  const list = props.asset?.participants
-  if (!list || list.length === 0) return "-"
-
-  return list
-    .map(a => a.attendantName)
-    .join(", ")
+  const p = props.asset?.participants
+  if (!p) return "-"
+  if (Array.isArray(p)) return p.length ? p.map(i => i.name ?? i).join(", ") : "-"
+  if (typeof p === "object") return p.name ?? "-"
+  return p
 })
+
+/* -------------------------------------------
+   버튼 라벨
+------------------------------------------- */
+const normalizedUsage = computed(() =>
+  (props.asset?.usage ?? "").trim().toUpperCase()
+)
+
+const actionLabel = computed(() => {
+  switch (normalizedUsage.value) {
+    case "PENDING":
+      return "취소"
+    case "APPROVED":
+      return "사용 시작"
+    case "USING":
+    case "IN_USE":   // 서버 두 경우 모두 대응
+      return "사용 종료"
+    case "COMPLETED":
+      return "취소 불가"
+    default:
+      return null
+  }
+})
+
+const isActionDisabled = computed(() =>
+  ["COMPLETED"].includes(normalizedUsage.value)
+)
+
+/* -------------------------------------------
+   버튼 클릭 → 서버 요청 이벤트 + 모달 닫힘
+------------------------------------------- */
+const onAction = () => {
+  const usage = normalizedUsage.value
+
+  if (usage === "APPROVED") emit("start", props.asset.id)
+  if (usage === "USING" || usage === "IN_USE") emit("end", props.asset.id)
+  if (usage === "PENDING") emit("cancel", props.asset.id)
+
+  // 버튼 클릭 후 모달 자동 닫힘
+  emit("close")
+}
 </script>
 
 <style scoped>
+/* 그대로 유지 */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -153,6 +167,7 @@ const participantsText = computed(() => {
   align-items: center;
   z-index: 999;
 }
+
 .modal {
   width: 800px;
   background: #fff;
@@ -160,46 +175,67 @@ const participantsText = computed(() => {
   padding: 30px 40px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
 }
+
 .close-btn {
   background: none;
   border: none;
   font-size: 22px;
   cursor: pointer;
 }
+
 .detail-table {
   width: 100%;
 }
+
 .row {
   display: grid;
   grid-template-columns: 180px 1fr 180px 1fr;
   border-bottom: 1px solid #eaeaea;
 }
+
 .label {
   padding: 14px;
   font-weight: 600;
   color: white;
 }
+
 .green {
   background: #7ba678;
 }
+
 .value {
   padding: 14px;
   background: #fafafa;
 }
-/* 텍스트 영역 테두리 제거 + 배경만 유지 */
-.reason-textarea ::v-deep(.el-textarea__inner) {
-  border: none !important;
-  box-shadow: none !important;
-  background: #fafafa !important;
-  resize: none; /* 원하면 제거 가능 */
-  padding: 10px 12px;
-  min-height: 80px;
+
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
 }
 
+.footer-btn {
+  padding: 10px 28px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1.5px solid #d0d0d0;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.footer-btn:hover {
+  background: #f3f3f3;
+}
+
+.footer-btn:disabled {
+  cursor: not-allowed;
+  background: #eaeaea;
+}
 </style>
