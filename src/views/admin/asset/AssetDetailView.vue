@@ -144,6 +144,9 @@ watch(
   width: 250px;
   border-right: 1px solid #e5e5e5;
   padding-right: 20px;
+  overflow: auto;
+  white-space: nowrap;
+  height: calc(100vh - 140px);
 }
 
 .tree-title {
