@@ -26,33 +26,42 @@ import api from "@/api/axios.js"
 const rows = ref([])
 const loading = ref(false)
 
-// 👉 size = 10으로 설정
 const pageInfo = ref({
   page: 0,
   size: 10,
   totalPages: 0,
 })
 
-let lastFilter = {} // 마지막 검색 조건 저장
-
-async function loadData(filter) {
-  lastFilter = filter
-  await fetchData(0) // 검색 시 항상 첫 페이지로
+// 🔥 마지막 검색조건 저장
+let lastFilter = {
+  startDate: null,
+  endDate: null,
+  keyword: null
 }
 
+// 🔥 UsageHistoryFilter 가 보내준 값 저장
+async function loadData(filter) {
+  lastFilter = filter  // ⭐ 새로운 필터값 저장
+  await fetchData(0)   // 첫 페이지부터 다시 조회
+}
+
+// 🔥 서버에서 데이터 조회
 async function fetchData(page) {
   loading.value = true
 
   try {
     const res = await api.get("/accounting/usage-history", {
       params: {
-        ...lastFilter,
+        startDate: lastFilter.startDate,
+        endDate: lastFilter.endDate,
+        keyword: lastFilter.keyword,
         page,
-        size: 10, // ⚡ 한 페이지 10개
-      },
+        size: pageInfo.value.size,
+      }
     })
 
     rows.value = res.data.content
+
     pageInfo.value = {
       page: res.data.page,
       size: res.data.size,
@@ -66,11 +75,12 @@ async function fetchData(page) {
   loading.value = false
 }
 
+// 🔥 페이지 클릭 시 실행
 function changePage(newPage) {
   fetchData(newPage)
 }
 
-// 초기 조회
+// 🔥 초기 1회 조회
 fetchData(0)
 </script>
 
