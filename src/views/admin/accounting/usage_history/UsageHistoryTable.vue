@@ -20,15 +20,15 @@
       </thead>
 
       <tbody>
-        <tr v-for="row in rows" :key="row.id">
+        <tr v-for="row in rows" :key="row.usageHistoryId">
           <td>{{ row.assetName }}</td>
-          <td>{{ row.reserveStartAt }}</td>
-          <td>{{ row.reserveEndAt }}</td>
-          <td>{{ row.reserveMinutes }}</td>
+          <td>{{ row.reservationStartAt }}</td>
+          <td>{{ row.reservationEndAt }}</td>
+          <td>{{ row.reservationMinutes }}</td>
           <td>{{ row.actualStartAt }}</td>
           <td>{{ row.actualEndAt }}</td>
           <td>{{ row.actualMinutes }}</td>
-          <td>{{ row.usageRate }}</td>
+          <td>{{ Math.round(row.usageRatio * 100) }}%</td>
         </tr>
       </tbody>
     </table>
@@ -117,19 +117,44 @@ function goNextChunk() {
 </script>
 
 <style scoped>
+/* ==== 테이블 전체 ==== */
 .usage-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
+  margin-top: 18px;
+  background: white;
+  font-size: 14px;
 }
 
-.usage-table th,
+/* ==== 헤더 (연녹색 + 진녹색 글씨) ==== */
+.usage-table thead tr {
+  background: #D9E9CF;
+  border-bottom: 2px solid #E0E6E0;
+}
+
+.usage-table th {
+  padding: 12px;
+  font-weight: 700;
+  color: #565D6D;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ==== 본문 ==== */
 .usage-table td {
-  padding: 10px;
-  border-bottom: 1px solid #e5e5e5;
-  text-align: left;
+  padding: 14px 10px;
+  border-bottom: 1px solid #EFEFEF;
+  text-align: center;
+  color: #333;
+  font-size: 14px;
 }
 
+/* 행 hover */
+.usage-table tbody tr:hover {
+  background: #F6F6F6;
+}
+
+/* ==== 페이징 ==== */
 .pagination {
   display: flex;
   justify-content: center;
@@ -137,6 +162,7 @@ function goNextChunk() {
   gap: 8px;
 }
 
+/* 페이지 번호 */
 .page-btn {
   padding: 6px 12px;
   border: 1px solid #ccc;
@@ -145,14 +171,18 @@ function goNextChunk() {
   min-width: 38px;
   text-align: center;
   background: white;
+  font-size: 14px;
 }
 
+/* 현재 페이지 */
 .page-btn.active {
-  color: #00A950;
+  background: #ffffff;
+  color: rgb(0, 0, 0);
   border-color: #00A950;
   font-weight: 600;
 }
 
+/* 좌우 화살표 */
 .nav-btn {
   padding: 6px 10px;
   border: 1px solid #ddd;
