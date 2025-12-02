@@ -21,6 +21,7 @@
     <ReservationFilters
       @change="(f) => {
         Object.assign(searchParams, f)
+        searchParams.page = 0 
         fetchAppliedReservations()
       }"
     />
@@ -78,14 +79,7 @@ const total = ref(0)
 const modalOpen = ref(false)
 const reservationDetail = ref(null)
 const currentUserName = ref("")
-function buildParams() {
-  const params = {}
-  Object.entries(searchParams.value).forEach(([key, value]) => {
-    if (value === "" || value === null || value === undefined) return
-    params[key] = value
-  })
-  return params
-}
+
 
 async function fetchAppliedReservations() {
   const params = buildParams()
@@ -197,6 +191,14 @@ function getKSTDateString() {
   const kst = new Date(Date.now() + offset)
   return kst.toISOString().slice(0, 10)
 }
+function buildParams() {
+  const params = {}
+  Object.entries(searchParams.value).forEach(([key, value]) => {
+    params[key] = value === "" ? null : value
+  })
+  return params
+}
+
 
 onMounted(async() => {
   searchParams.value.date = getKSTDateString()
