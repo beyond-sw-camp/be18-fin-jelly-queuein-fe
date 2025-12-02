@@ -7,7 +7,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import AssetForm from './components/AssetForm.vue'
-import { assetApi } from '@/api/assetApi'
+import { assetApi } from '@/api/assetApi.js'
 import { ref } from 'vue'
 
 const router = useRouter()

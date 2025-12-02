@@ -1,7 +1,13 @@
 <!-- file: src/views/admin/asset/AssetEditView.vue -->
 <template>
   <div>
-    <AssetForm v-if="form" :initialData="form" submitText="자원 수정" :onSubmit="updateAsset" />
+    <AssetForm
+      v-if="form"
+      :initialData="form"
+      submitText="자원 수정"
+      :onSubmit="updateAsset"
+      :isEdit="true"
+    />
   </div>
 </template>
 
@@ -9,7 +15,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AssetForm from './components/AssetForm.vue'
-import { assetApi } from '@/api/assetApi'
+import { assetApi } from '@/api/assetApi.js'
 
 const route = useRoute()
 const router = useRouter()

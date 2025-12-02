@@ -36,7 +36,7 @@
           <td colspan="8" class="empty">데이터가 없습니다.</td>
         </tr>
 
-        <tr v-for="a in assets" :key="a.assetId">
+        <tr v-for="a in assets" :key="a.assetId" @click="goDetail(a.assetId)">
           <td>{{ a.type }}</td>
           <td>{{ a.status }}</td>
           <td>{{ a.name }}</td>
@@ -47,9 +47,11 @@
 
           <!-- 편집 버튼 -->
           <td>
-            <button class="edit-btn" @click="editAsset(a)">수정</button>
+            <button class="edit-btn" @click.stop="editAsset(a)">수정</button>
             /
-            <button class="delete-btn" @click="deleteAsset(a)">삭제</button>
+            <button class="move-btn" @click.stop="openMoveModal(a)">이동</button>
+            /
+            <button class="delete-btn" @click.stop="deleteAsset(a)">삭제</button>
           </td>
         </tr>
       </tbody>
@@ -76,14 +78,25 @@
       <button class="category-btn" @click="goCategory">카테고리 관리</button>
       <button class="create-btn" @click="createAsset">자원 등록</button>
     </div>
+
+    <ConfirmModal
+      v-if="showDeleteModal"
+      title="자원 삭제"
+      message="정말 삭제하시겠습니까?"
+      @confirm="confirmDelete"
+      @cancel="showDeleteModal = false"
+    />
+
+    <AssetMoveModal v-if="showMoveModal" :onConfirm="confirmMove" :onClose="closeMoveModal" />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { categoryApi } from '@/api/categoryApi'
+// import { categoryApi } from '@/api/categoryApi'
 import api from '@/api/axios'
+import { assetApi } from '@/api/assetApi'
 
 // 공용 드롭다운
 import RootDropDownMenu from '@/components/common/RootDropDownMenu.vue'
@@ -91,6 +104,8 @@ import OneDepthDropDownMenu from '@/components/common/OneDepthDropDownMenu.vue'
 import CategoryDropDownMenu from '@/components/common/CategoryDropDownMenu.vue'
 import AssetTypeDropdown from '@/components/common/AssetTypeDropdown.vue'
 import AssetStatusDropdown from '@/components/common/AssetStatusDropdown.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import AssetMoveModal from './components/AssetMoveModal.vue'
 
 const building = ref('')
 const location = ref('')
@@ -105,6 +120,13 @@ const size = ref(10)
 
 const assets = ref([])
 const totalPages = ref(1)
+
+const showDeleteModal = ref(false)
+const deleteTarget = ref(null)
+
+// 자원 이동에 필요한 변수
+const showMoveModal = ref(false)
+const moveTarget = ref(null)
 
 async function loadAssets() {
   const res = await api.get('/assets/descendants', {
@@ -124,6 +146,29 @@ async function loadAssets() {
   totalPages.value = res.data.totalPages
 }
 
+async function confirmDelete() {
+  try {
+    await assetApi.delete(deleteTarget.value.assetId)
+    showDeleteModal.value = false
+    loadAssets() // 목록 새로고침
+  } catch (err) {
+    alert(err.response?.data?.message || '삭제 실패')
+  }
+}
+
+async function confirmMove(newParentName) {
+  try {
+    await assetApi.move(moveTarget.value.assetId, newParentName)
+
+    alert('자원이 이동되었습니다.')
+    closeMoveModal()
+    loadAssets() // 목록 새로고침
+  } catch (err) {
+    alert(err.response?.data?.message || '이동 실패')
+    console.error(err)
+  }
+}
+
 function changePage(p) {
   page.value = p
   loadAssets()
@@ -140,6 +185,25 @@ function editAsset(asset) {
 function createAsset() {
   router.push('/admin/assets/create')
 }
+
+function goDetail(assetId) {
+  router.push(`/admin/assets/${assetId}`)
+}
+
+function deleteAsset(asset) {
+  deleteTarget.value = asset
+  showDeleteModal.value = true
+}
+
+function openMoveModal(asset) {
+  moveTarget.value = asset
+  showMoveModal.value = true
+}
+
+function closeMoveModal() {
+  showMoveModal.value = false
+}
+
 onMounted(loadAssets)
 </script>
 
@@ -199,6 +263,11 @@ onMounted(loadAssets)
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
+}
+
+.asset-table tbody tr:hover {
+  background-color: #f5f5f5;
+  cursor: pointer;
 }
 
 .asset-table th {
@@ -275,4 +344,16 @@ onMounted(loadAssets)
   border: none;
   outline: none;
 }
+
+.move-btn {
+  color: #2f5d2f;
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+/* .move-btn:hover {
+  background-color: #cfe3cf;
+} */
 </style>

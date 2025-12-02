@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
-import ChangePasswordView from '@/views/auth/ChangePasswordView.vue'
+import ChangeTempPasswordView from '@/views/auth/ChangeTempPasswordView.vue'
 import DashboardView from '@/views/app/DashboardView.vue'
 import HomeLayout from '@/layouts/HomeLayout.vue'
 import LoginView from '@/views/auth/LoginView.vue'
@@ -13,17 +13,21 @@ import { setupGuards } from './guards'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    // ---------------------------------------------------------
     // Public
+    // ---------------------------------------------------------
     {
       path: '/',
       component: PublicLayout,
       children: [
         { path: '', component: LoginView },
-        { path: 'change-password', component: ChangePasswordView },
+        { path: 'change-password', component: ChangeTempPasswordView },
       ],
     },
 
+    // ---------------------------------------------------------
     // 일반 사용자 영역
+    // ---------------------------------------------------------
     {
       path: '/app',
       component: HomeLayout,
@@ -72,7 +76,9 @@ const router = createRouter({
 
     },
 
+    // ---------------------------------------------------------
     // 관리자 영역
+    // ---------------------------------------------------------
     {
       path: '/admin',
       component: AdminLayout,
@@ -80,25 +86,72 @@ const router = createRouter({
       children: [
         { path: '', component: AdminDashboard },
 
-        // 카테고리 관리자용 목록 조회
+        // -------------------------
+        // 기본 이동: /admin → /admin/users
+        // -------------------------
+        { path: '', redirect: '/admin/users' },
+
+        // -------------------------
+        // 사용자 관리
+        // -------------------------
+        {
+          path: 'users',
+          component: () =>
+            import('@/views/admin/iam/user/UserManagement.vue'),
+          meta: { title: '사용자 관리', minRole: 'ADMIN' }
+        },
+
+        // -------------------------
+        // 역할 관리
+        // -------------------------
+        {
+          path: 'roles',
+          component: () =>
+            import('@/views/admin/iam/role/RoleManagement.vue'),
+          meta: { title: '역할 관리', minRole: 'ADMIN' }
+        },
+
+        // -------------------------
+        // 권한 관리
+        // -------------------------
+        {
+          path: 'permissions',
+          component: () =>
+            import('@/views/admin/iam/permission/PermissionManagement.vue'),
+          meta: { title: '권한 관리', minRole: 'ADMIN' }
+        },
+
+        // ========== ⭐ 자원 관리 그룹 ==========
+        {
+          path: 'assets',
+          meta: { minRole: 'MANAGER' },
+          children: [
+            // /admin/assets  → /admin/assets/list 리디렉트
+            { path: '', redirect: '/admin/assets/list' },
+
+            {
+              path: 'list',
+              component: () => import('@/views/admin/asset/AssetManagement.vue'),
+              meta: { title: '자원 목록 조회', minRole: 'MANAGER' },
+            },
+            {
+              path: 'create',
+              component: () => import('@/views/admin/asset/AssetCreateView.vue'),
+              meta: { title: '자원 등록', minRole: 'MANAGER' },
+            },
+            {
+              path: ':assetId/edit',
+              component: () => import('@/views/admin/asset/AssetEditView.vue'),
+              meta: { title: '자원 수정', minRole: 'MANAGER' },
+            },
+          ],
+        },
+
+        // ========== 카테고리 관리 ==========
         {
           path: 'categories',
           component: () => import('@/views/admin/category/CategoryManagement.vue'),
-          meta: { minRole: 'MANAGER' },
-        },
-
-        // 자원 목록 조회
-        {
-          path: 'assets',
-          component: () => import('@/views/admin/asset/AssetManagement.vue'),
-          meta: { requiresAuth: true, minRole: 'MANAGER' },
-        },
-
-        // 자원 생성
-        {
-          path: 'assets/create',
-          component: () => import('@/views/admin/asset/AssetCreateView.vue'),
-          meta: { minRole: 'MANAGER' },
+          meta: { minRole: 'MANAGER', title: '카테고리 관리' },
         },
 
         // 자원 수정
@@ -107,10 +160,21 @@ const router = createRouter({
           component: () => import('@/views/admin/asset/AssetEditView.vue'),
           meta: { minRole: 'MANAGER' },
         },
+
+        // 자원 상세 조회
+        {
+          path: 'assets/:assetId',
+          component: () => import('@/views/admin/asset/AssetDetailView.vue'),
+          meta: { requiresAuth: true, minRole: 'MANAGER' },
+        },
+        // 다른 Admin 메뉴는 필요 시 추가 가능
       ],
     },
   
 
+    // ---------------------------------------------------------
+    // 오류 페이지
+    // ---------------------------------------------------------
     { path: '/403', component: () => import('@/views/error/ForbiddenView.vue') },
     { path: '/:pathMatch(.*)*', component: () => import('@/views/error/NotFoundView.vue') },
   ],
