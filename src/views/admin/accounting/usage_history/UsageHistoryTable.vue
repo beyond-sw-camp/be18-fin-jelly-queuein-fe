@@ -26,7 +26,6 @@
           :key="row.usageHistoryId"
         >
 
-
           <td>{{ row.assetName }}</td>
           <td>{{ row.reservationStartAt }}</td>
           <td>{{ row.reservationEndAt }}</td>
@@ -90,12 +89,14 @@
 
         <div class="modal-info">
           <p><strong>자원명:</strong> {{ detailData.assetName }}</p>
+
           <p><strong>예약자:</strong>
             <span v-if="detailData.reserverNames?.length">
               {{ detailData.reserverNames.join(", ") }}
             </span>
             <span v-else>없음</span>
           </p>
+
           <p><strong>청구금액:</strong> {{ detailData.billAmount }}</p>
           <p><strong>실제 청구금액:</strong> {{ detailData.actualBillAmount }}</p>
         </div>
@@ -158,7 +159,7 @@ const detailData = ref({})
 
 async function openDetail(id) {
   try {
-    const { data } = await api.get(`/api/v1/accounting/usage-history/${id}`)
+    const { data } = await api.get(`/accounting/usage-history/${id}`)
     detailData.value = data
     showDetail.value = true
   } catch (err) {
@@ -269,10 +270,10 @@ function closeDetail() {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 480px;
+  width: 700px;
   background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 32px;
   z-index: 999;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
@@ -293,12 +294,12 @@ function closeDetail() {
 
 .modal-body {
   display: flex;
-  gap: 20px;
+  gap: 40px;
 }
 
 .modal-image {
-  width: 140px;
-  height: 120px;
+  width: 260px;
+  height: 200px;
   background: #eee;
   border-radius: 8px;
   display: flex;
@@ -312,6 +313,6 @@ function closeDetail() {
 }
 
 .modal-info p {
-  margin: 6px 0;
+  margin: 20px 0;
 }
 </style>
