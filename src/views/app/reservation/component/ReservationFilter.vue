@@ -103,6 +103,45 @@ watch(
 
 <style scoped>
 .filter-row {
+  display: flex;
+  flex-wrap: wrap; /* 줄바꿈 허용 */
+  gap: 12px;
   margin: 20px 0;
 }
+
+/* 공통적으로 모든 el-col을 같은 크기로 */
+.filter-row > .el-col {
+  flex: 1 1 calc(16.66% - 12px); /* 6개 → 한줄에 6등분 */
+  min-width: 180px; /* 최소 너비 주면 겹침 방지 */
+}
+
+/* 내부 element 크기 고정 */
+.filter-row :deep(.el-select),
+.filter-row :deep(.el-date-editor),
+.filter-row :deep(.el-input),
+.filter-row :deep(.el-input__wrapper) {
+  width: 100%;
+}
+
+/* 🔥 반응형: 화면이 좁아지면 3등분 */
+@media (max-width: 1200px) {
+  .filter-row > .el-col {
+    flex: 1 1 calc(33.33% - 12px); /* 한 줄에 3개 */
+  }
+}
+
+/* 🔥 더 좁아지면 2등분 */
+@media (max-width: 900px) {
+  .filter-row > .el-col {
+    flex: 1 1 calc(50% - 12px); /* 한 줄에 2개 */
+  }
+}
+
+/* 🔥 모바일: 1개씩 */
+@media (max-width: 600px) {
+  .filter-row > .el-col {
+    flex: 1 1 100%; /* 한 줄에 하나 */
+  }
+}
+
 </style>

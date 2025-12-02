@@ -30,7 +30,7 @@ const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 
-pp.use(ElementPlus)
+app.use(ElementPlus)
 app.use(createPinia())
 app.use(router)
 // PrimeVue 설정
