@@ -1,6 +1,6 @@
+<!-- file: src/components/accounting/AccountingTabMenu.vue -->
 <template>
-  <div class="tab-container">
-
+  <div class="tab-wrapper">
     <div class="tab-menu">
       <router-link
         to="/admin/accounting/usage-history"
@@ -49,34 +49,44 @@ function isActive(path) {
 </script>
 
 <style scoped>
-.tab-container {
+.tab-wrapper {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  padding-left: 5px;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
+/* 탭 4개를 동일 비율로 꽉 채우기 */
 .tab-menu {
   display: flex;
-  gap: 48px;
-  padding: 10px 0 0 0;
+  width: 100%;
+  justify-content: space-between;
+  text-align: center;
 }
 
 .tab {
-  font-size: 17px;
+  flex: 1;
+  padding: 4px 0;
+  font-size: 16px;
   font-weight: 600;
   color: #6b7280;
-  padding-bottom: 8px;
   text-decoration: none;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* 세로 가운데 정렬 */
+  border-bottom: 3px solid transparent;
 }
 
+/* 활성 탭 */
 .tab.active {
   color: #00A950;
   border-bottom: 3px solid #00A950;
 }
 
+/* 아래 라인 */
 .bottom-line {
+  width: 100%;
   border-bottom: 1.5px solid #e5e7eb;
-  margin-top: 0;
+  margin-top: -3px;
 }
 </style>

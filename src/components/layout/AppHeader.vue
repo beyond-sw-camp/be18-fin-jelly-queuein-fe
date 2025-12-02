@@ -10,7 +10,7 @@ const emit = defineEmits(['toggle-sidebar'])
 // ===============================
 // 🧩 로그인 사용자 정보 가져오기
 // ===============================
-const role = localStorage.getItem('role') || '' 
+const role = localStorage.getItem('role') || ''
 const name = (localStorage.getItem('userName') || '').trim()
 
 // ===============================
@@ -56,7 +56,7 @@ const breadcrumbMap = {
 
   // 기타
   categories: '카테고리 관리',
-  settlement: '정산 관리',
+  accounting: '정산 관리',
   usage: '정산 관리',
   users: '유저 관리',
   schedule: '일정 관리',
