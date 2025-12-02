@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { roleApi } from '@/api/iam/roleApi.js'
-import { permissionApi } from '@/api/iam/permission.js'
+import { permissionApi } from '@/api/iam/permissionApi.js'
 
 import IamTabs from '@/components/iam/IamTabs.vue'
 
