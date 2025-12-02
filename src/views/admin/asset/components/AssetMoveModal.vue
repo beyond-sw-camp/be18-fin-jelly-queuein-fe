@@ -1,7 +1,7 @@
 <template>
   <div class="modal-backdrop" @click.self="close">
     <div class="modal-box">
-      <h3 class="modal-title">부모 자원 이동</h3>
+      <h3 class="modal-title">부모 자원 이름</h3>
 
       <!-- 입력창 -->
       <input
