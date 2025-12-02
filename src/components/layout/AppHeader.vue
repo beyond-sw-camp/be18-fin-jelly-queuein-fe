@@ -54,6 +54,7 @@ const breadcrumbMap = {
   edit: '자원 수정',
   'usage-history': '자원 사용 기록 조회',
   'usage-trend': '사용 추이',
+  'performance': '운영 성과 분석',
 
   // 기타
   categories: '카테고리 관리',

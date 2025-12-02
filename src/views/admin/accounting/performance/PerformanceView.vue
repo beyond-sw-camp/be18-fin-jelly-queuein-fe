@@ -3,20 +3,22 @@
 
     <h2 class="page-title">운영 성과 분석</h2>
 
+    <!-- 🔹오른쪽 상단 버튼 -->
+    <button class="target-btn" @click="openTargetModal">
+      {{ hasTarget ? "사용률 조회" : "사용률 등록" }}
+    </button>
+
     <!-- 필터 -->
     <div class="filters">
 
-      <!-- baseYear -->
       <select v-model="selectedBaseYear" @change="loadData">
         <option v-for="y in yearList" :key="y" :value="y">{{ y }}</option>
       </select>
 
-      <!-- compareYear -->
       <select v-model="selectedCompareYear" @change="loadData">
         <option v-for="y in yearList" :key="y" :value="y">{{ y }}</option>
       </select>
 
-      <!-- 검색 -->
       <div class="search-box">
         <input
           type="text"
@@ -32,14 +34,11 @@
     <!-- 본문 -->
     <div class="content-wrapper">
 
-      <!-- 좌측 차트 -->
       <div class="chart-box">
-
         <div class="chart-header">
           <span>{{ assetTitle }}</span>
         </div>
 
-        <!-- 막대 그래프 -->
         <Chart
           type="bar"
           :data="chartData"
@@ -48,9 +47,7 @@
         />
       </div>
 
-      <!-- 우측 정보 카드 -->
       <div class="right-cards">
-
         <div class="info-card">
           <h3>{{ formatMoney(summary.baseYearTotalSaving) }}</h3>
           <p>{{ selectedBaseYear }}년 총 절감 금액</p>
@@ -65,7 +62,6 @@
           <h3>{{ formatMoney(summary.accumulatedSaving) }}</h3>
           <p>누적 절감 금액</p>
         </div>
-
       </div>
 
     </div>
@@ -74,10 +70,44 @@
     <!-- 에러 모달 -->
     <!-- ============================= -->
     <div v-if="showErrorModal" class="modal-backdrop" @click="closeErrorModal"></div>
-
     <div v-if="showErrorModal" class="modal-box">
       <p>{{ errorMessage }}</p>
       <button class="close-btn" @click="closeErrorModal">확인</button>
+    </div>
+
+    <!-- ============================= -->
+    <!-- 사용률 등록 모달 -->
+    <!-- ============================= -->
+    <div v-if="showRegisterModal" class="modal-backdrop" @click="closeRegisterModal"></div>
+    <div v-if="showRegisterModal" class="modal-box">
+      <h3>{{ currentYear }} 목표 사용률</h3>
+
+      <input
+        type="number"
+        v-model="registerRate"
+        placeholder="예: 85"
+        class="input-box"
+      />
+
+      <button class="confirm-btn" @click="registerTarget">
+        등록
+      </button>
+    </div>
+
+    <!-- ============================= -->
+    <!-- 사용률 조회 모달 -->
+    <!-- ============================= -->
+    <div v-if="showViewModal" class="modal-backdrop" @click="closeViewModal"></div>
+    <div v-if="showViewModal" class="modal-box">
+      <h3>목표 사용률</h3>
+
+      <p style="font-size: 20px; margin-top: 10px;">
+        {{ currentYear }}년 → <b>{{ (targetRate * 100).toFixed(0) }}%</b>
+      </p>
+
+      <button class="confirm-btn" @click="closeViewModal">
+        확인
+      </button>
     </div>
 
   </div>
@@ -87,29 +117,46 @@
 import { ref, onMounted } from "vue"
 import api from "@/api/axios"
 
+/* =======================
+      상태
+======================= */
 const yearList = [2021, 2022, 2023, 2024, 2025, 2026]
 const selectedBaseYear = ref(2024)
 const selectedCompareYear = ref(2025)
 const assetName = ref("")
-
 const assetTitle = ref("전체")
 
 const summary = ref({})
 const chartData = ref({})
 const chartOptions = ref({})
 
-/* 에러 모달 상태 */
+/* 에러 모달 */
 const showErrorModal = ref(false)
 const errorMessage = ref("")
+function closeErrorModal() { showErrorModal.value = false }
 
-function closeErrorModal() {
-  showErrorModal.value = false
-}
+/* =======================
+      사용률 등록 상태
+======================= */
+const currentYear = new Date().getFullYear()
+const hasTarget = ref(false)   // 등록 여부
+const targetRate = ref(0)
 
+const showRegisterModal = ref(false)
+const showViewModal = ref(false)
+const registerRate = ref("")   // 사용자가 입력한 값
+
+/* =======================
+      초기 로드
+======================= */
 onMounted(() => {
   loadData()
+  loadTargetRate()
 })
 
+/* =======================
+   KPI 데이터
+======================= */
 async function loadData() {
   try {
     const { data } = await api.get("/accounting/settlement/performance", {
@@ -130,18 +177,8 @@ async function loadData() {
     chartData.value = {
       labels,
       datasets: [
-        {
-          label: selectedBaseYear.value,
-          backgroundColor: "#8B5401",
-          data: base,
-          borderRadius: 4
-        },
-        {
-          label: selectedCompareYear.value,
-          backgroundColor: "#00A950",
-          data: compare,
-          borderRadius: 4
-        }
+        { label: selectedBaseYear.value, backgroundColor: "#8B5401", data: base },
+        { label: selectedCompareYear.value, backgroundColor: "#00A950", data: compare }
       ]
     }
 
@@ -149,26 +186,67 @@ async function loadData() {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        y: {
-          ticks: {
-            callback: v => (v / 10000).toLocaleString() + "만",
-          }
-        }
-      },
-      plugins: {
-        legend: { position: "top" }
+        y: { ticks: { callback: v => (v / 10000).toLocaleString() + "만" } }
       }
     }
 
   } catch (e) {
     console.error("API 오류:", e)
-
-    // 잘못된 자원 검색 시
     errorMessage.value = "등록되지 않은 자원입니다."
     showErrorModal.value = true
   }
 }
 
+/* =======================
+   목표 사용률 조회
+======================= */
+async function loadTargetRate() {
+  try {
+    const { data } = await api.get("/accounting/usage-targets")
+
+    if (data?.targetRate !== undefined) {
+      hasTarget.value = true
+      targetRate.value = data.targetRate
+    }
+  } catch (e) {
+    hasTarget.value = false
+  }
+}
+
+/* =======================
+    버튼 클릭 시 모달 결정
+======================= */
+function openTargetModal() {
+  if (hasTarget.value) showViewModal.value = true
+  else showRegisterModal.value = true
+}
+
+/* =======================
+    사용률 등록 POST
+======================= */
+async function registerTarget() {
+  if (!registerRate.value) return
+
+  try {
+    await api.post("/accounting/usage-targets", {
+      targetRate: Number(registerRate.value) / 100
+    })
+
+    hasTarget.value = true
+    targetRate.value = Number(registerRate.value) / 100
+
+    showRegisterModal.value = false
+  } catch (e) {
+    console.error("등록 실패:", e)
+  }
+}
+
+function closeRegisterModal() { showRegisterModal.value = false }
+function closeViewModal() { showViewModal.value = false }
+
+/* =======================
+    금액 표시 변환
+======================= */
 function formatMoney(v) {
   if (v === undefined || v === null) return "-"
   return (v / 10000).toLocaleString() + " 만원"
@@ -176,8 +254,6 @@ function formatMoney(v) {
 </script>
 
 <style scoped>
-/* --- 기존 사용 추이 화면 스타일 그대로 유지 --- */
-
 .usage-trend-page {
   padding: 20px;
 }
@@ -188,6 +264,20 @@ function formatMoney(v) {
   margin-bottom: 20px;
 }
 
+/* 🔹 상단 버튼 */
+.target-btn {
+  position: absolute;
+  right: 40px;
+  top: 130px;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* 필터 */
 .filters {
   display: flex;
   gap: 12px;
@@ -209,11 +299,7 @@ function formatMoney(v) {
   border-radius: 6px;
 }
 
-.search-box input {
-  border: none;
-  outline: none;
-}
-
+/* 본문 */
 .content-wrapper {
   display: flex;
   gap: 20px;
@@ -247,13 +333,13 @@ function formatMoney(v) {
   margin-bottom: 6px;
 }
 
-/* ==== 에러 모달 스타일 ==== */
+/* 모달 공통 */
 .modal-backdrop {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
   background: rgba(0,0,0,0.35);
-  z-index: 999;
+  z-index: 998;
 }
 
 .modal-box {
@@ -263,10 +349,28 @@ function formatMoney(v) {
   background: white;
   padding: 26px;
   width: 320px;
-  border-radius: 10px;
+  border-radius: 12px;
   text-align: center;
-  z-index: 1000;
+  z-index: 999;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.input-box {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.confirm-btn {
+  margin-top: 20px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  background: #00A950;
+  color: white;
+  cursor: pointer;
 }
 
 .close-btn {
