@@ -26,7 +26,7 @@ const router = createRouter({
     },
 
     // ---------------------------------------------------------
-    // 일반 사용자 영역
+    // 일반 사용자
     // ---------------------------------------------------------
     {
       path: '/app',
@@ -38,7 +38,7 @@ const router = createRouter({
     },
 
     // ---------------------------------------------------------
-    // 관리자 영역
+    // 관리자
     // ---------------------------------------------------------
     {
       path: '/admin',
@@ -47,59 +47,75 @@ const router = createRouter({
       children: [
         { path: '', component: AdminDashboard },
 
-        // ========== ⭐ 자원 관리 그룹 ==========
+        // 자원 관리
         {
           path: 'assets',
           meta: { minRole: 'MANAGER' },
           children: [
-            // /admin/assets  → /admin/assets/list 리디렉트
             { path: '', redirect: '/admin/assets/list' },
-
             {
               path: 'list',
-              component: () =>
-                import('@/views/admin/asset/AssetManagement.vue'),
+              component: () => import('@/views/admin/asset/AssetManagement.vue'),
               meta: { title: '자원 목록 조회', minRole: 'MANAGER' }
             },
             {
               path: 'create',
-              component: () =>
-                import('@/views/admin/asset/AssetCreateView.vue'),
+              component: () => import('@/views/admin/asset/AssetCreateView.vue'),
               meta: { title: '자원 등록', minRole: 'MANAGER' }
             },
             {
               path: ':assetId/edit',
-              component: () =>
-                import('@/views/admin/asset/AssetEditView.vue'),
+              component: () => import('@/views/admin/asset/AssetEditView.vue'),
               meta: { title: '자원 수정', minRole: 'MANAGER' }
             }
           ]
         },
 
-        // ========== 카테고리 관리 ==========
+        // 카테고리 관리
         {
           path: 'categories',
-          component: () =>
-            import('@/views/admin/category/CategoryManagement.vue'),
+          component: () => import('@/views/admin/category/CategoryManagement.vue'),
           meta: { minRole: 'MANAGER', title: '카테고리 관리' },
         },
-        
 
-        // 정산 - 자원 사용 기록 조회
+        // ---------------------------------------------------------
+        // ⭐ 정산 메뉴 (Layout 제거됨)
+        // ---------------------------------------------------------
         {
-          path: 'settlement/usage-history',
-          component: () =>
-            import('@/views/admin/settlement/UsageHistory.vue'),
-          meta: { minRole: 'MANAGER', title: '자원 사용 기록' },
+          path: 'accounting',
+          meta: { minRole: 'MANAGER' },
+          children: [
+            {
+              path: 'usage-history',
+              component: () =>
+                import('@/views/admin/accounting/usage_history/UsageHistory.vue'),
+              meta: { title: '자원 사용 기록' }
+            },
+            {
+              path: 'usage-trend',
+              component: () =>
+                import('@/views/admin/accounting/usage_trend/UsageTrend.vue'),
+              meta: { title: '사용 추이' }
+            },
+            {
+              path: 'performance',
+              component: () =>
+                import('@/views/admin/accounting/performance/PerformanceView.vue'),
+              meta: { title: '운영 성과 분석' }
+            },
+            {
+              path: 'quarter',
+              component: () =>
+                import('@/views/admin/accounting/quarter/QuarterSettlement.vue'),
+              meta: { title: '분기 정산' }
+            }
+          ]
         }
-
-
-        // 다른 Admin 메뉴는 필요 시 추가 가능
       ],
     },
 
     // ---------------------------------------------------------
-    // 오류 페이지
+    // Error 페이지
     // ---------------------------------------------------------
     { path: '/403', component: () => import('@/views/error/ForbiddenView.vue') },
     { path: '/:pathMatch(.*)*', component: () => import('@/views/error/NotFoundView.vue') },
