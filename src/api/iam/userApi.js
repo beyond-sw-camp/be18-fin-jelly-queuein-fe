@@ -13,7 +13,7 @@ export const userApi = {
   updateUser: (userId, payload) => api.patch(`/users/${userId}`, payload),
 
   // 임시 비밀번호 변경 (로그인 직후)
-  changeTempPassword: (payload) => api.patch('/users/me/temp-password', payload),
+  changeTempPassword: (payload,config) => api.patch('/users/me/temp-password', payload, config),
 
   // 본인 비밀번호 변경
   changePassword: (payload) => api.patch('/users/me/password', payload),
