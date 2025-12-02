@@ -40,13 +40,6 @@
       />
     </el-col>
 
-    <!-- 0계층 (사옥) -->
-    <el-col :span="4">
-      <BuildingDropdown
-        v-model="filters.layerZero"
-        @update:modelValue="onBuildingChange"
-      />
-    </el-col>
 
     <!-- 1계층 (위치: 사옥 선택 시 활성화) -->
     <el-col :span="4">
@@ -54,6 +47,14 @@
         v-model="filters.layerOne"
         :buildingId="filters.layerZero"
         @update:modelValue="emitChange"
+      />
+    </el-col>
+
+        <!-- 0계층 (사옥) -->
+    <el-col :span="4">
+      <BuildingDropdown
+        v-model="filters.layerZero"
+        @update:modelValue="onBuildingChange"
       />
     </el-col>
 
@@ -104,24 +105,34 @@ watch(
 <style scoped>
 .filter-row {
   display: flex;
-  flex-wrap: wrap; /* 줄바꿈 허용 */
+  flex-wrap: wrap;
   gap: 12px;
   margin: 20px 0;
 }
 
-/* 공통적으로 모든 el-col을 같은 크기로 */
+/* 모든 el-col은 동일 크기로 강제 */
 .filter-row > .el-col {
-  flex: 1 1 calc(16.66% - 12px); /* 6개 → 한줄에 6등분 */
-  min-width: 180px; /* 최소 너비 주면 겹침 방지 */
+  flex: 1;
+  min-width: 180px;
+  box-sizing: border-box;
 }
 
-/* 내부 element 크기 고정 */
+/* 내부 요소 모두 width 100% */
 .filter-row :deep(.el-select),
 .filter-row :deep(.el-date-editor),
 .filter-row :deep(.el-input),
-.filter-row :deep(.el-input__wrapper) {
-  width: 100%;
+.filter-row :deep(.el-input__wrapper),
+.filter-row :deep(.el-input__inner) {
+  width: 100% !important;
+  box-sizing: border-box;
 }
+
+/* 드롭다운 내부도 padding 균일하게 */
+.filter-row :deep(.el-input__wrapper) {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
 
 /* 🔥 반응형: 화면이 좁아지면 3등분 */
 @media (max-width: 1200px) {

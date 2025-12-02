@@ -9,7 +9,7 @@
       @keyup.enter="fetchReservableAssets"
     >
       <template #append>
-        <el-button icon="Search" @click="fetchReservableAssets" />
+        <el-button :icon="Search" @click="fetchReservableAssets" />
       </template>
     </el-input>
   </div>
@@ -49,7 +49,7 @@ import ReservationTabs from './component/ReservationTab.vue'
 import ReservationFilters from './component/ReservationFilter.vue'
 import ReservationTable from './component/ReservableAssetsTable.vue'
 import { ref, onMounted } from 'vue'
-
+import { Search } from '@element-plus/icons-vue'
 import api from '@/api/axios'
 
 

@@ -11,7 +11,7 @@
         @keyup.enter="fetchAppliedReservations"
       >
         <template #append>
-          <el-button icon="Search" @click="fetchAppliedReservations" />
+          <el-button :icon="Search" @click="fetchAppliedReservations" />
         </template>
       </el-input>
     </div>
@@ -55,6 +55,7 @@ import ReservationTabs from "./component/ReservationTab.vue"
 import ReservationFilters from "./component/ReservationFilter.vue"
 import ReservationTable from "./component/AppliedReservationTable.vue"
 import ReservationDetailModal from "./component/ReservationApplyDetailModal.vue"
+import { Search } from '@element-plus/icons-vue'
 
 
 const searchParams = ref({

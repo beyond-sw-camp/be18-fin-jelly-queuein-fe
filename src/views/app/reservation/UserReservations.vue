@@ -52,7 +52,7 @@ import ReservationFilters from "./component/ReservationFilter.vue"
 import ReservationTable from "./component/UserReservationTable.vue"
 import ReservationDetailModal from "./component/ReservationDetailModal.vue"
 import { reservationApi } from "@/api/reservationApi"
-
+import { Search } from '@element-plus/icons-vue'
 // 검색어
 const search = ref("")
 

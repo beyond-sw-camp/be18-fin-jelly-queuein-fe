@@ -48,10 +48,8 @@
         <el-input
           class="note-textarea"
           type="textarea"
-          :model-value="note"
+          v-model="internalNote"
           placeholder="비고를 입력하세요"
-          @update:model-value="val => emit('update:note', val)"
-
           rows="2"
           style="max-width: 400px;"
         />
@@ -62,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 
 const props = defineProps({
   assetName: String,
@@ -70,7 +68,10 @@ const props = defineProps({
   reserver: String,
   timeRange: String,
   participants: Array,
-  note: String
+  note: {
+  type: String,
+  default: ""
+}
 });
 
 const emit = defineEmits(["add", "update:date", "update:note"]);
@@ -88,6 +89,11 @@ const onDateChange = (v) => {
   else if (v instanceof Date) str = v.toISOString().slice(0, 10);
   emit("update:date", str);
 };
+
+const internalNote = computed({
+  get: () => props.note,
+  set: (val) => emit("update:note", val)
+});
 
 // 참여자 추가
 const onAdd = () => emit("add");
