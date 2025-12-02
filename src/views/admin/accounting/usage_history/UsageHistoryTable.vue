@@ -8,7 +8,6 @@
     <table v-else class="usage-table">
       <thead>
         <tr>
-          <th style="width: 60px;">상세</th>
           <th>자원명</th>
           <th>예약 시작</th>
           <th>예약 종료</th>
@@ -17,16 +16,16 @@
           <th>실제 종료</th>
           <th>실사용 시간(분)</th>
           <th>사용률(%)</th>
+          <th style="width: 60px;">상세</th>
         </tr>
       </thead>
 
       <tbody>
-        <tr v-for="row in rows" :key="row.usageHistoryId">
-          <td>
-            <button class="detail-btn" @click="openDetail(row)">
-              조회
-            </button>
-          </td>
+        <tr
+          v-for="row in rows"
+          :key="row.usageHistoryId"
+        >
+
 
           <td>{{ row.assetName }}</td>
           <td>{{ row.reservationStartAt }}</td>
@@ -36,6 +35,11 @@
           <td>{{ row.actualEndAt }}</td>
           <td>{{ row.actualMinutes }}</td>
           <td>{{ Math.round(row.usageRatio * 100) }}%</td>
+
+          <!-- 조회 링크 형태로 변경 -->
+          <td class="detail-cell">
+            <span class="detail-link" @click="openDetail(row.usageHistoryId)">조회</span>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -56,14 +60,16 @@
         {{ i }}
       </span>
 
-      <button class="nav-btn" :disabled="currentPage === totalPages - 1" @click="goNextChunk">
+      <button
+        class="nav-btn"
+        :disabled="currentPage === totalPages - 1"
+        @click="goNextChunk"
+      >
         <span class="arrow">&gt;</span>
       </button>
     </div>
 
-    <!-- ========================== -->
-    <!-- 상세 모달 ------------------- -->
-    <!-- ========================== -->
+    <!-- 상세 모달 -->
     <div v-if="showDetail" class="modal-backdrop" @click="closeDetail"></div>
 
     <div v-if="showDetail" class="detail-modal">
@@ -73,14 +79,25 @@
       </div>
 
       <div class="modal-body">
-        <div class="modal-image"></div>
+        <div class="modal-image">
+          <img
+            v-if="detailData.assetImage"
+            :src="detailData.assetImage"
+            alt="자원 이미지"
+          />
+          <div v-else class="no-image">이미지 없음</div>
+        </div>
 
         <div class="modal-info">
           <p><strong>자원명:</strong> {{ detailData.assetName }}</p>
-          <p><strong>예약 시작:</strong> {{ detailData.reservationStartAt }}</p>
-          <p><strong>예약 종료:</strong> {{ detailData.reservationEndAt }}</p>
-          <p><strong>실사용 시간:</strong> {{ detailData.actualMinutes }}분</p>
-          <p><strong>사용률:</strong> {{ Math.round(detailData.usageRatio * 100) }}%</p>
+          <p><strong>예약자:</strong>
+            <span v-if="detailData.reserverNames?.length">
+              {{ detailData.reserverNames.join(", ") }}
+            </span>
+            <span v-else>없음</span>
+          </p>
+          <p><strong>청구금액:</strong> {{ detailData.billAmount }}</p>
+          <p><strong>실제 청구금액:</strong> {{ detailData.actualBillAmount }}</p>
         </div>
       </div>
     </div>
@@ -89,6 +106,7 @@
 </template>
 
 <script setup>
+import api from "@/api/axios"
 import { computed, ref } from "vue"
 
 const props = defineProps({
@@ -134,15 +152,18 @@ function goNextChunk() {
   emit("changePage", target)
 }
 
-/* ============
-   상세 모달
-============== */
+/* 상세 모달 */
 const showDetail = ref(false)
 const detailData = ref({})
 
-function openDetail(row) {
-  detailData.value = row
-  showDetail.value = true
+async function openDetail(id) {
+  try {
+    const { data } = await api.get(`/api/v1/accounting/usage-history/${id}`)
+    detailData.value = data
+    showDetail.value = true
+  } catch (err) {
+    console.error("상세 API 오류:", err)
+  }
 }
 
 function closeDetail() {
@@ -181,23 +202,54 @@ function closeDetail() {
   font-size: 14px;
 }
 
+/* hover */
 .usage-table tbody tr:hover {
   background: #F6F6F6;
 }
 
-/* 조회 버튼 */
-.detail-btn {
-  padding: 4px 8px;
-  font-size: 13px;
-  border: 1px solid #1A73E8;
+/* 조회 링크 */
+.detail-cell {
+  text-align: left !important;
+  padding-left: 12px;
+}
+
+.detail-link {
   color: #1A73E8;
-  background: white;
-  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.detail-link:hover {
+  color: #1257b0;
+}
+
+/* 페이징 */
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.page-btn {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
   cursor: pointer;
 }
 
-.detail-btn:hover {
-  background: #EBF3FF;
+.page-btn.active {
+  background: rgb(255, 255, 255);
+  color: #00A950;
+  border-color: #00A950;
+}
+
+.nav-btn {
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: white;
+  border: 1px solid #ccc;
 }
 
 /* 모달 배경 */
@@ -208,7 +260,6 @@ function closeDetail() {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(3px);
   z-index: 998;
 }
 
@@ -218,12 +269,12 @@ function closeDetail() {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 520px;
+  width: 480px;
   background: white;
   border-radius: 12px;
   padding: 20px;
   z-index: 999;
-  box-shadow: 0px 4px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 
 .modal-header {
@@ -246,10 +297,18 @@ function closeDetail() {
 }
 
 .modal-image {
-  width: 160px;
-  height: 140px;
-  background: #ddd;
+  width: 140px;
+  height: 120px;
+  background: #eee;
   border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-image {
+  color: #777;
+  font-size: 13px;
 }
 
 .modal-info p {
