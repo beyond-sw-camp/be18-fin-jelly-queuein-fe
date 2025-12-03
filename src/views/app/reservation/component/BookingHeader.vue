@@ -35,9 +35,9 @@
       <div class="line-label">참여자</div>
       <div class="line-content">
         <el-button type="success" circle @click="onAdd">+</el-button>
-        <div v-for="(p,i) in participants" :key="i" class="tag">
-          {{ p }}
-        </div>
+          <span v-for="user in participants" :key="user.id">
+            {{ user.userName }}
+          </span>
       </div>
     </div>
 

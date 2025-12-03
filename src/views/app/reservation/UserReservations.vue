@@ -21,13 +21,14 @@
     </div>
 
     <!-- 날짜 필터 -->
-    <ReservationFilters @change="handleDateChange" />
+    <ReservationFilters @change="handleFilterChange" />
+
 
     <!-- 예약 목록 -->
     <ReservationTable 
-      :date="selectedDate"
-      @open-detail="openDetailModal"
+      :filters="selectedFilters"   
       :key="tableKey"
+      @open-detail="openDetailModal"
     />
 
     <!-- 상세 모달 -->
@@ -62,6 +63,20 @@ const selectedDate = ref(new Date().toISOString().split("T")[0])
 const handleSaveNote = async (note) => {
   if (!reservationDetail.value) return
   reservationDetail.value.note = note
+  refreshTable()
+}
+const selectedFilters = ref({
+  date: selectedDate.value,
+  assetType: "",
+  assetStatus: "",
+  categoryName: "",
+  layerZero: "",
+  layerOne: ""
+})
+
+const handleFilterChange = (filters) => {
+  selectedFilters.value = { ...filters } // 필터 전체 반영
+  selectedDate.value = filters.date      // 날짜도 따로 필요하면 그대로
   refreshTable()
 }
 

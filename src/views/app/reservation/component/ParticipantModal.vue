@@ -86,13 +86,10 @@ const toggleSelect = (user: User) => {
   const idx = selectedIds.value.indexOf(user.userId)
 
   if (idx === -1) {
-    // 선택 추가
     selectedIds.value.push(user.userId)
     selectedUserObjects.value.push(user)
   } else {
-    // 선택 해제
     selectedIds.value.splice(idx, 1)
-
     selectedUserObjects.value = selectedUserObjects.value.filter(
       u => u.userId !== user.userId
     )

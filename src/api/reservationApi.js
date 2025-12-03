@@ -20,10 +20,20 @@ export const reservationApi = {
   getReservationDetail: (id) => api.get(`/reservations/${id}`),
 
   // 사용자 예약 조회
-    getUserReservations: ({ page, size, date }) =>
+  getUserReservations: ({ page, size, date, assetType, assetStatus, categoryName, layerZero, layerOne }) =>
     api.get('/reservations/me', {
-        params: { page, size, date }
+      params: {
+        page,
+        size,
+        date,          // 필수, "YYYY-MM-DD"
+        assetType,
+        assetStatus,
+        categoryName,
+        layerZero,
+        layerOne
+      }
     }),
+
 
   startUsing(id) {
   return api.patch(`/reservations/${id}/check-in`)

@@ -72,13 +72,13 @@
 import { ref, watch } from "vue"
 import { reservationApi } from "@/api/reservationApi"
 import StatusTag from "./ReservationStatus.vue"
-
 const props = defineProps({
-  date: {
-    type: String,
+  filters: {
+    type: Object,
     required: true,
   },
 })
+
 
 const emit = defineEmits(["open-detail"])
 
@@ -126,19 +126,26 @@ const convertAssetStatus = (status) => {
 // ----------------------------
 const fetchReservations = async () => {
   try {
-    const res = await reservationApi.getUserReservations({
+    const params = {
       page: page.value - 1,
       size: pageSize.value,
-      date: props.date,
-    })
+      date: props.filters.date,
+      assetType: props.filters.assetType || undefined,
+      assetStatus: props.filters.assetStatus || undefined,
+      categoryName: props.filters.categoryName || undefined,
+      layerZero: props.filters.layerZero || undefined,
+      layerOne: props.filters.layerOne || undefined
+    }
+
+    const res = await reservationApi.getUserReservations(params)
 
     rows.value = res?.data?.content ?? []
     total.value = res?.data?.totalElements ?? 0
-
   } catch (err) {
     console.error("예약 조회 실패:", err)
   }
 }
+
 
 // ----------------------------
 // Row 클릭 이벤트
@@ -153,13 +160,14 @@ const openRow = (row, column) => {
 // 날짜 변경 시 페이지 초기화 + 리스트 재조회
 // ----------------------------
 watch(
-  () => props.date,
+  () => props.filters,
   () => {
     page.value = 1
     fetchReservations()
   },
-  { immediate: true }
+  { deep: true, immediate: true }
 )
+
 
 // ----------------------------
 // 페이지 변경

@@ -13,7 +13,6 @@ const isAdmin = computed(() =>
   ['MASTER', 'ADMIN', 'MANAGER'].includes(role)
 )
 
-// ★ 여기 추가!
 function isActiveExact(path) {
   return route.path === path
 }

@@ -1,6 +1,6 @@
 <template>
   <select class="dropdown" :value="modelValue" @change="updateValue">
-    <option value="" disabled>{{ placeholder }}</option>
+    <option value="">{{ placeholder }}</option>
 
     <option value="AVAILABLE">사용 가능</option>
     <option value="UNAVAILABLE">사용 불가</option>
