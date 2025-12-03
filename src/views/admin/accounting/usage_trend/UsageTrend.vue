@@ -16,7 +16,7 @@
         <option v-for="y in yearList" :key="y" :value="y">{{ y }}</option>
       </select>
 
-      <!-- 검색창 = assetName -->
+      <!-- 검색 -->
       <div class="search-box">
         <input
           type="text"
@@ -41,58 +41,100 @@
           type="line"
           :data="chartData"
           :options="chartOptions"
-          style="width:100%; height:360px;"
+          style="width:100%; height:500px;"
         />
       </div>
 
       <!-- 오른쪽 카드 -->
       <div class="right-cards">
-
         <div class="info-card">
           <h3>{{ summary.usageRateIncrease }}%</h3>
-          <p>{{ selectedBaseYear }}년 대비 {{ selectedCompareYear }}년<br/>사용 증가율</p>
+          <p>{{ selectedBaseYear }}년 대비 {{ selectedCompareYear }}년<br/>예약 증가율</p>
         </div>
 
         <div class="info-card">
           <h3>{{ summary.actualUsageIncrease }}%</h3>
-          <p>{{ selectedBaseYear }}년 대비 {{ selectedCompareYear }}년<br/>실 사용률 증가율</p>
+          <p>{{ selectedBaseYear }}년 대비 {{ selectedCompareYear }}년<br/>실 사용률 증가</p>
         </div>
 
         <div class="info-card">
           <h3>{{ summary.resourceUtilizationIncrease }}%</h3>
-          <p>{{ selectedBaseYear }}년 대비 {{ selectedCompareYear }}년<br/>월별 트렌드 증가율</p>
+          <p>{{ selectedBaseYear }}년 대비 {{ selectedCompareYear }}년<br/>가동률 증가</p>
         </div>
-
       </div>
 
     </div>
+
+    <!-- ======================= -->
+    <!-- 에러 모달 -->
+    <!-- ======================= -->
+    <transition name="fade">
+      <div v-if="showErrorModal" class="modal-backdrop"></div>
+    </transition>
+
+    <transition name="scale-fade">
+      <div v-if="showErrorModal" class="modal-box">
+        <p>{{ errorMessage }}</p>
+        <button class="close-btn" @click="closeErrorModal">확인</button>
+      </div>
+    </transition>
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted, onBeforeUnmount } from "vue"
 import api from "@/api/axios"
 
 // ---------------------
-// UI State
+// 상태
 // ---------------------
 const yearList = [2023, 2024, 2025, 2026]
+const currentYear = new Date().getFullYear()
 
-const selectedBaseYear = ref(2023)
-const selectedCompareYear = ref(2024)
+const selectedBaseYear = ref(currentYear - 1)   // 작년
+const selectedCompareYear = ref(currentYear)    // 올해
 const assetName = ref("")
 
-// ---------------------
 const dataAssetName = ref("")
 const summary = ref({})
 const chartData = ref({})
 const chartOptions = ref({})
 
+// ---------------------
+// 모달 상태
+// ---------------------
+const showErrorModal = ref(false)
+const errorMessage = ref("")
+
+function closeErrorModal() {
+  showErrorModal.value = false
+}
+
+function handleKeyPress(e) {
+  // ESC 또는 Enter => 모달 닫기
+  if ((e.key === "Escape" || e.key === "Enter") && showErrorModal.value) {
+    closeErrorModal()
+  }
+}
+
 onMounted(() => {
+  window.addEventListener("keyup", handleKeyPress)
   loadData()
 })
 
+onBeforeUnmount(() => {
+  window.removeEventListener("keyup", handleKeyPress)
+})
+
+// ---------------------
+// API 호출
+// ---------------------
 async function loadData() {
+
+  // 모달 떠 있으면 재검색 금지
+  if (showErrorModal.value) return
+
   try {
     const { data } = await api.get("/accounting/usage-history/trend", {
       params: {
@@ -110,7 +152,6 @@ async function loadData() {
     const baseValues = data.monthlyData.map(m => m.baseYearUsageRate)
     const compareValues = data.monthlyData.map(m => m.compareYearUsageRate)
 
-    // 꺾은선 그래프
     chartData.value = {
       labels,
       datasets: [
@@ -124,6 +165,7 @@ async function loadData() {
           pointBackgroundColor: "#E6A500",
           pointBorderColor: "#E6A500",
           tension: 0
+          
         },
         {
           label: selectedCompareYear.value,
@@ -143,48 +185,43 @@ async function loadData() {
       responsive: true,
       maintainAspectRatio: false,
 
+      plugins: {
+        legend: {
+          labels: {
+            pointStyle: "line",      // 선(line) 모양
+            boxWidth: 30,            // 선 길이
+            boxHeight: 1,            // 선 두께
+            color: "#333"
+          }
+        }
+      },
+
       scales: {
         y: {
           min: 0,
           max: 100,
           ticks: { stepSize: 20 }
         }
-      },
-      plugins: {
-        legend: {
-          labels: {
-            usePointStyle: false,   // 박스 대신 선을 사용
-            boxWidth: 40,
-            boxHeight: 0,
-            color: '#333'
-          }
-        }
       }
     }
 
   } catch (err) {
     console.error("API 오류:", err)
+    errorMessage.value = "등록되지 않은 자원입니다."
+    showErrorModal.value = true
   }
 }
 </script>
 
 <style scoped>
-.usage-trend-page {
-  padding: 20px;
-}
+/* ---------------------------------- */
+/* 기존 UI 스타일 */
+/* ---------------------------------- */
 
-.page-title {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 20px;
-}
+.usage-trend-page { padding: 20px; }
+.page-title { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
 
-.filters {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
+.filters { display: flex; gap: 12px; margin-bottom: 20px; }
 .filters select {
   padding: 8px 10px;
   border: 1px solid #ddd;
@@ -205,10 +242,7 @@ async function loadData() {
   outline: none;
 }
 
-.content-wrapper {
-  display: flex;
-  gap: 20px;
-}
+.content-wrapper { display: flex; gap: 20px; }
 
 .chart-box {
   flex: 1;
@@ -216,12 +250,6 @@ async function loadData() {
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
 }
 
 .right-cards {
@@ -237,10 +265,70 @@ async function loadData() {
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+.info-card h3 { font-size: 26px; color: #00A950; }
 
-.info-card h3 {
-  font-size: 26px;
-  color: #00A950;
-  margin-bottom: 6px;
+/* ---------------------------------- */
+/* 모달 스타일 */
+/* ---------------------------------- */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.35);
+  z-index: 998;
+}
+
+.modal-box {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 26px;
+  width: 320px;
+  border-radius: 12px;
+  text-align: center;
+  z-index: 999;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.close-btn {
+  margin-top: 18px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  background: #00A950;
+  color: white;
+  cursor: pointer;
+}
+
+/* ---------------------------------- */
+/* 모달 애니메이션 */
+/* ---------------------------------- */
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity .25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.scale-fade-enter-active {
+  animation: scaleIn .25s ease;
+}
+.scale-fade-leave-active {
+  animation: scaleOut .2s ease forwards;
+}
+
+@keyframes scaleIn {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes scaleOut {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
 }
 </style>

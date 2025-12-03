@@ -10,7 +10,6 @@
 
     <!-- 필터 -->
     <div class="filters">
-
       <select v-model="selectedBaseYear" @change="loadData">
         <option v-for="y in yearList" :key="y" :value="y">{{ y }}</option>
       </select>
@@ -28,7 +27,6 @@
         />
         <i class="ri-search-line" @click="loadData"></i>
       </div>
-
     </div>
 
     <!-- 본문 -->
@@ -63,22 +61,32 @@
           <p>누적 절감 금액</p>
         </div>
       </div>
-
     </div>
 
     <!-- ============================= -->
-    <!-- 에러 모달 -->
+    <!-- 에러 모달 + 애니메이션 -->
     <!-- ============================= -->
-    <div v-if="showErrorModal" class="modal-backdrop" @click="closeErrorModal"></div>
-    <div v-if="showErrorModal" class="modal-box">
-      <p>{{ errorMessage }}</p>
-      <button class="close-btn" @click="closeErrorModal">확인</button>
-    </div>
+    <transition name="fade">
+      <div
+        v-if="showErrorModal"
+        class="modal-backdrop"
+        @click="closeErrorModal">
+      </div>
+    </transition>
+
+    <transition name="scale-fade">
+      <div v-if="showErrorModal" class="modal-box">
+        <p>{{ errorMessage }}</p>
+        <button class="close-btn" @click="closeErrorModal">확인</button>
+      </div>
+    </transition>
+
 
     <!-- ============================= -->
     <!-- 사용률 등록 모달 -->
     <!-- ============================= -->
     <div v-if="showRegisterModal" class="modal-backdrop" @click="closeRegisterModal"></div>
+
     <div v-if="showRegisterModal" class="modal-box">
       <h3>{{ currentYear }} 목표 사용률</h3>
 
@@ -94,10 +102,12 @@
       </button>
     </div>
 
+
     <!-- ============================= -->
     <!-- 사용률 조회 모달 -->
     <!-- ============================= -->
     <div v-if="showViewModal" class="modal-backdrop" @click="closeViewModal"></div>
+
     <div v-if="showViewModal" class="modal-box">
       <h3>목표 사용률</h3>
 
@@ -106,7 +116,7 @@
       </p>
 
       <button class="confirm-btn" @click="closeViewModal">
-        확인
+        확인 
       </button>
     </div>
 
@@ -114,15 +124,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted, onBeforeUnmount } from "vue"
 import api from "@/api/axios"
 
 /* =======================
-      상태
+      자동 연도 설정
 ======================= */
+const currentYear = new Date().getFullYear()
 const yearList = [2021, 2022, 2023, 2024, 2025, 2026]
-const selectedBaseYear = ref(2024)
-const selectedCompareYear = ref(2025)
+
+const selectedBaseYear = ref(currentYear - 1)
+const selectedCompareYear = ref(currentYear)
+
 const assetName = ref("")
 const assetTitle = ref("전체")
 
@@ -130,34 +143,79 @@ const summary = ref({})
 const chartData = ref({})
 const chartOptions = ref({})
 
-/* 에러 모달 */
+/* =======================
+      에러 모달
+======================= */
 const showErrorModal = ref(false)
 const errorMessage = ref("")
+
 function closeErrorModal() { showErrorModal.value = false }
+
+/* ESC + Enter 모달 닫기 */
+function handleKeyPress(e) {
+  if ((e.key === "Escape" || e.key === "Enter") && showErrorModal.value) {
+    closeErrorModal()
+  }
+}
 
 /* =======================
       사용률 등록 상태
 ======================= */
-const currentYear = new Date().getFullYear()
-const hasTarget = ref(false)   // 등록 여부
+const hasTarget = ref(false)
 const targetRate = ref(0)
 
 const showRegisterModal = ref(false)
 const showViewModal = ref(false)
-const registerRate = ref("")   // 사용자가 입력한 값
+const registerRate = ref("")
+
+/* 🔥 올해 목표 존재 여부 조회 */
+async function loadTargetStatus() {
+  try {
+    const { data } = await api.get("/accounting/usage-targets/current")
+
+    hasTarget.value = data.exists
+    if (data.exists) {
+      targetRate.value = data.targetRate
+    }
+
+  } catch (e) {
+    console.error("목표 조회 실패:", e)
+  }
+}
+
+/* 버튼 클릭 시 모달 결정 */
+function openTargetModal() {
+  if (hasTarget.value) showViewModal.value = true
+  else showRegisterModal.value = true
+}
+
+/* 🔥 목표 사용률 등록 */
+async function registerTarget() {
+  if (!registerRate.value) return
+
+  try {
+    const payload = { targetRate: Number(registerRate.value) / 100 }
+
+    const { data } = await api.post("/accounting/usage-targets", payload)
+
+    hasTarget.value = true
+    targetRate.value = data.targetRate
+    showRegisterModal.value = false
+
+  } catch (e) {
+    console.error("등록 실패:", e)
+  }
+}
+
+function closeRegisterModal() { showRegisterModal.value = false }
+function closeViewModal() { showViewModal.value = false }
 
 /* =======================
-      초기 로드
-======================= */
-onMounted(() => {
-  loadData()
-  loadTargetRate()
-})
-
-/* =======================
-   KPI 데이터
+      KPI 데이터 조회
 ======================= */
 async function loadData() {
+  if (showErrorModal.value) return
+
   try {
     const { data } = await api.get("/accounting/settlement/performance", {
       params: {
@@ -186,77 +244,41 @@ async function loadData() {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        y: { ticks: { callback: v => (v / 10000).toLocaleString() + "만" } }
+        y: { ticks: { callback: v => v.toLocaleString("ko-KR") + "원" } }
       }
     }
 
   } catch (e) {
-    console.error("API 오류:", e)
     errorMessage.value = "등록되지 않은 자원입니다."
     showErrorModal.value = true
   }
 }
 
 /* =======================
-   목표 사용률 조회
-======================= */
-async function loadTargetRate() {
-  try {
-    const { data } = await api.get("/accounting/usage-targets")
-
-    if (data?.targetRate !== undefined) {
-      hasTarget.value = true
-      targetRate.value = data.targetRate
-    }
-  } catch (e) {
-    hasTarget.value = false
-  }
-}
-
-/* =======================
-    버튼 클릭 시 모달 결정
-======================= */
-function openTargetModal() {
-  if (hasTarget.value) showViewModal.value = true
-  else showRegisterModal.value = true
-}
-
-/* =======================
-    사용률 등록 POST
-======================= */
-async function registerTarget() {
-  if (!registerRate.value) return
-
-  try {
-    await api.post("/accounting/usage-targets", {
-      targetRate: Number(registerRate.value) / 100
-    })
-
-    hasTarget.value = true
-    targetRate.value = Number(registerRate.value) / 100
-
-    showRegisterModal.value = false
-  } catch (e) {
-    console.error("등록 실패:", e)
-  }
-}
-
-function closeRegisterModal() { showRegisterModal.value = false }
-function closeViewModal() { showViewModal.value = false }
-
-/* =======================
-    금액 표시 변환
+     금액 표시
 ======================= */
 function formatMoney(v) {
   if (v === undefined || v === null) return "-"
-  return (v / 10000).toLocaleString() + " 만원"
+  return Math.floor(v).toLocaleString("ko-KR") + "원"
 }
+
+/* =======================
+     초기 실행
+======================= */
+onMounted(() => {
+  window.addEventListener("keyup", handleKeyPress)
+  loadData()
+  loadTargetStatus()  // 올해 목표 조회
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keyup", handleKeyPress)
+})
 </script>
 
 <style scoped>
-.usage-trend-page {
-  padding: 20px;
-}
+/* 스타일 동일 — 그대로 사용 */
+.usage-trend-page { padding: 20px; }
 
 .page-title {
   font-size: 22px;
@@ -264,7 +286,6 @@ function formatMoney(v) {
   margin-bottom: 20px;
 }
 
-/* 🔹 상단 버튼 */
 .target-btn {
   position: absolute;
   right: 40px;
@@ -277,7 +298,6 @@ function formatMoney(v) {
   font-size: 13px;
 }
 
-/* 필터 */
 .filters {
   display: flex;
   gap: 12px;
@@ -299,7 +319,12 @@ function formatMoney(v) {
   border-radius: 6px;
 }
 
-/* 본문 */
+.search-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
 .content-wrapper {
   display: flex;
   gap: 20px;
@@ -330,10 +355,9 @@ function formatMoney(v) {
 .info-card h3 {
   font-size: 26px;
   color: #00A950;
-  margin-bottom: 6px;
 }
 
-/* 모달 공통 */
+/* 모달 */
 .modal-backdrop {
   position: fixed;
   top: 0; left: 0;
@@ -355,24 +379,7 @@ function formatMoney(v) {
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 
-.input-box {
-  width: 100%;
-  margin-top: 12px;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.confirm-btn {
-  margin-top: 20px;
-  padding: 8px 14px;
-  border-radius: 6px;
-  border: none;
-  background: #00A950;
-  color: white;
-  cursor: pointer;
-}
-
+.confirm-btn,
 .close-btn {
   margin-top: 18px;
   padding: 8px 14px;
@@ -381,5 +388,34 @@ function formatMoney(v) {
   background: #00A950;
   color: white;
   cursor: pointer;
+}
+
+/* 애니메이션 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity .25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.scale-fade-enter-active {
+  animation: scaleIn .25s ease;
+}
+
+.scale-fade-leave-active {
+  animation: scaleOut .2s ease forwards;
+}
+
+@keyframes scaleIn {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes scaleOut {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
 }
 </style>
