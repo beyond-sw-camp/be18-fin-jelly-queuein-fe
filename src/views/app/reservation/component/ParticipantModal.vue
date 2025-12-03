@@ -31,6 +31,7 @@ const emit = defineEmits<{
 const users = ref<User[]>([])     // 🔹 검색 결과
 const keyword = ref('')
 const selectedIds = ref<number[]>([])  // 선택된 유저 ID들
+const selectedUserObjects = ref<User[]>([])
 
 // ------------------
 // Debounce + API 호출
@@ -83,20 +84,30 @@ const filteredUsers = computed(() => {
 // ------------------
 const toggleSelect = (user: User) => {
   const idx = selectedIds.value.indexOf(user.userId)
-  if (idx === -1) selectedIds.value.push(user.userId)
-  else selectedIds.value.splice(idx, 1)
+
+  if (idx === -1) {
+    // 선택 추가
+    selectedIds.value.push(user.userId)
+    selectedUserObjects.value.push(user)
+  } else {
+    // 선택 해제
+    selectedIds.value.splice(idx, 1)
+
+    selectedUserObjects.value = selectedUserObjects.value.filter(
+      u => u.userId !== user.userId
+    )
+  }
 }
+
 
 // ------------------
 // 선택 완료
 // ------------------
 const submitSelection = () => {
-  const selectedUsers = users.value.filter(u =>
-    selectedIds.value.includes(u.userId)
-  )
-  emit('select', selectedUsers)
+  emit('select', selectedUserObjects.value)
   emit('close')
 }
+
 
 </script>
 
