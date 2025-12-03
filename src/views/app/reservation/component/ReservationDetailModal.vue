@@ -128,13 +128,13 @@ const close = () => emit("close")
    참여자 출력
 ------------------------------------------- */
 const participantsText = computed(() => {
-  const p = props.asset?.participants
-  if (!p) return "-"
-  if (Array.isArray(p)) return p.length ? p.map(i => i.name ?? i).join(", ") : "-"
-  if (typeof p === "object") return p.name ?? "-"
-  return p
-})
+  const list = props.asset?.participants
+  if (!list || list.length === 0) return "-"
 
+  return list
+    .map(a => a.attendantName)
+    .join(", ")
+})
 /* -------------------------------------------
    버튼 라벨
 ------------------------------------------- */

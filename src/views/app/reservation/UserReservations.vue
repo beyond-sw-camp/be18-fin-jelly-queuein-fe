@@ -107,8 +107,7 @@ const openDetailModal = async (reservationId) => {
       actualStartAt: d.actualStartAt,
       actualEndAt: d.actualEndAt,
 
-      // 🔥 participant 그대로 유지 (이 이름 절대 변경 X)
-      participants: d.participant,
+      participants: d.attendants,
 
       reason: d.reason,
       note: d.description
