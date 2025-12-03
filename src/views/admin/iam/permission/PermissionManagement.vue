@@ -1,32 +1,34 @@
 <!-- file: src/views/admin/iam/permission/PermissionManagement.vue -->
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { roleApi } from '@/api/iam/roleApi.js'
-import { permissionApi } from '@/api/iam/permissionApi.js'
-import IamTabs from '@/components/iam/IamTabs.vue'
+import { ref, computed, onMounted } from "vue"
+import { roleApi } from "@/api/iam/roleApi.js"
+import { permissionApi } from "@/api/iam/permissionApi.js"
+import IamTabs from "@/components/iam/IamTabs.vue"
+import Button from "primevue/button"
+import InputText from "primevue/inputtext"
+import ToggleSwitch from "primevue/toggleswitch"
+import DataTable from "primevue/datatable"
+import Column from "primevue/column"
 
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import InputText from 'primevue/inputtext'
-import ToggleSwitch from 'primevue/toggleswitch'
-import Card from 'primevue/card'
-import Button from 'primevue/button'
-import Tag from 'primevue/tag'
+import { diffChanges } from "@/utils/permissionDiff"
 
-// ------------------------------------------------------------
+// -------------------------------------
 // 상태
-// ------------------------------------------------------------
+// -------------------------------------
 const roles = ref([])
 const permissions = ref([])
 const matrix = ref([])
+const original = ref([])
 
 const keyword = ref("")
 const saving = ref(false)
-const modified = ref(false)
 
-// ------------------------------------------------------------
+const summaryOpen = ref(false)
+const changes = ref([])
+
+// -------------------------------------
 // 데이터 로딩
-// ------------------------------------------------------------
+// -------------------------------------
 async function loadData() {
   const roleRes = await roleApi.getRoleList()
   const permRes = await permissionApi.getPermissionList()
@@ -34,240 +36,238 @@ async function loadData() {
   roles.value = roleRes.data.roles
   permissions.value = permRes.data.permissions
 
-  matrix.value = permissions.value.map(p => ({
-    permissionId: p.permissionId,
-    name: p.permissionName,
-    desc: p.permissionDescription,
-
+  const built = permissions.value.map((perm) => ({
+    key: perm.permissionId, // ★ DataTable key
+    permissionId: perm.permissionId,
+    name: perm.permissionName,
+    desc: perm.permissionDescription,
     roles: Object.fromEntries(
-      roles.value.map(r => [
-        r.roleName,
-        r.permissions?.some(x => x.permissionId === p.permissionId) || false
+      roles.value.map((r) => [
+        r.roleId,
+        r.permissions.some((x) => x.permissionId === perm.permissionId),
       ])
-    )
+    ),
   }))
+
+  matrix.value = JSON.parse(JSON.stringify(built))
+  original.value = JSON.parse(JSON.stringify(built))
 }
 
 onMounted(loadData)
 
-// ------------------------------------------------------------
-// 역할별 권한 수 계산 — FIXED
-// ------------------------------------------------------------
-function countAssigned(roleName) {
-  return matrix.value.filter(p => p.roles[roleName]).length
-}
-
-// ------------------------------------------------------------
+// -------------------------------------
 // 검색
-// ------------------------------------------------------------
+// -------------------------------------
 const filteredMatrix = computed(() => {
   if (!keyword.value.trim()) return matrix.value
-  const key = keyword.value.toLowerCase()
+  const q = keyword.value.toLowerCase()
 
-  return matrix.value.filter(p =>
-    p.name.toLowerCase().includes(key) ||
-    p.desc?.toLowerCase().includes(key)
+  return matrix.value.filter(
+    (p) =>
+      p.name.toLowerCase().includes(q) ||
+      (p.desc || "").toLowerCase().includes(q)
   )
 })
 
-// ------------------------------------------------------------
-// 토글
-// ------------------------------------------------------------
-function toggleRole(row, roleName) {
-  row.roles[roleName] = !row.roles[roleName]
-  modified.value = true
+// -------------------------------------
+// 토글 변경 (PrimeVue 최적화 문제 해결버전)
+// -------------------------------------
+function manualToggle(row, roleId) {
+  // 직접 반전시켜야 즉시 반영됨
+  row.roles[roleId] = !row.roles[roleId]
+
+  // diff 즉시 계산
+  changes.value = diffChanges(original.value, matrix.value, roles.value)
+
+  if (changes.value.length > 0) summaryOpen.value = true
 }
 
-// ------------------------------------------------------------
-// 권한 행 삭제
-// ------------------------------------------------------------
-async function deletePermissionRow(row) {
-  if (!confirm("정말 삭제하시겠습니까?")) return
-  await permissionApi.deletePermission(row.permissionId)
-
-  matrix.value = matrix.value.filter(r => r.permissionId !== row.permissionId)
-  permissions.value = permissions.value.filter(r => r.permissionId !== row.permissionId)
-  modified.value = true
-}
-
-// ------------------------------------------------------------
-// 저장 — FIXED
-// ------------------------------------------------------------
+// -------------------------------------
+// 저장
+// -------------------------------------
 async function saveChanges() {
   saving.value = true
 
   for (const role of roles.value) {
     const allowedIds = matrix.value
-    .filter(p => p.roles[role.roleName])
-    .map(p => p.permissionId)
+    .filter((p) => p.roles[role.roleId])
+    .map((p) => p.permissionId)
 
     await roleApi.replacePermissions(role.roleId, {
-      permissionIds: allowedIds
+      permissionIds: allowedIds,
     })
   }
 
-  modified.value = false
+  original.value = JSON.parse(JSON.stringify(matrix.value))
+  changes.value = []
+  summaryOpen.value = false
   saving.value = false
-  alert("변경 사항이 저장되었습니다.")
+
+  alert("저장되었습니다.")
 }
 </script>
-
 
 <template>
   <div class="page">
 
+    <!-- ⭐ SummaryBar + Panel 전체를 하나의 sticky 덩어리로 묶음 ⭐ -->
+    <div class="summary-wrapper">
+
+      <!-- SummaryBar -->
+      <div class="summary-bar">
+        <div class="summary-left" @click="summaryOpen = !summaryOpen">
+          <span class="arrow" :class="{ open: summaryOpen }"></span>
+          <span class="label">
+            {{ changes.length === 0 ? "변경된 내용 없음" : `변경된 내용 ${changes.length}건` }}
+          </span>
+        </div>
+
+        <Button
+          label="저장"
+          icon="pi pi-save"
+          class="save-btn"
+          :loading="saving"
+          :disabled="changes.length === 0"
+          @click="saveChanges"
+        />
+      </div>
+
+      <!-- SummaryPanel (SummaryBar 바로 아래에서 함께 sticky 동작) -->
+      <div v-if="summaryOpen" class="summary-panel">
+        <div v-for="item in changes" :key="item.key" class="summary-row">
+          <span class="role">{{ item.roleName }}</span>
+          <span>역할에</span>
+          <span class="perm">{{ item.permissionName }}</span>
+          <span :class="{ on: item.now, off: !item.now }">
+            {{ item.now ? "권한을 활성화했습니다." : "권한을 비활성화했습니다." }}
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tabs -->
     <IamTabs />
 
-    <h2>권한 설정</h2>
-    <p class="desc">Manage users, roles, and permissions for your application</p>
+    <!-- Search -->
+    <InputText v-model="keyword" placeholder="Search permissions..." class="search-input" />
 
-    <!-- Summary Cards -->
-    <div class="role-summary">
-      <Card
+    <!-- Table -->
+    <DataTable :value="filteredMatrix" :rowKey="'key'" stripedRows class="perm-table">
+      <Column header="Permission" field="name">
+        <template #body="{ data }">
+          <div class="p-name">{{ data.name }}</div>
+          <div class="p-desc">{{ data.desc }}</div>
+        </template>
+      </Column>
+
+      <Column
         v-for="role in roles"
         :key="role.roleId"
-        class="role-summary-card"
+        :header="role.roleName"
+        style="width: 120px; text-align: center"
       >
-        <div class="role-summary-header">
-          <span class="role-title">{{ role.roleName }}</span>
-          <Tag
-            v-if="role.roleName === 'MASTER'"
-            value="System"
-            severity="secondary"
-          />
-        </div>
-
-        <div class="role-summary-count">
-          {{ countAssigned(role.roleName) }} permissions assigned
-        </div>
-      </Card>
-    </div>
-
-    <!-- Permission Matrix -->
-    <div class="matrix-section">
-      <InputText
-        v-model="keyword"
-        placeholder="Search permissions..."
-        class="search"
-      />
-
-      <DataTable
-        :value="filteredMatrix"
-        stripedRows
-        class="permission-table"
-      >
-        <!-- Permission Info -->
-        <Column header="Permission" field="name" style="width: 240px">
-          <template #body="{ data }">
-            <div class="perm-name">{{ data.name }}</div>
-            <div class="perm-desc">{{ data.desc }}</div>
-          </template>
-        </Column>
-
-        <!-- Role Toggles -->
-        <Column
-          v-for="role in roles"
-          :key="role.roleId"
-          :header="role.roleName"
-          style="width: 130px; text-align: center"
-        >
-          <template #body="{ data }">
-            <div class="toggle-wrap">
-              <ToggleSwitch
-                v-model="data.roles[role.roleName]"
-                @update:modelValue="toggleRole(data, role.roleName)"
-              />
-            </div>
-          </template>
-        </Column>
-
-        <!-- Delete Button -->
-        <Column header="삭제" style="width: 80px; text-align: center">
-          <template #body="{ data }">
-            <Button
-              label="삭제"
-              severity="danger"
-              text
-              @click="deletePermissionRow(data)"
+        <template #body="{ data }">
+          <div class="toggle-center">
+            <ToggleSwitch
+              :modelValue="data.roles[role.roleId]"
+              @change="manualToggle(data, role.roleId)"
             />
-          </template>
-        </Column>
-      </DataTable>
-    </div>
-
-    <div class="save-wrap">
-      <Button
-        label="저장"
-        :disabled="!modified"
-        :loading="saving"
-        @click="saveChanges"
-      />
-    </div>
+          </div>
+        </template>
+      </Column>
+    </DataTable>
   </div>
 </template>
 
-
 <style scoped>
 .page {
-  padding: 30px;
+  padding: 0 30px;
 }
 
-.desc {
-  color: #777;
-  margin-bottom: 20px;
+/* SummaryBar + SummaryPanel 전체를 sticky 묶음으로*/
+.summary-wrapper {
+  position: sticky;
+  top: 70px; /* Header height */
+  z-index: 300;
+  background: white;
 }
 
-.role-summary {
+/* SummaryBar */
+.summary-bar {
   display: flex;
-  gap: 16px;
-  margin: 20px 0;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 12px 6px;
+  border-bottom: 1px solid #ddd;
+  background: white;
 }
 
-.role-summary-card {
-  width: 180px;
+.summary-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.arrow {
+  border: solid #444;
+  border-width: 0 2px 2px 0;
+  padding: 4px;
+  transform: rotate(45deg);
+  transition: 0.2s;
+}
+
+.arrow.open {
+  transform: rotate(-135deg);
+}
+
+/* SummaryPanel: summary-bar 바로 아래 */
+.summary-panel {
+  background: #fafafa;
+  border-bottom: 1px solid #ddd;
   padding: 16px;
 }
 
-.role-summary-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 17px;
-  font-weight: 600;
+.summary-row {
+  padding: 4px 0;
+  font-size: 14px;
 }
 
-.role-summary-count {
-  font-size: 13px;
-  color: #666;
+.role {
+  font-weight: bold;
 }
 
-.matrix-section {
-  margin-top: 20px;
+.perm {
+  font-weight: bold;
+  margin: 0 4px;
 }
 
-.search {
-  width: 280px;
-  margin-bottom: 10px;
+.on {
+  color: #16a34a;
 }
 
-.perm-name {
-  font-weight: 600;
-  margin-bottom: 2px;
+.off {
+  color: #dc2626;
 }
 
-.perm-desc {
-  font-size: 12px;
-  color: #777;
+/* Search */
+.search-input {
+  margin-top: 18px;
+  width: 260px;
 }
 
-.permission-table .p-datatable-thead > tr > th {
-  text-align: center;
-  font-weight: 600;
-}
-
-.toggle-wrap {
+/* Toggle */
+.toggle-center {
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
+.save-btn {
+  background: #22c55e !important;
+  border: none;
+}
 </style>
+

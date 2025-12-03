@@ -29,11 +29,11 @@ function closeHover() {
     <AppHeader @toggle-sidebar="toggleSidebar" />
 
     <!-- 어두워지는 오버레이 -->
-    <div 
+    <div
       v-if="isSidebarOpen"
       class="overlay"
       @click="isFixedOpen = false"
-      @close-sidebar="isFixedOpen = false" 
+      @close-sidebar="isFixedOpen = false"
     />
 
     <!-- 사이드바 -->
