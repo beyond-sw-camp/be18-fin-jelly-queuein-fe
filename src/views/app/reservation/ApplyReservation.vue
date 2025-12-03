@@ -156,40 +156,41 @@ const onSelectParticipants = (users: any[]) => {
   selectedUsers.value = users
   participantModalVisible.value = false
 }
+function toUtcIso(date, hour) {
+  // date = "2025-12-03"
+  // hour = 0~23 (KST)
+  const local = new Date(`${date}T${String(hour).padStart(2, "0")}:00:00+09:00`);
+  return local.toISOString(); // → UTC 변환
+}
 
-
-
-
-// -------------------------------
-// 예약 생성 API
-// -------------------------------
 async function submitBooking() {
   if (!selectedHours.value.length) {
-    alert("예약 시간을 선택해주세요.")
-    return
+    alert("예약 시간을 선택해주세요.");
+    return;
   }
 
-  const startHour = Math.min(...selectedHours.value)
-  const endHour = Math.max(...selectedHours.value) + 1
+  const startHour = Math.min(...selectedHours.value);
+  const endHour = Math.max(...selectedHours.value) + 1;
 
-  const startAt = `${date.value}T${startHour.toString().padStart(2,'0')}:00:00Z`
-  const endAt = `${date.value}T${endHour.toString().padStart(2,'0')}:00:00Z`
+  const startAt = toUtcIso(date.value, startHour);
+  const endAt = toUtcIso(date.value, endHour);
 
   const payload = {
     applicantId: currentUserId.value,
-    attendantIds: selectedUsers.value
-      .map(u => u.userId ?? u.userId)      // 🔥 둘 중 하나라도 값이 있으면 사용
-      .filter(id => id != null),       // 🔥 null 제거
-
+    attendantIds: selectedUsers.value.map(u => u.userId),
     startAt,
     endAt,
-    description: note.value ?? ""
-  }
+    description: note.value || ""
+  };
 
-  console.log("apply payload", payload)
+  console.log("UTC payload", payload);
 
-  await api.post(`/reservations/${assetId}/apply`, payload)
+  await api.post(`/reservations/${assetId}/apply`, payload);
 }
+
+
+
+
 
 const currentUserName = ref("")
 const currentUserId = ref(null)
