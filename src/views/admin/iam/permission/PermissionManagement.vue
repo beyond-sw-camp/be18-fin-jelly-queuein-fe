@@ -1,11 +1,10 @@
+<!-- file: src/views/admin/iam/permission/PermissionManagement.vue -->
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { roleApi } from '@/api/iam/roleApi.js'
 import { permissionApi } from '@/api/iam/permissionApi.js'
-
 import IamTabs from '@/components/iam/IamTabs.vue'
 
-// PrimeVue Components
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
@@ -15,7 +14,7 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 
 // ------------------------------------------------------------
-// 상태 변수
+// 상태
 // ------------------------------------------------------------
 const roles = ref([])
 const permissions = ref([])
@@ -23,8 +22,6 @@ const matrix = ref([])
 
 const keyword = ref("")
 const saving = ref(false)
-
-// 변경 추적용
 const modified = ref(false)
 
 // ------------------------------------------------------------
@@ -34,13 +31,7 @@ async function loadData() {
   const roleRes = await roleApi.getRoleList()
   const permRes = await permissionApi.getPermissionList()
 
-  console.log("ROLE API RESULT:", roleRes.data)
-  console.log("PERMISSION API RESULT:", permRes.data)
-
-  // 응답이 { roles: [...] } 형태일 경우
   roles.value = roleRes.data.roles
-
-  // 응답이 { permissions: [...] } 형태
   permissions.value = permRes.data.permissions
 
   matrix.value = permissions.value.map(p => ({
@@ -57,22 +48,22 @@ async function loadData() {
   }))
 }
 
-// 역할명
-function countAssigned(roleName) {
-  return matrix.value.filter(p => p.roles[role.roleName]).length
-}
-
-
-
-
 onMounted(loadData)
 
 // ------------------------------------------------------------
-// 검색 필터
+// 역할별 권한 수 계산 — FIXED
+// ------------------------------------------------------------
+function countAssigned(roleName) {
+  return matrix.value.filter(p => p.roles[roleName]).length
+}
+
+// ------------------------------------------------------------
+// 검색
 // ------------------------------------------------------------
 const filteredMatrix = computed(() => {
   if (!keyword.value.trim()) return matrix.value
   const key = keyword.value.toLowerCase()
+
   return matrix.value.filter(p =>
     p.name.toLowerCase().includes(key) ||
     p.desc?.toLowerCase().includes(key)
@@ -80,7 +71,7 @@ const filteredMatrix = computed(() => {
 })
 
 // ------------------------------------------------------------
-// 토글 변경 처리
+// 토글
 // ------------------------------------------------------------
 function toggleRole(row, roleName) {
   row.roles[roleName] = !row.roles[roleName]
@@ -88,14 +79,26 @@ function toggleRole(row, roleName) {
 }
 
 // ------------------------------------------------------------
-// 저장하기
+// 권한 행 삭제
+// ------------------------------------------------------------
+async function deletePermissionRow(row) {
+  if (!confirm("정말 삭제하시겠습니까?")) return
+  await permissionApi.deletePermission(row.permissionId)
+
+  matrix.value = matrix.value.filter(r => r.permissionId !== row.permissionId)
+  permissions.value = permissions.value.filter(r => r.permissionId !== row.permissionId)
+  modified.value = true
+}
+
+// ------------------------------------------------------------
+// 저장 — FIXED
 // ------------------------------------------------------------
 async function saveChanges() {
   saving.value = true
 
   for (const role of roles.value) {
     const allowedIds = matrix.value
-    .filter(p => p.roles[role.name])
+    .filter(p => p.roles[role.roleName])
     .map(p => p.permissionId)
 
     await roleApi.replacePermissions(role.roleId, {
@@ -105,7 +108,7 @@ async function saveChanges() {
 
   modified.value = false
   saving.value = false
-  alert('변경 사항이 저장되었습니다.')
+  alert("변경 사항이 저장되었습니다.")
 }
 </script>
 
@@ -115,7 +118,6 @@ async function saveChanges() {
 
     <IamTabs />
 
-    <!-- Header -->
     <h2>권한 설정</h2>
     <p class="desc">Manage users, roles, and permissions for your application</p>
 
@@ -143,8 +145,6 @@ async function saveChanges() {
 
     <!-- Permission Matrix -->
     <div class="matrix-section">
-
-      <!-- Search -->
       <InputText
         v-model="keyword"
         placeholder="Search permissions..."
@@ -154,22 +154,22 @@ async function saveChanges() {
       <DataTable
         :value="filteredMatrix"
         stripedRows
-        class="mt-3 permission-table"
+        class="permission-table"
       >
-        <!-- Permission Column -->
-        <Column header="Permission" field="name" style="width: 260px">
+        <!-- Permission Info -->
+        <Column header="Permission" field="name" style="width: 240px">
           <template #body="{ data }">
             <div class="perm-name">{{ data.name }}</div>
             <div class="perm-desc">{{ data.desc }}</div>
           </template>
         </Column>
 
-        <!-- Role Columns -->
+        <!-- Role Toggles -->
         <Column
           v-for="role in roles"
           :key="role.roleId"
           :header="role.roleName"
-          style="width: 140px; text-align: center"
+          style="width: 130px; text-align: center"
         >
           <template #body="{ data }">
             <div class="toggle-wrap">
@@ -180,11 +180,21 @@ async function saveChanges() {
             </div>
           </template>
         </Column>
-      </DataTable>
 
+        <!-- Delete Button -->
+        <Column header="삭제" style="width: 80px; text-align: center">
+          <template #body="{ data }">
+            <Button
+              label="삭제"
+              severity="danger"
+              text
+              @click="deletePermissionRow(data)"
+            />
+          </template>
+        </Column>
+      </DataTable>
     </div>
 
-    <!-- Save Button -->
     <div class="save-wrap">
       <Button
         label="저장"
@@ -207,30 +217,28 @@ async function saveChanges() {
   margin-bottom: 20px;
 }
 
-.summary {
+.role-summary {
   display: flex;
   gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 30px;
+  margin: 20px 0;
 }
 
-.summary-card {
-  width: 200px;
-  padding: 14px;
+.role-summary-card {
+  width: 180px;
+  padding: 16px;
 }
 
-.r-title {
-  font-size: 17px;
-  font-weight: 700;
-  margin-bottom: 6px;
+.role-summary-header {
   display: flex;
   align-items: center;
   gap: 6px;
+  font-size: 17px;
+  font-weight: 600;
 }
 
-.r-count {
-  color: #555;
+.role-summary-count {
   font-size: 13px;
+  color: #666;
 }
 
 .matrix-section {
@@ -258,41 +266,8 @@ async function saveChanges() {
 }
 
 .toggle-wrap {
-  width: 100%;
-  height: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.save-wrap {
-  text-align: right;
-  margin-top: 20px;
-}
-</style>
-<style scoped>
-.role-summary {
-  display: flex;
-  gap: 16px;
-  margin: 20px 0;
-}
-
-.role-summary-card {
-  width: 180px;
-  padding: 16px;
-}
-
-.role-summary-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 17px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.role-summary-count {
-  font-size: 13px;
-  color: #666;
 }
 </style>
