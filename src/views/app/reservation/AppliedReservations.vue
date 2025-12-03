@@ -113,7 +113,8 @@ async function openDetailModal(reservationId) {
       participants: d.attendants,
       reason: d.reason,
       note: d.note,
-      usage: d.reservationStatus
+      usage: d.reservationStatus,
+      description: d.description  
     }
 
     modalOpen.value = true

@@ -68,7 +68,7 @@
 
           <div class="label green">비고</div>
           <div class="value">
-            {{ asset?.note ?? "-" }}
+            {{ asset?.description ?? "-" }}
           </div>
         </div>
 
@@ -223,6 +223,10 @@ const participantsText = computed(() => {
   resize: none; /* 원하면 제거 가능 */
   padding: 10px 12px;
   min-height: 80px;
+}
+
+.reason-textarea ::v-deep(.el-textarea__inner) {
+  color: #333 !important; /* 글자가 보이도록 */
 }
 
 </style>

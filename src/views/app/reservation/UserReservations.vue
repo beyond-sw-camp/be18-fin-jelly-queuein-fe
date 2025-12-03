@@ -111,7 +111,7 @@ const openDetailModal = async (reservationId) => {
       participants: d.participant,
 
       reason: d.reason,
-      note: d.note
+      note: d.description
     }
 
     modalOpen.value = true
