@@ -5,6 +5,7 @@ import Dialog from "primevue/dialog"
 import InputText from "primevue/inputtext"
 import Button from "primevue/button"
 import AutoComplete from "primevue/autocomplete"
+import Dropdown from "primevue/dropdown"
 import Calendar from "primevue/calendar"
 import { userApi } from "@/api/iam/userApi.js"
 
@@ -14,7 +15,7 @@ const props = defineProps({
 const emit = defineEmits(["close", "created"])
 
 // -------------------------------
-// 부서 옵션
+// 부서 옵션 (Dropdown 기반)
 // -------------------------------
 const departmentOptions = [
   { label: "개발 1팀", value: 1 },
@@ -49,7 +50,7 @@ const errors = ref({
 const saving = ref(false)
 
 // -------------------------------
-// 엔터 기본 동작 차단 (다음 input에 잔류 입력 차단)
+// 엔터 잔류 입력 완전 차단
 // -------------------------------
 function blockEnter(e) {
   if (e.key === "Enter") {
@@ -61,7 +62,7 @@ function blockEnter(e) {
 }
 
 // -------------------------------
-// 다음 input으로 이동
+// 다음 input으로 포커스 이동
 // -------------------------------
 function moveTo(id) {
   setTimeout(() => {
@@ -84,6 +85,7 @@ function resetForm() {
     birthMonth: "",
     birthDay: ""
   }
+
   Object.keys(errors.value).forEach(k => (errors.value[k] = ""))
 }
 
@@ -92,7 +94,7 @@ function resetForm() {
 // -------------------------------
 function autoHyphen(raw) {
   if (!raw) return ""
-  let digits = raw.replace(/\D/g, "").slice(0, 11) // 최대 11자리
+  let digits = raw.replace(/\D/g, "").slice(0, 11)
 
   if (digits.length <= 3) return digits
   if (digits.length <= 7) return digits.replace(/(\d{3})(\d{1,4})/, "$1-$2")
@@ -169,7 +171,6 @@ async function submit() {
 
   if (Object.values(errors.value).some(v => v)) return
 
-  // 생년월일 조합
   let birthString = null
   if (form.value.birthYear && form.value.birthMonth && form.value.birthDay) {
     birthString = formatDate(
@@ -217,15 +218,14 @@ async function submit() {
 
       <!-- 부서 -->
       <label for="dptId">부서*</label>
-      <AutoComplete
+      <Dropdown
         id="dptId"
         v-model="form.dptId"
+        :options="departmentOptions"
         optionLabel="label"
         optionValue="value"
-        :suggestions="departmentOptions"
         placeholder="부서를 선택하세요"
         class="input"
-        forceSelection
         @keydown.enter.prevent="moveTo('userName')"
         @keydown="blockEnter"
       />
