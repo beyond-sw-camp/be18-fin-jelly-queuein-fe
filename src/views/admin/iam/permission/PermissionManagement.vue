@@ -87,23 +87,28 @@ function manualToggle(row, roleId) {
 async function saveChanges() {
   saving.value = true
 
-  for (const role of roles.value) {
-    const allowedIds = matrix.value
-    .filter((p) => p.roles[role.roleId])
-    .map((p) => p.permissionId)
+  try {
+    for (const role of roles.value) {
+      const allowedIds = matrix.value
+      .filter((p) => p.roles[role.roleId])
+      .map((p) => p.permissionId)
 
-    await roleApi.replacePermissions(role.roleId, {
-      permissionIds: allowedIds,
-    })
+      await roleApi.replacePermissions(role.roleId, {
+        permissionIds: allowedIds,
+      })
+    }
+
+    await loadData()
+
+    changes.value = []
+    summaryOpen.value = false
+
+    alert("저장되었습니다.")
+  } finally {
+    saving.value = false
   }
-
-  original.value = JSON.parse(JSON.stringify(matrix.value))
-  changes.value = []
-  summaryOpen.value = false
-  saving.value = false
-
-  alert("저장되었습니다.")
 }
+
 </script>
 
 <template>
@@ -122,13 +127,16 @@ async function saveChanges() {
         </div>
 
         <Button
-          label="저장"
+          :label="saving ? '저장 중...' : '저장'"
           icon="pi pi-save"
-          class="save-btn"
+          iconPos="right"
           :loading="saving"
-          :disabled="changes.length === 0"
+          loadingIcon="pi pi-spinner pi-spin"
+          class="save-btn"
+          :disabled="changes.length === 0 || saving"
           @click="saveChanges"
         />
+
       </div>
 
       <!-- SummaryPanel (SummaryBar 바로 아래에서 함께 sticky 동작) -->
