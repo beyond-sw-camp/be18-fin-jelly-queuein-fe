@@ -33,6 +33,34 @@ export const reservationApi = {
         layerOne
       }
     }),
+      getAppliedReservations: ({ page, size, date, assetName, assetType, assetStatus, categoryName, layerZero, layerOne }) =>
+    api.get('/reservations/pending', {
+      params: {
+        page,
+        size,
+        date,          // 필수, "YYYY-MM-DD"
+        assetName,
+        assetType,
+        assetStatus,
+        categoryName,
+        layerZero,
+        layerOne
+      }
+    }),
+          getReservableAssets: ({ page, size, date, assetType, assetName, assetStatus, categoryName, layerZero, layerOne }) =>
+    api.get('/reservations/reservable-assets', {
+      params: {
+        page,
+        size,
+        date,          // 필수, "YYYY-MM-DD"
+        assetType,
+        assetStatus,
+        categoryName,
+        layerZero,
+        layerOne,
+        assetName
+      }
+    }),
 
 
   startUsing(id) {

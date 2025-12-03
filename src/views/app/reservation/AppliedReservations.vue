@@ -4,35 +4,28 @@
     <div class="header-row">
       <h2>예약 신청 목록 조회</h2>
 
-      <el-input
-        v-model="searchParams.assetName"
-        placeholder="검색어를 입력해주세요"
-        class="search-input"
-        @keyup.enter="fetchAppliedReservations"
-      >
-        <template #append>
-          <el-button :icon="Search" @click="fetchAppliedReservations" />
-        </template>
-      </el-input>
+    <el-input
+      v-model="selectedFilters.assetName"
+      placeholder="검색어를 입력해주세요"
+      class="search-input"
+      @keyup.enter="refreshTable"
+    >
+      <template #append>
+        <el-button :icon="Search" @click="refreshTable" />
+      </template>
+    </el-input>
+
+
     </div>
 
     <ReservationTabs />
 
-    <ReservationFilters
-      @change="(f) => {
-        Object.assign(searchParams, f)
-        searchParams.page = 0 
-        fetchAppliedReservations()
-      }"
-    />
+    <ReservationFilters @change="handleFilterChange" />
 
-    <ReservationTable
-      :rows="tableData"
-      :total="total"
-      @page-change="(p) => {
-        searchParams.page = p
-        fetchAppliedReservations()
-      }"
+    <!-- 예약 목록 -->
+    <ReservationTable 
+      :filters="selectedFilters"   
+      :key="tableKey"
       @open-detail="openDetailModal"
       @approve="onApprove"
       @reject="onReject"
@@ -58,20 +51,26 @@ import ReservationDetailModal from "./component/ReservationApplyDetailModal.vue"
 import { Search } from '@element-plus/icons-vue'
 
 
-const searchParams = ref({
-  date: "",
-  applicantName: "",
-  respondentName: "",
-  isApproved: "",
-  isReservable: "",
-  assetName: "",
+const handleFilterChange = (filters) => {
+  selectedFilters.value = { ...filters } // 필터 전체 반영
+  selectedDate.value = filters.date      // 날짜도 따로 필요하면 그대로
+  refreshTable()
+}
+const selectedDate = ref(new Date().toISOString().split("T")[0])
+// 테이블 갱신용 key
+const tableKey = ref(0)
+const refreshTable = () => {
+  tableKey.value += 1
+}
+
+const selectedFilters = ref({
+  date: selectedDate.value,
+  assetName: "",       // 검색바 입력값 포함
   assetType: "",
-  categoryName: "",
   assetStatus: "",
+  categoryName: "",
   layerZero: "",
-  layerOne: "",
-  page: 0,
-  size: 10
+  layerOne: ""
 })
 
 const tableData = ref([])
@@ -80,6 +79,19 @@ const total = ref(0)
 const modalOpen = ref(false)
 const reservationDetail = ref(null)
 const currentUserName = ref("")
+
+onMounted(async() => {
+  selectedFilters.value.date = getKSTDateString()
+
+  try {
+    const res = await api.get("/users/me")
+    currentUserName.value = res.data.userName
+  } catch (e) {
+    console.error("유저 정보 조회 실패:", e)
+  }
+
+  fetchAppliedReservations()
+})
 
 
 async function fetchAppliedReservations() {
@@ -195,7 +207,7 @@ function getKSTDateString() {
 }
 function buildParams() {
   const params = {}
-  Object.entries(searchParams.value).forEach(([key, value]) => {
+  Object.entries(selectedFilters.value).forEach(([key, value]) => {
     params[key] = value === "" ? null : value
   })
   return params

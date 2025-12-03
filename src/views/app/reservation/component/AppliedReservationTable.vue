@@ -1,6 +1,6 @@
 <template>
   <el-table
-    :data="props.rows"
+    :data="rows"
     border
     style="width: 100%"
     highlight-current-row
@@ -55,18 +55,39 @@
   <div class="pagination">
     <el-pagination
       layout="prev, pager, next"
-      :total="props.total"
-      @current-change="(page) => emit('page-change', page - 1)"
+      :total="total"
+      :page-size="pageSize"
+      :current-page="page"
+      @current-change="changePage"
     />
   </div>
 </template>
 
 <script setup>
+
+import { reservationApi } from "@/api/reservationApi"
+import { ref, watch } from "vue" 
 const props = defineProps({
   rows: { type: Array, required: true },
-  total: { type: Number, required: true }
+  total: { type: Number, required: true },
+  filters: { 
+    type: Object, 
+    default: () => ({
+      date: "",
+      assetType: "",
+      assetStatus: "",
+      categoryName: "",
+      layerZero: "",
+      layerOne: "",
+      assetName: ""    // ✅ 여기 추가
+    }) 
+  }
 })
 
+const rows = ref([])
+const total = ref(0)
+const page = ref(1)
+const pageSize = ref(10)
 const emit = defineEmits(["page-change", "approve", "reject", "open-detail"])
 
 const onRowClick = (row, column) => {
@@ -74,6 +95,37 @@ const onRowClick = (row, column) => {
   if (!row?.reservationId) return
   emit("open-detail", row.reservationId)
 }
+const fetchReservations = async () => {
+  try {
+    const params = {
+      page: page.value - 1,
+      size: pageSize.value,
+      date: props.filters.date,
+      assetType: props.filters.assetType || undefined,
+      assetStatus: props.filters.assetStatus || undefined,
+      categoryName: props.filters.categoryName || undefined,
+      layerZero: props.filters.layerZero || undefined,
+      layerOne: props.filters.layerOne || undefined,
+      assetName: props.filters.assetName || undefined
+    }
+
+    const res = await reservationApi.getAppliedReservations(params)
+
+    rows.value = res?.data?.content ?? []
+    total.value = res?.data?.totalElements ?? 0
+  } catch (err) {
+    console.error("예약 조회 실패:", err)
+  }
+}
+watch(
+  () => props.filters,
+  () => {
+    page.value = 1
+    fetchReservations()
+  },
+  { deep: true, immediate: true }
+)
+
 </script>
 
 <style scoped>

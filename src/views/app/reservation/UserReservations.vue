@@ -71,7 +71,8 @@ const selectedFilters = ref({
   assetStatus: "",
   categoryName: "",
   layerZero: "",
-  layerOne: ""
+  layerOne: "",
+  assetName: ""
 })
 
 const handleFilterChange = (filters) => {

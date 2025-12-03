@@ -134,7 +134,8 @@ const fetchReservations = async () => {
       assetStatus: props.filters.assetStatus || undefined,
       categoryName: props.filters.categoryName || undefined,
       layerZero: props.filters.layerZero || undefined,
-      layerOne: props.filters.layerOne || undefined
+      layerOne: props.filters.layerOne || undefined,
+      assetName: props.filters.assetName || undefined
     }
 
     const res = await reservationApi.getUserReservations(params)
