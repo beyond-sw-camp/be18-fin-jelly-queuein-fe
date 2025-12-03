@@ -64,8 +64,19 @@
 
       </div>
 
+
+
       <!-- 하단 버튼 -->
       <div class="footer" v-if="actionLabel">
+
+        <!-- 수정 버튼: PENDING 또는 APPROVED 상태일 때만 -->
+        <button 
+          v-if="normalizedUsage === 'PENDING' || normalizedUsage === 'APPROVED'"
+          class="footer-btn"
+          @click="onEdit"
+        >
+          수정
+        </button>
         <button 
           class="footer-btn"
           :disabled="isActionDisabled"
@@ -119,11 +130,14 @@ const formatKoreaTime = (instant) => {
   return "-";
 };
 
-const emit = defineEmits(["close", "start", "end"])
+const emit = defineEmits(["close", "start", "end", "cancel", "edit"])
 
 const close = () => emit("close")
 
-
+const onEdit = () => {
+  if (!props.asset) return;
+  emit("edit", props.asset.id)   // 부모 컴포넌트에서 수정 처리
+}
 /* -------------------------------------------
    참여자 출력
 ------------------------------------------- */

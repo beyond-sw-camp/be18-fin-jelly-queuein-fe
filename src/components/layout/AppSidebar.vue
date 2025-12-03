@@ -28,19 +28,10 @@ function isActiveStartsWith(basePath) {
 
     <nav class="menu">
 
-      <router-link to="/app/reservations/me" class="item">
-
-        <img src="@/assets/icons/reserve.svg" class="icon" />
-        <span v-if="open">예약 관리 </span>
-      </router-link>
-
-      <router-link to="/app/reservations/monthly" class="item">
-      </router-link>
-
 
       <!-- 예약 관리 -->
       <router-link
-        to="/app"
+        to="/app/reservations/me"
         class="item"
         :class="{ active: isActiveStartsWith('/app') }"
         @click="$emit('close-sidebar')"
@@ -51,7 +42,7 @@ function isActiveStartsWith(basePath) {
 
       <!-- 일정 관리 -->
       <router-link
-        to="/app/schedule"
+        to="/app/reservations/monthly"
         class="item"
         :class="{ active: isActiveStartsWith('/app/schedule') }"
         @click="$emit('close-sidebar')"

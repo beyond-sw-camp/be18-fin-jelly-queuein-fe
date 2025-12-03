@@ -134,11 +134,6 @@ function convertToTimeBlocks(apiData) {
 
   return blocks
 }
-function onFilterChanged(newFilter) {
-  filterState.value = { ...newFilter };
-  page.value = 1;
-  fetchReservations();
-}
 
 const fetchAvailableTimes = async () => {
   const res = await reservationApi.getAvailableTimes(assetId, date.value)
