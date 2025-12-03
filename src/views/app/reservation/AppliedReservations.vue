@@ -24,6 +24,7 @@
 
     <!-- 예약 목록 -->
     <ReservationTable 
+      :rows="tableData"  
       :filters="selectedFilters"   
       :key="tableKey"
       @open-detail="openDetailModal"

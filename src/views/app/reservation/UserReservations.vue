@@ -4,15 +4,17 @@
     <div class="header-row">
       <h2>사용자 예약 내용 조회</h2>
 
-      <el-input
-        v-model="search"
-        placeholder="검색어를 입력해주세요"
-        class="search-input"
-      >
-        <template #append>
-          <el-button icon="Search" />
-        </template>
-      </el-input>
+    <el-input
+      v-model="selectedFilters.assetName"
+      placeholder="검색어를 입력해주세요"
+      class="search-input"
+      @keyup.enter="refreshTable"
+    >
+      <template #append>
+        <el-button :icon="Search" @click="refreshTable" />
+      </template>
+    </el-input>
+
     </div>
 
     <!-- 탭 -->
@@ -46,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { ref, watch } from "vue"
 
 import ReservationTabs from "./component/ReservationTab.vue"
 import ReservationFilters from "./component/ReservationFilter.vue"
@@ -56,7 +58,8 @@ import { reservationApi } from "@/api/reservationApi"
 import { Search } from '@element-plus/icons-vue'
 // 검색어
 const search = ref("")
-
+const tableData = ref([])
+const total = ref(0)
 // 기본 날짜 (오늘)
 const selectedDate = ref(new Date().toISOString().split("T")[0])
 
@@ -74,6 +77,10 @@ const selectedFilters = ref({
   layerOne: "",
   assetName: ""
 })
+const refreshTable = () => {
+  fetchUserReservations()
+  tableKey.value += 1
+}
 
 const handleFilterChange = (filters) => {
   selectedFilters.value = { ...filters } // 필터 전체 반영
@@ -88,9 +95,7 @@ const reservationDetail = ref(null)
 
 // 테이블 갱신용 key
 const tableKey = ref(0)
-const refreshTable = () => {
-  tableKey.value += 1
-}
+
 
 // 날짜 변경 handler
 const handleDateChange = (filters) => {
@@ -172,6 +177,31 @@ const handleCancel = async (id) => {
 /* 모달 닫기 */
 const closeModal = () => {
   modalOpen.value = false
+}
+watch(
+  () => selectedFilters.value.assetName,
+  () => {
+    fetchUserReservations()
+  }
+)
+async function fetchUserReservations() {
+  try {
+    const params = buildParams()
+    const res = await reservationApi.getUserReservations(params)
+    tableData.value = res.data.content ?? []
+    total.value = res.data.totalElements ?? 0
+  } catch (err) {
+    console.error("예약 조회 실패:", err)
+  }
+}
+
+
+function buildParams() {
+  const params = {}
+  Object.entries(selectedFilters.value).forEach(([key, value]) => {
+    params[key] = value === "" ? null : value
+  })
+  return params
 }
 
 
