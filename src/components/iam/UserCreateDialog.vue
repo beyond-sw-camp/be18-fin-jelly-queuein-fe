@@ -1,18 +1,21 @@
+<!-- file: src/components/iam/UserCreateDialog.vue -->
 <script setup>
 import { ref, watch, nextTick } from "vue"
 import Dialog from "primevue/dialog"
 import InputText from "primevue/inputtext"
 import Button from "primevue/button"
-import Dropdown from "primevue/dropdown"
+import AutoComplete from "primevue/autocomplete"
 import Calendar from "primevue/calendar"
 import { userApi } from "@/api/iam/userApi.js"
 
-const props = defineProps({ visible: Boolean })
+const props = defineProps({
+  visible: Boolean
+})
 const emit = defineEmits(["close", "created"])
 
-// ----------------------------
-// 부서 목록
-// ----------------------------
+// -------------------------------
+// 부서 옵션
+// -------------------------------
 const departmentOptions = [
   { label: "개발 1팀", value: 1 },
   { label: "개발 2팀", value: 2 },
@@ -20,18 +23,18 @@ const departmentOptions = [
   { label: "재무팀", value: 4 }
 ]
 
-// ----------------------------
-// 폼 데이터 + 에러
-// ----------------------------
+// -------------------------------
+// 폼 + 에러
+// -------------------------------
 const form = ref({
-  dptId: null,
+  dptId: "",
   userName: "",
   email: "",
   hireDate: null,
   phone: "",
-  birthYear: null,
-  birthMonth: null,
-  birthDay: null
+  birthYear: "",
+  birthMonth: "",
+  birthDay: ""
 })
 
 const errors = ref({
@@ -43,162 +46,162 @@ const errors = ref({
   birth: ""
 })
 
-// ----------------------------
-// 전화번호 하이픈 + 길이 제한
-// ----------------------------
-function autoPhone(raw) {
+const saving = ref(false)
+
+// -------------------------------
+// 엔터 기본 동작 차단 (다음 input에 잔류 입력 차단)
+// -------------------------------
+function blockEnter(e) {
+  if (e.key === "Enter") {
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    e.stopPropagation()
+    return false
+  }
+}
+
+// -------------------------------
+// 다음 input으로 이동
+// -------------------------------
+function moveTo(id) {
+  setTimeout(() => {
+    const el = document.getElementById(id)
+    if (el) el.focus()
+  }, 10)
+}
+
+// -------------------------------
+// 초기화
+// -------------------------------
+function resetForm() {
+  form.value = {
+    dptId: "",
+    userName: "",
+    email: "",
+    hireDate: null,
+    phone: "",
+    birthYear: "",
+    birthMonth: "",
+    birthDay: ""
+  }
+  Object.keys(errors.value).forEach(k => (errors.value[k] = ""))
+}
+
+// -------------------------------
+// 전화번호 자동 하이픈 + 11자리 제한
+// -------------------------------
+function autoHyphen(raw) {
   if (!raw) return ""
-  let digits = raw.replace(/\D/g, "").slice(0, 11) // 딱 11자리 제한
+  let digits = raw.replace(/\D/g, "").slice(0, 11) // 최대 11자리
 
   if (digits.length <= 3) return digits
   if (digits.length <= 7) return digits.replace(/(\d{3})(\d{1,4})/, "$1-$2")
   return digits.replace(/(\d{3})(\d{4})(\d{1,4})/, "$1-$2-$3")
 }
 
-watch(
-  () => form.value.phone,
-  val => form.value.phone = autoPhone(val)
+function onPhoneInput(e) {
+  form.value.phone = autoHyphen(e.target.value)
+}
+
+// -------------------------------
+// yyyy-MM-dd 포맷
+// -------------------------------
+function formatDate(y, m, d) {
+  const mm = String(m).padStart(2, "0")
+  const dd = String(d).padStart(2, "0")
+  return `${y}-${mm}-${dd}`
+}
+
+// -------------------------------
+// 생년월일 AutoComplete
+// -------------------------------
+const allYears = Array.from({ length: 2025 - 1950 + 1 }, (_, i) =>
+  String(2025 - i)
 )
+const filteredYears = ref([])
 
-// ----------------------------
-// 날짜 목록 생성
-// ----------------------------
-const years = Array.from({ length: 2025 - 1950 + 1 }, (_, i) => ({
-  label: String(2025 - i),
-  value: 2025 - i
-}))
+function searchYear(e) {
+  const q = e.query.trim()
+  filteredYears.value = allYears.filter(y => y.includes(q))
+}
 
-const months = Array.from({ length: 12 }, (_, i) => ({
-  label: String(i + 1),
-  value: i + 1
-}))
+const allMonths = Array.from({ length: 12 }, (_, i) => String(i + 1))
+const filteredMonths = ref([])
 
-const days = ref([])
+function searchMonth(e) {
+  const q = e.query.trim()
+  filteredMonths.value = allMonths.filter(m => m.includes(q))
+}
+
+const allDays = ref([])
+const filteredDays = ref([])
 
 watch(
   () => [form.value.birthYear, form.value.birthMonth],
   ([y, m]) => {
     if (!y || !m) {
-      days.value = []
-      form.value.birthDay = null
+      allDays.value = []
+      form.value.birthDay = ""
       return
     }
-
-    const last = new Date(y, m, 0).getDate()
-    days.value = Array.from({ length: last }, (_, i) => ({
-      label: String(i + 1),
-      value: i + 1
-    }))
+    const last = new Date(Number(y), Number(m), 0).getDate()
+    allDays.value = Array.from({ length: last }, (_, i) => String(i + 1))
   }
 )
 
-// ----------------------------
-// 검색 → 엔터 → 정확한 값 반영
-// (PrimeVue filter-input 직접 제어 방식)
-// ----------------------------
-async function handleEnterSelect(event, options, setter) {
-  await nextTick()
-
-  const input = event.target
-  const query = input.value.trim()
-
-  if (!query) return
-
-  // 입력값 일치 항목 찾기
-  const matched = options.find(op => op.label === query)
-
-  if (matched) {
-    setter(matched.value)
-  }
-
-  // filterInput 초기화 & 드롭다운 닫기
-  input.value = ""
-  input.blur()
+function searchDay(e) {
+  const q = e.query.trim()
+  filteredDays.value = allDays.value.filter(d => d.includes(q))
 }
 
-// ----------------------------
-// 초기화
-// ----------------------------
-function resetForm() {
-  form.value = {
-    dptId: null,
-    userName: "",
-    email: "",
-    hireDate: null,
-    phone: "",
-    birthYear: null,
-    birthMonth: null,
-    birthDay: null
-  }
-
-  errors.value = {
-    dptId: "",
-    userName: "",
-    email: "",
-    hireDate: "",
-    phone: "",
-    birth: ""
-  }
-}
-
-// ----------------------------
+// -------------------------------
 // 저장
-// ----------------------------
+// -------------------------------
 async function submit() {
-  errors.value = {
-    dptId: "",
-    userName: "",
-    email: "",
-    hireDate: "",
-    phone: "",
-    birth: ""
-  }
+  Object.keys(errors.value).forEach(k => (errors.value[k] = ""))
 
-  if (!form.value.dptId) errors.value.dptId = "부서를 선택해주세요."
+  if (!form.value.dptId) errors.value.dptId = "부서를 선택하세요."
   if (!form.value.userName) errors.value.userName = "이름을 입력해주세요."
   if (!form.value.email) errors.value.email = "이메일을 입력해주세요."
   if (form.value.email && !form.value.email.includes("@"))
-    errors.value.email = "이메일 형식이 올바르지 않습니다."
-  if (!form.value.hireDate) errors.value.hireDate = "입사일을 선택해주세요."
+    errors.value.email = "올바른 이메일 형식이 아닙니다."
+  if (!form.value.hireDate) errors.value.hireDate = "입사일을 선택하세요."
 
-  const hasErr = Object.values(errors.value).some(e => e)
-  if (hasErr) return
+  if (Object.values(errors.value).some(v => v)) return
 
-
-  // 전화번호 검증
-  let phone = null
-  if (form.value.phone) {
-    const digits = form.value.phone.replace(/\D/g, "")
-    if (digits.length !== 11 || !digits.startsWith("010")) {
-      errors.value.phone = "전화번호는 010으로 시작하는 11자리여야 합니다."
-      return
-    }
-    phone = form.value.phone
-  }
-
-  // 생년월일 검증
-  let birth = null
-  if (form.value.birthYear || form.value.birthMonth || form.value.birthDay) {
-    if (!form.value.birthYear || !form.value.birthMonth || !form.value.birthDay) {
-      errors.value.birth = "생년·월·일을 모두 선택해주세요."
-      return
-    }
-    birth = `${form.value.birthYear}-${String(form.value.birthMonth).padStart(2, "0")}-${String(form.value.birthDay).padStart(2, "0")}`
+  // 생년월일 조합
+  let birthString = null
+  if (form.value.birthYear && form.value.birthMonth && form.value.birthDay) {
+    birthString = formatDate(
+      form.value.birthYear,
+      form.value.birthMonth,
+      form.value.birthDay
+    )
   }
 
   const payload = {
     dptId: form.value.dptId,
     userName: form.value.userName,
     email: form.value.email,
-    hireDate: form.value.hireDate.toISOString().slice(0, 10),
-    phone,
-    birth
+    hireDate: form.value.hireDate
+      ? formatDate(
+        form.value.hireDate.getFullYear(),
+        form.value.hireDate.getMonth() + 1,
+        form.value.hireDate.getDate()
+      )
+      : null,
+    phone: form.value.phone || null,
+    birth: birthString
   }
 
-  await userApi.createUser(payload)
-
-  emit("created")
-  emit("close")
+  saving.value = true
+  try {
+    await userApi.createUser(payload)
+    emit("created")
+    emit("close")
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
@@ -213,104 +216,114 @@ async function submit() {
     <div class="form">
 
       <!-- 부서 -->
-      <label>부서</label>
-      <Dropdown
+      <label for="dptId">부서*</label>
+      <AutoComplete
+        id="dptId"
         v-model="form.dptId"
-        :options="departmentOptions"
         optionLabel="label"
         optionValue="value"
+        :suggestions="departmentOptions"
         placeholder="부서를 선택하세요"
         class="input"
-        :class="{ invalid: errors.dptId }"
+        forceSelection
+        @keydown.enter.prevent="moveTo('userName')"
+        @keydown="blockEnter"
       />
       <p v-if="errors.dptId" class="error">{{ errors.dptId }}</p>
 
       <!-- 이름 -->
-      <label>이름</label>
+      <label for="userName">이름*</label>
       <InputText
+        id="userName"
         v-model="form.userName"
         class="input"
-        :class="{ invalid: errors.userName }"
+        @keydown.enter.prevent="moveTo('email')"
+        @keydown="blockEnter"
       />
       <p v-if="errors.userName" class="error">{{ errors.userName }}</p>
 
       <!-- 이메일 -->
-      <label>이메일</label>
+      <label for="email">이메일*</label>
       <InputText
+        id="email"
         v-model="form.email"
         class="input"
-        :class="{ invalid: errors.email }"
+        @keydown.enter.prevent="moveTo('hireDate')"
+        @keydown="blockEnter"
       />
       <p v-if="errors.email" class="error">{{ errors.email }}</p>
 
       <!-- 입사일 -->
-      <label>입사일</label>
+      <label for="hireDate">입사일*</label>
       <Calendar
+        id="hireDate"
         v-model="form.hireDate"
         dateFormat="yy-mm-dd"
         class="input"
-        :class="{ invalid: errors.hireDate }"
+        @keydown.enter.prevent="moveTo('phone')"
+        @keydown="blockEnter"
       />
       <p v-if="errors.hireDate" class="error">{{ errors.hireDate }}</p>
 
-      <!-- 연락처 -->
-      <label>연락처(선택)</label>
+      <!-- 전화번호 -->
+      <label for="phone">연락처</label>
       <InputText
+        id="phone"
         v-model="form.phone"
         class="input"
         placeholder="예: 010-1234-5678"
         maxlength="13"
-        :class="{ invalid: errors.phone }"
+        @input="onPhoneInput"
+        @keydown.enter.prevent="moveTo('birthYear')"
+        @keydown="blockEnter"
       />
-      <p v-if="errors.phone" class="error">{{ errors.phone }}</p>
 
       <!-- 생년월일 -->
-      <label>생년월일(선택)</label>
+      <label>생년월일</label>
       <div class="birth-row">
 
-        <!-- 년도 -->
-        <Dropdown
+        <AutoComplete
+          id="birthYear"
           v-model="form.birthYear"
-          :options="years"
-          optionLabel="label"
-          optionValue="value"
+          :suggestions="filteredYears"
+          @complete="searchYear"
           placeholder="년도"
-          filter
-          @keydown.enter="handleEnterSelect($event, years, v => form.birthYear = v)"
-          class="birth-select"
+          class="input birth-select"
+          dropdown
+          @keydown.enter.prevent="moveTo('birthMonth')"
+          @keydown="blockEnter"
         />
 
-        <!-- 월 -->
-        <Dropdown
+        <AutoComplete
+          id="birthMonth"
           v-model="form.birthMonth"
-          :options="months"
-          optionLabel="label"
-          optionValue="value"
+          :suggestions="filteredMonths"
+          @complete="searchMonth"
           placeholder="월"
-          filter
-          @keydown.enter="handleEnterSelect($event, months, v => form.birthMonth = v)"
-          class="birth-select"
+          class="input birth-select"
+          dropdown
+          @keydown.enter.prevent="moveTo('birthDay')"
+          @keydown="blockEnter"
         />
 
-        <!-- 일 -->
-        <Dropdown
+        <AutoComplete
+          id="birthDay"
           v-model="form.birthDay"
-          :options="days"
-          optionLabel="label"
-          optionValue="value"
+          :suggestions="filteredDays"
+          @complete="searchDay"
           placeholder="일"
-          filter
-          @keydown.enter="handleEnterSelect($event, days, v => form.birthDay = v)"
-          class="birth-select"
+          class="input birth-select"
+          dropdown
+          @keydown.enter.prevent="moveTo('submitBtn')"
+          @keydown="blockEnter"
         />
 
       </div>
-      <p v-if="errors.birth" class="error">{{ errors.birth }}</p>
 
       <div class="actions">
         <Button label="초기화" text @click="resetForm" />
         <Button label="취소" text @click="emit('close')" />
-        <Button label="등록" @click="submit" />
+        <Button id="submitBtn" label="등록" :loading="saving" @click="submit" />
       </div>
 
     </div>
@@ -325,6 +338,8 @@ async function submit() {
 }
 .input {
   width: 100%;
+  height: 42px !important;
+  border-radius: 8px;
 }
 .birth-row {
   display: flex;
@@ -336,13 +351,10 @@ async function submit() {
 .error {
   color: #d92d20;
   font-size: 13px;
-  margin-top: -6px;
-}
-.invalid {
-  border-color: #d92d20 !important;
+  margin-top: -4px;
 }
 .actions {
-  margin-top: 16px;
+  margin-top: 20px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
