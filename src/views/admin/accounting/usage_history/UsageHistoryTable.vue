@@ -27,11 +27,11 @@
         >
 
           <td>{{ row.assetName }}</td>
-          <td>{{ row.reservationStartAt }}</td>
-          <td>{{ row.reservationEndAt }}</td>
+          <td>{{ toKST(row.reservationStartAt) }}</td>
+          <td>{{ toKST(row.reservationEndAt) }}</td>
           <td>{{ row.reservationMinutes }}</td>
-          <td>{{ row.actualStartAt }}</td>
-          <td>{{ row.actualEndAt }}</td>
+          <td>{{ toKST(row.actualStartAt) }}</td>
+          <td>{{ toKST(row.actualEndAt) }}</td>
           <td>{{ row.actualMinutes }}</td>
           <td>{{ Math.round(row.usageRatio * 100) }}%</td>
 
@@ -146,6 +146,15 @@ function changePage(page) {
 function goPrevChunk() {
   const target = Math.max(chunkStart.value - 1, 0)
   emit("changePage", target)
+}
+
+// 날짜 변환 
+function toKST(dateString) {
+  if (!dateString) return "-";
+  const date = new Date(dateString); // UTC 기반 Date 생성
+  // KST = UTC + 9
+  const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().replace("T", " ").slice(0, 16); 
 }
 
 function goNextChunk() {

@@ -20,7 +20,7 @@
       <div class="search-box">
         <input
           type="text"
-          placeholder="검색어를 입력해주세요"
+          placeholder="자원명을 입력해주세요"
           v-model="assetName"
           @keyup.enter="loadData"
         />

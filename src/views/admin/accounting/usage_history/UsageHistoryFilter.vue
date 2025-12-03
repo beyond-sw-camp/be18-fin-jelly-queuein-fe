@@ -13,23 +13,20 @@
       placeholder="날짜 범위를 선택하세요"
     />
 
-    <!-- 검색창 -->
-    <span class="search-box">
+    <!-- 검색창 + 아이콘 -->
+    <div class="search-container">
       <InputText
         v-model="keyword"
-        placeholder="자원명을 입력하세요"
-        class="keyword"
+        placeholder="자원명을 입력해주세요"
+        class="search-input"
+        @keyup.enter="emitSearch"
       />
-    </span>
+      <i class="ri-search-line search-icon" @click="emitSearch"></i>
+    </div>
 
-    <!-- 검색 버튼 -->
-    <Button
-      label="검색"
-      class="p-button-success search-btn"
-      @click="emitSearch"
-    />
   </div>
 </template>
+
 
 <script setup>
 import { ref } from 'vue'
@@ -37,16 +34,14 @@ import DatePicker from 'primevue/datepicker'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 
-// 부모에게 전달
 const emit = defineEmits(['search'])
 
 const dateRange = ref(null)
 const keyword = ref('')
 
-/* 🔥 서버가 LocalDate로 받기 때문에 yyyy-MM-dd 로 변환해야 함 */
 function formatDate(date) {
   if (!date) return null
-  return date.toISOString().split("T")[0]  // "2025-12-04"
+  return date.toISOString().split("T")[0]
 }
 
 function emitSearch() {
@@ -70,21 +65,31 @@ function emitSearch() {
 /* DatePicker width */
 .dater {
   width: 270px;
-  font-size: 14px;      /* 입력창 글씨 크기도 줄이기 가능 */
-  padding: 4px 5px;     /* 내부 패딩 줄이기 */
+  font-size: 14px;
+  padding: 4px 5px;
 }
-/* 검색창 오른쪽 정렬 */
-.search-box {
+
+/* 오른쪽 검색창 컨테이너 */
+.search-container {
+  position: relative;
+  width: 260px;
   margin-left: auto;
 }
 
-/* 검색 인풋 width */
-.keyword {
-  width: 250px;
+.search-input {
+  width: 100%;
+  padding-right: 32px; /* 아이콘 공간 확보 */
 }
 
-/* 버튼 스타일 */
-.search-btn {
-  padding: 6px 14px;
+/* 검색 아이콘 오른쪽 정렬 */
+.search-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #555;
+  cursor: pointer;
 }
+
 </style>

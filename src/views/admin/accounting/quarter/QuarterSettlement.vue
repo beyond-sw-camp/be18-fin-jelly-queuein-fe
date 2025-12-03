@@ -25,7 +25,7 @@
           <input
             type="text"
             v-model="assetName"
-            placeholder="검색어를 입력해주세요"
+            placeholder="자원명을 입력해주세요"
             @keyup.enter="loadData"
           />
           <i class="ri-search-line search-icon" @click="loadData"></i>
