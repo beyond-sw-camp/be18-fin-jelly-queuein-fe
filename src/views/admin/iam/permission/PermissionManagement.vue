@@ -79,7 +79,6 @@ function manualToggle(row, roleId) {
   // diff 즉시 계산
   changes.value = diffChanges(original.value, matrix.value, roles.value)
 
-  if (changes.value.length > 0) summaryOpen.value = true
 }
 
 // -------------------------------------
@@ -188,7 +187,7 @@ async function saveChanges() {
 /* SummaryBar + SummaryPanel 전체를 sticky 묶음으로*/
 .summary-wrapper {
   position: sticky;
-  top: 70px; /* Header height */
+  top: 0px; /* Header height */
   z-index: 300;
   background: white;
 }
