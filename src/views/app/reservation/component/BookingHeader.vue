@@ -163,11 +163,15 @@ const onAdd = () => emit("add");
 }
 
 .tag {
+  display: inline-flex;        /* 기존 block → inline-flex */
+  align-items: center;
   background: #aed8ae;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 12px;
   font-size: 14px;
+  white-space: nowrap;        /* 이름 줄바꿈 방지 */
 }
+
 
 /* "자원명 ~ 참여자" 사이 구분선 */
 .divider {
@@ -190,5 +194,9 @@ const onAdd = () => emit("add");
   background: transparent; /* 필요 시 */
   resize: none; /* 크기 조절 막기 — 선택사항 */
 }
+.tag {
+  color: black !important;
+}
+
 
 </style>

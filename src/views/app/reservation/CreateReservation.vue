@@ -151,10 +151,13 @@ const timeRange = computed(() => {
 
 // 모달
 const openParticipantModal = () => participantModalVisible.value = true
-const onSelectParticipants = (users: any[]) => {
-  selectedUsers.value = users
-  participantModalVisible.value = false
+const onSelectParticipants = (users) => {
+  selectedUsers.value = users.map(u => ({
+    id: Number(u.userId),     // 반드시 Number 처리
+    name: u.userName
+  }))
 }
+
 
 function toUtcIso(date, hour) {
   const local = new Date(`${date}T${String(hour).padStart(2, "0")}:00:00+09:00`);
@@ -192,11 +195,9 @@ async function submitBooking() {
   const payload = {
     applicantId: currentUserId.value,
     attendantIds: selectedUsers.value.map(u => u.id),
-    assetName: assetName,
     startAt,
     endAt,
     description: note.value,  
-    participants: selectedUsers.value.map(u => u.id)
   };
 
 

@@ -94,8 +94,28 @@ dayjs.extend(timezone)
 
 const formatKoreaTime = (instant) => {
   if (!instant) return "-"
-  return dayjs.utc(instant).tz("Asia/Seoul").format("HH:mm")
+
+  const str = String(instant)
+
+  // ISO 8601 (예: 2025-12-03T00:00:00Z)
+  if (str.includes("T")) {
+    return str.slice(11, 16) // HH:mm
+  }
+
+  // 공백 포함한 일반 datetime (예: 2025-12-03 09:00:00)
+  if (str.includes(" ")) {
+    const timePart = str.split(" ")[1] // "09:00:00"
+    return timePart ? timePart.slice(0, 5) : "-"
+  }
+
+  // 이미 HH:mm 이거나 HH:mm:ss 형태인 경우
+  if (/^\d{2}:\d{2}/.test(str)) {
+    return str.slice(0, 5)
+  }
+
+  return "-"
 }
+
 
 const props = defineProps({
   visible: Boolean,

@@ -54,7 +54,14 @@ export const reservationApi = {
   getAvailableTimes: (id, dateStr) =>
   api.get(`/reservations/${id}/available-times`, {
     params: { date: dateStr }
-  })
+  }),
+  //신청 
+  applyReservation: (assetId, data) =>
+    api.post(`/reservations/${assetId}/apply`, data),
+
+  // 즉시 승인 예약 생성
+  instantConfirmReservation: (assetId, data) =>
+    api.post(`/reservations/${assetId}/instant-confirm`, data),
 
 
 }

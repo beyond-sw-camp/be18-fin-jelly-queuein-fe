@@ -14,7 +14,7 @@
       v-model:note="note"
       :reserver="currentUserName"
       :timeRange="timeRange"
-      :participants="selectedUsers.map(u => u.name)"
+      :participants="selectedUsers.map(u => u.userId)"
       @add="openParticipantModal"
     />
 
@@ -79,7 +79,8 @@ console.log("route.query.date =", route.query.date)
 
 // 참여자
 const participantModalVisible = ref(false)
-const selectedUsers = ref<{ id: number; name: string }[]>([])
+const selectedUsers = ref<{ userId: number; userName: string }[]>([])
+
 const note = ref("")
 
 // -------------------------------
@@ -158,6 +159,7 @@ const onSelectParticipants = (users: any[]) => {
 
 
 
+
 // -------------------------------
 // 예약 생성 API
 // -------------------------------
@@ -170,18 +172,25 @@ async function submitBooking() {
   const startHour = Math.min(...selectedHours.value)
   const endHour = Math.max(...selectedHours.value) + 1
 
+  const startAt = `${date.value}T${startHour.toString().padStart(2,'0')}:00:00Z`
+  const endAt = `${date.value}T${endHour.toString().padStart(2,'0')}:00:00Z`
+
   const payload = {
     applicantId: currentUserId.value,
-    attendantIds: selectedUsers.value.map(u => u.id),
-    assetName: assetName,  
-    startAt: `${date.value}T${startHour.toString().padStart(2,'0')}:00:00Z`,
-    endAt: `${date.value}T${endHour.toString().padStart(2,'0')}:00:00Z`,
+    attendantIds: selectedUsers.value
+      .map(u => u.userId ?? u.userId)      // 🔥 둘 중 하나라도 값이 있으면 사용
+      .filter(id => id != null),       // 🔥 null 제거
 
-    participants: selectedUsers.value.map(u => u.id)
+    startAt,
+    endAt,
+    description: note.value ?? ""
   }
+
+  console.log("apply payload", payload)
 
   await api.post(`/reservations/${assetId}/apply`, payload)
 }
+
 const currentUserName = ref("")
 const currentUserId = ref(null)
 onMounted(async () => {
