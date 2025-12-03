@@ -14,8 +14,8 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@primevue/themes": "^4.5.0",
     "@formkit/drag-and-drop": "^0.5.3",
+    "@primevue/themes": "^4.5.0",
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",
     "pinia": "^3.0.3",
