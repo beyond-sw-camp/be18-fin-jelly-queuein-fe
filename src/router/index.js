@@ -35,7 +35,7 @@ const router = createRouter({
       // meta: { requiresAuth: true },
       children: [
         { path: '', component: DashboardView },
-        
+
         {
           path: 'reservations/me',
           component: () => import('@/views/app/reservation/UserReservations.vue'),
@@ -116,9 +116,38 @@ const router = createRouter({
         // -------------------------
         {
           path: 'permissions',
-          component: () =>
-            import('@/views/admin/iam/permission/PermissionManagement.vue'),
-          meta: { title: '권한 관리', minRole: 'ADMIN' }
+          meta: { minRole: 'ADMIN' },
+          children: [
+            { path: '', redirect: '/admin/permissions/list' },
+
+            {
+              path: 'list',
+              component: () =>
+                import('@/views/admin/iam/permission/PermissionList.vue'),
+              meta: { title: '권한 목록', minRole: 'ADMIN' }
+            },
+
+            {
+              path: 'create',
+              component: () =>
+                import('@/views/admin/iam/permission/PermissionCreate.vue'),
+              meta: { title: '권한 생성', minRole: 'MASTER' }
+            },
+
+            {
+              path: ':permissionId/edit',
+              component: () =>
+                import('@/views/admin/iam/permission/PermissionEdit.vue'),
+              meta: { title: '권한 수정', minRole: 'MASTER' }
+            },
+
+            {
+              path: 'matrix',
+              component: () =>
+                import('@/views/admin/iam/permission/PermissionMatrix.vue'),
+              meta: { title: '역할-권한 매핑', minRole: 'ADMIN' }
+            }
+          ]
         },
 
         // ========== ⭐ 자원 관리 그룹 ==========
@@ -203,7 +232,7 @@ const router = createRouter({
         }
       ],
     },
-  
+
 
     // ---------------------------------------------------------
     // 오류 페이지

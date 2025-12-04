@@ -1,4 +1,4 @@
-<!-- file: src/views/admin/iam/permission/PermissionManagement.vue -->
+<!-- file: src/views/admin/iam/permission/PermissionMatrix.vue -->
 <script setup>
 import { ref, computed, onMounted } from "vue"
 import { roleApi } from "@/api/iam/roleApi.js"
