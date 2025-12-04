@@ -67,16 +67,16 @@
 
 
       <!-- 하단 버튼 -->
-      <div class="footer" v-if="actionLabel">
+      <div class="footer" v-if="actionLabel"   :class="{ 'has-edit': normalizedUsage === 'PENDING' || normalizedUsage === 'APPROVED' }">
 
         <!-- 수정 버튼: PENDING 또는 APPROVED 상태일 때만 -->
-        <button 
+        <!-- <button 
           v-if="normalizedUsage === 'PENDING' || normalizedUsage === 'APPROVED'"
           class="footer-btn"
-          @click="onEdit"
-        >
-          수정
-        </button>
+          @click="onEdit" 
+        > 수정 
+          
+        </button> -->
         <button 
           class="footer-btn"
           :disabled="isActionDisabled"
@@ -273,4 +273,12 @@ const onAction = () => {
   cursor: not-allowed;
   background: #eaeaea;
 }
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+
+
 </style>

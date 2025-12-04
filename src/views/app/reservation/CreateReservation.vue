@@ -79,9 +79,11 @@ console.log("route.query.date =", route.query.date)
 
 // 참여자
 const participantModalVisible = ref(false)
-const selectedUsers = ref<{ id: number; name: string }[]>([])
+const selectedUsers = ref([])
 const note = ref("")
-
+const onSelectParticipants = (users) => {
+  selectedUsers.value = users   // ✅ 그대로 전달
+}
 // -------------------------------
 //  예약 가능 시간 조회 API
 // -------------------------------
@@ -92,12 +94,7 @@ const initialDate =
   Array.isArray(rawDate) ? rawDate[0] : rawDate
 
 const date = ref(initialDate || today)
-const onSelectParticipants = (users) => {
-  selectedUsers.value = users.map(u => ({
-    id: u.userId,         // 서버로 보낼 값
-    name: u.userName      // 화면에 보여줄 값
-  }))
-}
+
 // console.log("받은 값:", users);
 // console.log("저장 직전:", users.map(u => ({ id: u.userId, name: u.userName })));
 

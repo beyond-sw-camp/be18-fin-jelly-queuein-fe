@@ -1,4 +1,6 @@
 <template>
+  <pre>{{ participants }}</pre>
+
   <div class="reservation-header">
 
     <!-- 제목 -->
@@ -35,9 +37,17 @@
       <div class="line-label">참여자</div>
       <div class="line-content">
         <el-button type="success" circle @click="onAdd">+</el-button>
-          <span v-for="user in participants" :key="user.id">
+          <span 
+            v-for="user in participants" 
+            :key="user.userId"
+            class="tag"
+          >
             {{ user.userName }}
           </span>
+
+
+
+
       </div>
     </div>
 
@@ -62,17 +72,31 @@
 <script setup>
 import { ref, watch, computed } from "vue";
 
+// const props = defineProps({
+//   assetName: String,
+//   date: String,
+//   reserver: String,
+//   timeRange: String,
+//   participants: Array,
+//   note: {
+//   type: String,
+//   default: ""
+// }
+// });
+
 const props = defineProps({
   assetName: String,
   date: String,
   reserver: String,
   timeRange: String,
-  participants: Array,
-  note: {
-  type: String,
-  default: ""
-}
-});
+  participants: {
+    type: Array,
+    default: () => []
+  },
+  note: String
+})
+
+
 
 const emit = defineEmits(["add", "update:date", "update:note"]);
 
