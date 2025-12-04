@@ -26,6 +26,13 @@ const saving = ref(false)
 const summaryOpen = ref(false)
 const changes = ref([])
 
+const showCreate = ref(false)
+
+const createForm = ref({
+  permissionName: '',
+  permissionDescription: ''
+})
+
 // -------------------------------------
 // 데이터 로딩
 // -------------------------------------
@@ -52,6 +59,31 @@ async function loadData() {
   matrix.value = JSON.parse(JSON.stringify(built))
   original.value = JSON.parse(JSON.stringify(built))
 }
+
+async function createPermission() {
+  if (!createForm.value.permissionName.trim()) {
+    return alert("권한명을 입력하세요.")
+  }
+
+  await permissionApi.createPermission({
+    permissionName: createForm.value.permissionName,
+    permissionDescription: createForm.value.permissionDescription
+  })
+
+  alert("권한이 생성되었습니다.")
+
+  // 폼 초기화
+  createForm.value = {
+    permissionName: '',
+    permissionDescription: ''
+  }
+
+  showCreate.value = false
+
+  // 다시 로딩하여 테이블 갱신
+  await loadData()
+}
+
 
 onMounted(loadData)
 
@@ -158,7 +190,12 @@ async function saveChanges() {
 
     <!-- Search -->
     <InputText v-model="keyword" placeholder="Search permissions..." class="search-input" />
-
+    <Button
+      label="권한 추가"
+      icon="pi pi-plus"
+      class="add-btn"
+      @click="showCreate = true"
+    />
     <!-- Table -->
     <DataTable :value="filteredMatrix" :rowKey="'key'" stripedRows class="perm-table">
       <Column header="Permission" field="name">
@@ -185,6 +222,26 @@ async function saveChanges() {
       </Column>
     </DataTable>
   </div>
+
+  <Dialog
+    v-model:visible="showCreate"
+    header="권한 생성"
+    modal
+    class="create-dialog"
+  >
+    <div class="dialog-body">
+      <label>권한명</label>
+      <InputText v-model="createForm.permissionName" class="w-full" />
+
+      <label>설명</label>
+      <InputText v-model="createForm.permissionDescription" class="w-full" />
+    </div>
+
+    <template #footer>
+      <Button label="취소" text @click="showCreate = false" />
+      <Button label="생성" @click="createPermission" />
+    </template>
+  </Dialog>
 </template>
 
 <style scoped>
@@ -275,6 +332,28 @@ async function saveChanges() {
 .save-btn {
   background: #22c55e !important;
   border: none;
+}
+
+.add-btn {
+  background: #000;
+  border: none;
+  color: white;
+  margin-left: 10px;
+}
+
+.create-dialog {
+  width: 400px;
+}
+
+.dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 10px 0;
+}
+
+.w-full {
+  width: 100%;
 }
 </style>
 
