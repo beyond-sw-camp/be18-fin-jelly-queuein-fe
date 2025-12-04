@@ -1,6 +1,6 @@
 <template>
   <select class="dropdown" :value="modelValue" @change="updateValue" :disabled="!buildingId">
-    <option value="" disabled>{{ placeholder }}</option>
+    <option value="">{{ placeholder }}</option>
 
     <option v-for="l in locations" :key="l.assetId" :value="l.assetId">
       {{ l.name }}
