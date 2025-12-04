@@ -13,7 +13,6 @@ const isAdmin = computed(() =>
   ['MASTER', 'ADMIN', 'MANAGER'].includes(role)
 )
 
-// ★ 여기 추가!
 function isActiveExact(path) {
   return route.path === path
 }
@@ -30,10 +29,9 @@ function isActiveStartsWith(basePath) {
     <nav class="menu">
 
 
-
       <!-- 예약 관리 -->
       <router-link
-        to="/app"
+        to="/app/reservations/me"
         class="item"
         :class="{ active: isActiveStartsWith('/app') }"
         @click="$emit('close-sidebar')"
@@ -44,7 +42,7 @@ function isActiveStartsWith(basePath) {
 
       <!-- 일정 관리 -->
       <router-link
-        to="/app/schedule"
+        to="/app/reservations/monthly"
         class="item"
         :class="{ active: isActiveStartsWith('/app/schedule') }"
         @click="$emit('close-sidebar')"
@@ -155,5 +153,13 @@ function isActiveStartsWith(basePath) {
   margin-top: 6px;
   font-size: 14px;
   font-weight: 600;
+}
+
+ /* 사이드바에서 클릭 시 초록색으로 변경 */
+:deep(.router-link-active),
+:deep(.router-link-exact-active) {
+  background: #B6CEB4 !important;
+  border-radius: 12px;
+  color: #000 !important;
 }
 </style>

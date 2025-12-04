@@ -14,10 +14,15 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@primevue/themes": "^4.5.0",
     "@formkit/drag-and-drop": "^0.5.3",
+    "@fullcalendar/core": "^6.1.19",
+    "@fullcalendar/daygrid": "^6.1.19",
+    "@fullcalendar/timegrid": "^6.1.19",
+    "@fullcalendar/vue3": "^6.1.19",
+    "@primevue/themes": "^4.5.0",
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",
+    "element-plus": "^2.11.8",
     "pinia": "^3.0.3",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
