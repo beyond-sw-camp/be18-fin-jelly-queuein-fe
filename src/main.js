@@ -14,6 +14,7 @@ import router from './router';
 // PrimeVue v4
 import PrimeVue from 'primevue/config';
 import Aura from '@primevue/themes/aura';
+import Chart from 'primevue/chart';
 
 
 
@@ -43,4 +44,5 @@ app.use(PrimeVue, {
   }
 });
 
+app.component('Chart', Chart);
 app.mount('#app');

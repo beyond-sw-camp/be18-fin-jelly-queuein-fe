@@ -168,6 +168,39 @@ const router = createRouter({
           meta: { requiresAuth: true, minRole: 'MANAGER' },
         },
         // 다른 Admin 메뉴는 필요 시 추가 가능
+        // ---------------------------------------------------------
+        // ⭐ 정산 메뉴 (Layout 제거됨)
+        // ---------------------------------------------------------
+        {
+          path: 'accounting',
+          meta: { minRole: 'MANAGER' },
+          children: [
+            {
+              path: 'usage-history',
+              component: () =>
+                import('@/views/admin/accounting/usage_history/UsageHistory.vue'),
+              meta: { title: '자원 사용 기록' }
+            },
+            {
+              path: 'usage-trend',
+              component: () =>
+                import('@/views/admin/accounting/usage_trend/UsageTrend.vue'),
+              meta: { title: '사용 추이' }
+            },
+            {
+              path: 'performance',
+              component: () =>
+                import('@/views/admin/accounting/performance/PerformanceView.vue'),
+              meta: { title: '운영 성과 분석' }
+            },
+            {
+              path: 'quarter',
+              component: () =>
+                import('@/views/admin/accounting/quarter/QuarterSettlement.vue'),
+              meta: { title: '분기 정산' }
+            }
+          ]
+        }
       ],
     },
   

@@ -52,10 +52,14 @@ const breadcrumbMap = {
   list: '자원 목록 조회',
   create: '자원 등록',
   edit: '자원 수정',
+  'usage-history': '자원 사용 기록 조회',
+  'usage-trend': '사용 추이',
+  'performance': '운영 성과 분석',
+  'quarter': '분기 정산',
 
   // 기타
   categories: '카테고리 관리',
-  settlement: '정산 관리',
+  accounting: '정산 관리',
   usage: '정산 관리',
   users: '유저 관리',
   roles: '역할 관리',

@@ -3,7 +3,12 @@
     <h2 class="page-title">자원 목록 조회</h2>
     <!-- 🔹 상단 필터 영역 -->
     <div class="filters">
-      <div class="cell"><RootDropDownMenu v-model="building" /></div>
+      <div class="cell">
+        <RootDropDownMenu v-model="building">
+          <option value="">전체</option>
+          <!-- 전체 옵션 추가 -->
+        </RootDropDownMenu>
+      </div>
       <div class="cell"><OneDepthDropDownMenu v-model="location" :buildingId="building" /></div>
       <div class="cell"><CategoryDropDownMenu v-model="category" /></div>
       <div class="cell"><AssetTypeDropdown v-model="type" /></div>
@@ -133,8 +138,8 @@ async function loadAssets() {
     params: {
       page: page.value,
       size: size.value,
-      buildingId: building.value || null,
-      locationId: location.value || null,
+      root: building.value || null,
+      oneDepth: location.value || null,
       categoryId: category.value || null,
       type: type.value || null,
       status: status.value || null,
