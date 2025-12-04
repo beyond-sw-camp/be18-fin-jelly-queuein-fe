@@ -1,7 +1,7 @@
 <template>
   <div class="dropdown-wrapper">
     <select class="dropdown" :value="modelValue" @change="onChange">
-      <option value="" disabled>카테고리 선택</option>
+      <option value="">카테고리 선택</option>
 
       <option v-for="c in categories" :key="c.categoryId" :value="c.categoryId">
         {{ c.name }}
