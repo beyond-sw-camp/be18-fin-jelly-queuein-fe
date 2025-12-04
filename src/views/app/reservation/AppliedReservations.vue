@@ -45,10 +45,10 @@
 import { ref, onMounted } from "vue"
 import api from "@/api/axios"
 
-import ReservationTabs from "./component/ReservationTab.vue"
-import ReservationFilters from "./component/ReservationFilter.vue"
-import ReservationTable from "./component/AppliedReservationTable.vue"
-import ReservationDetailModal from "./component/ReservationApplyDetailModal.vue"
+import ReservationTabs from "./components/reservation/ReservationTab.vue"
+import ReservationFilters from "./components/reservation/ReservationFilter.vue"
+import ReservationTable from "./components/reservation/AppliedReservationTable.vue"
+import ReservationDetailModal from "./components/reservation/ReservationApplyDetailModal.vue"
 import { Search } from '@element-plus/icons-vue'
 
 

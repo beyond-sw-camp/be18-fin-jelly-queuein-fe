@@ -50,10 +50,10 @@
 <script setup>
 import { ref, watch } from "vue"
 
-import ReservationTabs from "./component/ReservationTab.vue"
-import ReservationFilters from "./component/ReservationFilter.vue"
-import ReservationTable from "./component/UserReservationTable.vue"
-import ReservationDetailModal from "./component/ReservationDetailModal.vue"
+import ReservationTabs from "@/components/reservation/ReservationTab.vue"
+import ReservationFilters from "@/components/reservation/ReservationFilter.vue"
+import ReservationTable from "@/components/reservation/UserReservationTable.vue"
+import ReservationDetailModal from "@/components/reservation/ReservationDetailModal.vue"
 import { reservationApi } from "@/api/reservationApi"
 import { Search } from '@element-plus/icons-vue'
 // 검색어

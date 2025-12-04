@@ -45,9 +45,9 @@
 </template>
 
 <script setup>
-import ReservationTabs from './component/ReservationTab.vue'
-import ReservationFilters from './component/ReservationFilter.vue'
-import ReservationTable from './component/ReservableAssetsTable.vue'
+import ReservationTabs from '@/components/reservation/ReservationTab.vue'
+import ReservationFilters from '@/components/reservation/ReservationFilter.vue'
+import ReservationTable from '@/components/reservation/ReservableAssetsTable.vue'
 import { ref, onMounted } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import api from '@/api/axios'
