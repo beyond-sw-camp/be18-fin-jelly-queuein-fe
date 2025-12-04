@@ -37,7 +37,7 @@ async function loadData() {
   permissions.value = permRes.data.permissions
 
   const built = permissions.value.map((perm) => ({
-    key: perm.permissionId, // ★ DataTable key
+    key: perm.permissionId,
     permissionId: perm.permissionId,
     name: perm.permissionName,
     desc: perm.permissionDescription,
