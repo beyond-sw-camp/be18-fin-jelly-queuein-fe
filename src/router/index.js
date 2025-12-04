@@ -31,8 +31,49 @@ const router = createRouter({
     {
       path: '/app',
       component: HomeLayout,
-      meta: { requiresAuth: true },
-      children: [{ path: '', component: DashboardView }],
+
+      // meta: { requiresAuth: true },
+      children: [
+        { path: '', component: DashboardView },
+        
+        {
+          path: 'reservations/me',
+          component: () => import('@/views/app/reservation/UserReservations.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/available-assets',
+          component: () => import('@/views/app/reservation/ReservableAssets.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/applied',
+          component: () => import('@/views/app/reservation/AppliedReservations.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/monthly',
+          component: () => import('@/views/app/reservation/MonthlyReservations.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/weekly',
+          component: () => import('@/views/app/reservation/WeeklyReservations.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/create',
+          component: () => import('@/views/app/reservation/CreateReservation.vue'),
+          // meta: { requiresAuth: true }
+        },
+        {
+          path: 'reservations/apply',
+          component: () => import('@/views/app/reservation/ApplyReservation.vue'),
+          // meta: { requiresAuth: true }
+        }
+
+      ]
+
     },
 
     // ---------------------------------------------------------
@@ -129,6 +170,7 @@ const router = createRouter({
         // 다른 Admin 메뉴는 필요 시 추가 가능
       ],
     },
+  
 
     // ---------------------------------------------------------
     // 오류 페이지
