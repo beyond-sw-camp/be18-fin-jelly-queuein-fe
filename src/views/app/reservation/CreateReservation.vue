@@ -57,8 +57,8 @@ import api from '@/api/axios'
 import TimeBar from '@/components/reservation/TimeBar.vue'
 import BookingHeader from '@/components/reservation/BookingHeader.vue'
 import ParticipantModal from '@/components/reservation/ParticipantModal.vue'
-import ApplyButton from './component/ApplyButton.vue'
-import ReservationTabs from './component/ReservationTab.vue'
+import ApplyButton from '@/components/reservation/ApplyButton.vue'
+import ReservationTabs from '@/components/reservation/ReservationTab.vue'
 import { reservationApi } from '@/api/reservationApi'
 
 const route = useRoute()
