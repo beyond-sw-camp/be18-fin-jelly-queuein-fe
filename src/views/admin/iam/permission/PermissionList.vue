@@ -55,7 +55,7 @@ onMounted(load)
         label="역할-권한 매핑"
         icon="pi pi-sitemap"
         class="p-button-secondary"
-        @click="router.push('/admin/permissions/matrix')"
+        @click="router.push('/admin/permissions')"
       />
     </div>
 
