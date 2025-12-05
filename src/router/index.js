@@ -37,6 +37,13 @@ const router = createRouter({
         { path: '', component: DashboardView },
 
         {
+          path: 'users/me',
+          name: 'MyPage',
+          component: () => import('@/views/app/user/MyPage.vue'),
+          meta: { requiresAuth: true }
+        },
+
+        {
           path: 'reservations/me',
           component: () => import('@/views/app/reservation/UserReservations.vue'),
           // meta: { requiresAuth: true }
@@ -99,6 +106,13 @@ const router = createRouter({
           component: () =>
             import('@/views/admin/iam/user/UserManagement.vue'),
           meta: { title: '사용자 관리', minRole: 'ADMIN' }
+        },
+        // 관리자용 사용자 수정
+        {
+          path: 'users/:userId/edit',
+          name: 'UserEdit',
+          component: () => import('@/views/admin/iam/user/UserEditView.vue'),
+          meta: { title: '사용자 수정', minRole: 'ADMIN' }
         },
 
         // -------------------------
