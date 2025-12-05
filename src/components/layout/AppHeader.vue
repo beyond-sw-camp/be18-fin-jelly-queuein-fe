@@ -65,6 +65,7 @@ const breadcrumbMap = {
   'available-assets': '가능 자원',
   'me': '사용자 예약',
   'applied': '신청 예약',
+  'monthly': '스케쥴 확인',
 
 
   // 기타

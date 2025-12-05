@@ -2,7 +2,7 @@
   <div class="reservation-page">
     <!-- 헤더 -->
     <div class="header-row">
-      <h2>예약하기</h2>
+ 
     </div>
     <ReservationTabs />
 
@@ -222,12 +222,12 @@ onMounted(async () => {
 
 
 const onSelectParticipants = (users) => {
-  console.log("모달에서 선택된 유저들:", users); // 🔹 확인용
+  console.log("모달에서 선택된 유저들:", users); 
   selectedUsers.value = users.map(u => ({
     id: u.userId,
     name: u.userName
   }));
-  console.log("BookingHeader로 전달할 selectedUsers:", selectedUsers.value); // 🔹 확인용
+  console.log("BookingHeader로 전달할 selectedUsers:", selectedUsers.value); 
 };
 
 // -------------------------------
