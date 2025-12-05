@@ -26,7 +26,7 @@
     </el-table-column>
 
     <!-- 승인/거절 버튼 -->
-    <el-table-column label="승인 / 거절" min-width="250" align="center">
+    <!-- <el-table-column label="승인 / 거절" min-width="250" align="center">
       <template #default="scope">
         <el-button type="success" size="small" @click.stop="emit('approve', scope.row)">
           승인
@@ -36,7 +36,7 @@
           거절
         </el-button>
       </template>
-    </el-table-column>
+    </el-table-column> -->
 
     <!-- 예약 결과 -->
     <el-table-column label="예약 결과" min-width="180" align="center">
@@ -66,6 +66,7 @@
       :current-page="page"
       @current-change="changePage"
     />
+
   </div>
 </template>
 
@@ -124,6 +125,12 @@ const fetchReservations = async () => {
     console.error("예약 조회 실패:", err)
   }
 }
+
+const changePage = (newPage) => {
+  page.value = newPage
+  emit("page-change", newPage)
+}
+
 watch(
   () => props.filters,
   () => {

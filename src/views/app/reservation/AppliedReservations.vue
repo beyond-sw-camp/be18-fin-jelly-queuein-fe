@@ -25,7 +25,12 @@
     <!-- 예약 목록 -->
     <ReservationTable 
       :rows="tableData"  
-      :filters="selectedFilters"   
+      :filters="selectedFilters"
+      :total="total"
+      @page-change="(newPage) => {
+        selectedFilters.value.page = newPage - 1
+        fetchAppliedReservations()
+      }"   
       :key="tableKey"
       @open-detail="openDetailModal"
     />
@@ -71,7 +76,9 @@ const selectedFilters = ref({
   assetStatus: "",
   categoryName: "",
   layerZero: "",
-  layerOne: ""
+  layerOne: "",
+  page: 0,
+  size: 10,
 })
 
 const tableData = ref([])
