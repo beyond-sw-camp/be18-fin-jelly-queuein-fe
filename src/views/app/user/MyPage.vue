@@ -205,6 +205,7 @@ function formatPhone(value) {
 
               <div class="field">
                 <label>생년월일</label>
+                <br>
                 <DatePicker
                   v-model="form.birth"
                   dateFormat="yy-mm-dd"
@@ -215,7 +216,10 @@ function formatPhone(value) {
               </div>
             </div>
 
-            <Button label="내 정보 저장" class="save-btn" @click="saveMyInfo" />
+            <!-- 기본 정보 저장 버튼 -->
+            <div class="btn-row">
+              <Button label="저장" class="save-btn" @click="saveMyInfo" />
+            </div>
           </div>
         </div>
 
@@ -226,16 +230,38 @@ function formatPhone(value) {
           <div class="pw-grid">
             <div class="field">
               <label>현재 비밀번호</label>
-              <Password v-model="pwForm.oldPassword" toggleMask class="input-lg" />
+              <Password
+                v-model="pwForm.oldPassword"
+                toggleMask
+                class="input-lg"
+                :feedback="true"
+                promptLabel="비밀번호를 입력하세요"
+                weakLabel="약함"
+                mediumLabel="보통"
+                strongLabel="강함"
+              />
             </div>
 
             <div class="field">
               <label>새 비밀번호</label>
-              <Password v-model="pwForm.newPassword" toggleMask class="input-lg" />
+              <Password
+                v-model="pwForm.newPassword"
+                toggleMask
+                class="input-lg"
+                :feedback="true"
+                promptLabel="비밀번호를 입력하세요"
+                weakLabel="약함"
+                mediumLabel="보통"
+                strongLabel="강함"
+              />
             </div>
           </div>
 
-          <Button label="비밀번호 변경" class="pw-btn" severity="danger" @click="changePassword" />
+
+          <!-- 비밀번호 변경 -->
+          <div class="btn-row">
+            <Button label="비밀번호 변경" class="pw-btn" severity="danger" @click="changePassword" />
+          </div>
         </div>
 
       </template>
@@ -338,9 +364,30 @@ h3 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 25px;
+  align-items: center;
+}
+
+.pw-grid .input-lg {
+  width: 100%;
 }
 
 .pw-btn {
   margin-top: 16px;
 }
+
+:deep(.p-password) {
+  width: 100% !important;
+}
+
+:deep(.p-password-input) {
+  width: 100% !important;
+}
+
+
+.btn-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
 </style>
