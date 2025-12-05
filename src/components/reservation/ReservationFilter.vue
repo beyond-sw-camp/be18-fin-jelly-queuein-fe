@@ -33,10 +33,10 @@
         <AssetTypeDropdown v-model="filters.assetType" @update:modelValue="emitChange" />
       </div>
       <div class="cell search-box">
-        <input class="search-input" v-model="keyword" placeholder="자원명 검색" />
+        <el-input v-model="filters.assetName" placeholder="자원명 검색" />
       </div>
 
-      <button class="search-btn" @click="loadAssets">검색</button>
+      <button class="search-btn" @click="onSearch">검색</button>
     </div>
 
     <!-- 자원 유형 -->
@@ -86,7 +86,6 @@
 import { ref, watch } from 'vue'
 
 import AssetTypeDropdown from '@/components/common/AssetTypeDropdown.vue'
-import AssetStatusDropdown from '@/components/common/AssetStatusDropdown.vue'
 import CategoryDropDownMenu from '@/components/common/CategoryDropDownMenu.vue'
 import OneDepthDropDownMenu from '@/components/common/OneDepthDropDownMenu.vue'
 import RootDropDownMenu from '@/components/common/RootDropDownMenu.vue'
@@ -102,6 +101,7 @@ const filters = ref({
   categoryName: '',
   layerZero: '',
   layerOne: '',
+  assetName: '',
 })
 
 function emitChange() {
@@ -112,6 +112,11 @@ function emitChange() {
 function onBuildingChange(val) {
   filters.value.layerZero = val
   filters.value.layerOne = '' // 위치 초기화
+  emitChange()
+}
+
+// 검색 버튼 클릭 시 emit
+function onSearch() {
   emitChange()
 }
 
@@ -152,12 +157,6 @@ watch(
 .filter-row :deep(.el-input__wrapper) {
   padding-left: 12px !important;
   padding-right: 12px !important;
-}
-
-.cell :deep(.el-select),
-.cell :deep(.el-input),
-.cell :deep(.el-date-editor) {
-  width: 100%;
 }
 
 /* 🔥 반응형: 화면이 좁아지면 3등분 */

@@ -68,6 +68,7 @@ const selectedFilters = ref({
   layerZero: '',
   layerOne: '',
   assetName: '',
+  keyword: '',
 })
 const refreshTable = () => {
   fetchUserReservations()
