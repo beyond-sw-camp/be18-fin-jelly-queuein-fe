@@ -1,5 +1,4 @@
 <template>
-  <pre>{{ participants }}</pre>
 
   <div class="reservation-header">
 

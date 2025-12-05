@@ -103,10 +103,10 @@ const toggleHour = (h: number) => {
 }
 
 .label {
-  width: 70px;
+  width: 90px;
   font-weight: 600;
   background: #cfe3ca;
-  padding: 4px;
+  padding: 14px;
   border-radius: 4px;
   text-align: center;
   margin-right: 4px;
@@ -115,7 +115,7 @@ const toggleHour = (h: number) => {
 .hour-label,
 .block {
   flex: 1;
-  height: 24px;
+  height: 32px;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -7,7 +7,7 @@
     <ReservationTabs />
 
     <!-- 자원 예약 정보 -->
-    <h2>자원 예약</h2>
+    
     <BookingHeader
       :assetName="assetInfo?.assetName || assetName"
       v-model:date="date"
@@ -29,6 +29,7 @@
         v-model="selectedHours"
       />
     </div>
+    
 
     <!-- 선택된 참여자 표시
     <div v-if="selectedUsers.length" class="selected-users">
@@ -242,6 +243,9 @@ const onSelectParticipants = (users) => {
 
 .time-section {
   margin-top: 40px;
+}
+.time-section h2{
+  margin-top: 20px;
 }
 
 .header-row {
