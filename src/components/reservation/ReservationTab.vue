@@ -24,7 +24,7 @@ function getTabNameByRoute(path) {
   if (path.includes('/app/reservations/me')) return 'status'
   if (path.includes('/app/reservations/available-assets')) return 'available'
   if (path.includes('/app/reservations/create')) return 'create'
-  if (path.includes('/app/reservations/applied')) return 'applied'
+  if (path.includes('/admin/reservations/applied')) return 'applied'
   return 'status'
 }
 
@@ -41,7 +41,7 @@ function onTabClick(tab) {
       ElMessage.warning('예약할 자원을 먼저 선택해주세요.')
       break
     case 'applied':
-      router.push('/app/reservations/applied')
+      router.push('/admin/reservations/applied')
       break
   }
 }

@@ -48,8 +48,9 @@
       </el-table-column>
 
       <!-- 예약 상태 -->
-      <el-table-column label="예약 상태" min-width="150"  align="center">
+      <el-table-column label="예약 상태" min-width="150" align="center">
         <template #default="{ row }">
+          <!-- 백에서 온 reservationStatus 그대로 StatusTag로 전달 -->
           <StatusTag :status="row.reservationStatus" />
         </template>
       </el-table-column>
@@ -142,6 +143,11 @@ const fetchReservations = async () => {
 
     rows.value = res?.data?.content ?? []
     total.value = res?.data?.totalElements ?? 0
+
+    rows.value.forEach(row => {
+      console.log("reservationStatus =", row.reservationStatus)
+      console.log("isApproved =", row.isApproved)
+    })
   } catch (err) {
     console.error("예약 조회 실패:", err)
   }
