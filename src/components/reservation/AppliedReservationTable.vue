@@ -133,11 +133,10 @@ watch(
   { deep: true, immediate: true }
 )
 
-watch(() => props.rows, (val) => {
-  localRows.value = [...val]
-}, { deep: true, immediate: true })
 
-// 모달에서 입력한 임시 사유 업데이트
+watch(() => props.rows, (val) => {
+  rows.value = [...val] // localRows 대신 바로 rows 사용
+}, { deep: true, immediate: true })
 
 </script>
 

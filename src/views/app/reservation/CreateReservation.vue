@@ -81,9 +81,7 @@ console.log("route.query.date =", route.query.date)
 const participantModalVisible = ref(false)
 const selectedUsers = ref([])
 const note = ref("")
-const onSelectParticipants = (users) => {
-  selectedUsers.value = users   // ✅ 그대로 전달
-}
+
 // -------------------------------
 //  예약 가능 시간 조회 API
 // -------------------------------
@@ -222,6 +220,14 @@ onMounted(async () => {
 })
 
 
+const onSelectParticipants = (users) => {
+  console.log("모달에서 선택된 유저들:", users); // 🔹 확인용
+  selectedUsers.value = users.map(u => ({
+    id: u.userId,
+    name: u.userName
+  }));
+  console.log("BookingHeader로 전달할 selectedUsers:", selectedUsers.value); // 🔹 확인용
+};
 
 // -------------------------------
 // 페이지 로딩 시 API 호출
