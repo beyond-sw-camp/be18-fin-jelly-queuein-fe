@@ -163,7 +163,7 @@ const actionLabel = computed(() => {
     case "APPROVED":
       return "사용 시작"
     case "USING":
-      return "사용중"
+      return "사용 종료"
     case "COMPLETED":   // 서버 두 경우 모두 대응
       return "사용 종료됨"
     // case "COMPLETED":
@@ -172,6 +172,8 @@ const actionLabel = computed(() => {
       return "거절됨"
     case "UNAVAILABLE":
       return "사용불가"
+    case "CANCELED":
+      return "취소됨"
       
       
     default:
@@ -180,7 +182,7 @@ const actionLabel = computed(() => {
 })
 
 const isActionDisabled = computed(() =>
-  ["COMPLETED"].includes(normalizedUsage.value)
+  ["COMPLETED", "CANCELED"].includes(normalizedUsage.value)
 )
 
 /* -------------------------------------------
