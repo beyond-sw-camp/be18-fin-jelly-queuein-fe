@@ -1,8 +1,18 @@
 <template>
+  <div class="tabs-full-row">
+    <ReservationTabs
+      @change="
+        (type) => {
+          searchParams.assetType = type
+          fetchReservableAssets()
+        }
+      "
+    />
+  </div>
   <div class="header-row">
     <h2>예약 가능 자원 조회</h2>
 
-    <el-input
+    <!-- <el-input
       v-model="searchParams.assetName"
       placeholder="검색어를 입력해주세요"
       class="search-input"
@@ -11,38 +21,34 @@
       <template #append>
         <el-button :icon="Search" @click="fetchReservableAssets" />
       </template>
-    </el-input>
+    </el-input> -->
   </div>
-  <ReservationTabs
-    @change="(type) => {
-      searchParams.assetType = type
-      fetchReservableAssets()
-    }"
-  />
   <ReservationFilters
-    @change="(f) => { 
-      if (f.date) searchParams.date = f.date  
-      searchParams.categoryName = f.categoryName
-      searchParams.assetType = f.assetType
-      searchParams.assetStatus = f.assetStatus
-      searchParams.layerZero = f.layerZero
-      searchParams.layerOne = f.layerOne
-      fetchReservableAssets()
-    }"
+    @change="
+      (f) => {
+        if (f.date) searchParams.date = f.date
+        searchParams.categoryName = f.categoryName
+        searchParams.assetType = f.assetType
+        searchParams.assetStatus = f.assetStatus
+        searchParams.layerZero = f.layerZero
+        searchParams.layerOne = f.layerOne
+        fetchReservableAssets()
+      }
+    "
   />
-
 
   <ReservationTable
     @select="openCreatePage"
     :rows="tableData"
     :total="total"
     :date="searchParams.date"
-    @page-change="(p) => {
-      searchParams.page = p
-      fetchReservableAssets()
-    }"
+    @page-change="
+      (p) => {
+        searchParams.page = p
+        fetchReservableAssets()
+      }
+    "
   />
-
 </template>
 
 <script setup>
@@ -53,9 +59,8 @@ import { ref, onMounted } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import api from '@/api/axios'
 
-
 const searchParams = ref({
-  date: '',           // 반드시 yyyy-MM-dd 형태
+  date: '', // 반드시 yyyy-MM-dd 형태
   assetName: '',
   assetType: '',
   categoryName: '',
@@ -71,10 +76,7 @@ const total = ref(0)
 const today = new Date().toISOString().slice(0, 10)
 searchParams.value.date = today
 
-
-
 async function fetchReservableAssets() {
-
   // 기존 params 생성 방식 대신, 빈 값 제거 처리
   const params = {
     date: searchParams.value.date,
@@ -85,11 +87,11 @@ async function fetchReservableAssets() {
     layerZero: searchParams.value.layerZero,
     layerOne: searchParams.value.layerOne,
     page: searchParams.value.page,
-    size: searchParams.value.size
+    size: searchParams.value.size,
   }
 
   // 빈 문자열("")은 서버로 보내지 않도록 제거
-  Object.keys(params).forEach(key => {
+  Object.keys(params).forEach((key) => {
     if (params[key] === '' || params[key] === undefined || params[key] === null) {
       delete params[key]
     }
@@ -100,29 +102,26 @@ async function fetchReservableAssets() {
   tableData.value = res.data.content
   total.value = res.data.totalElements
 
-  console.log("응답:", res.data)
-  console.log("컨텐츠:", res.data.content)
+  console.log('응답:', res.data)
+  console.log('컨텐츠:', res.data.content)
 }
-
 
 function openCreatePage(asset) {
   router.push({
     path: `/app/reservations/create`,
     query: {
       assetId: asset.id,
-      date: searchParams.value.date
-    }
+      date: searchParams.value.date,
+    },
   })
 }
 
 onMounted(() => {
-  const today = new Date().toLocaleDateString("en-CA")  // YYYY-MM-DD 형식 + 로컬(KST) 기준
+  const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD 형식 + 로컬(KST) 기준
 
   searchParams.value.date = today
   fetchReservableAssets()
 })
-
-
 </script>
 
 <style scoped>
@@ -145,5 +144,9 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 600;
   margin-top: 10px;
+}
+
+.tabs-full-row {
+  margin-bottom: 15px;
 }
 </style>
