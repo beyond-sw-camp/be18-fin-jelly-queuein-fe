@@ -1,3 +1,4 @@
+<!-- file: src/views/admin/iam/user/UserEditView.vue -->
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -8,6 +9,7 @@ import InputText from "primevue/inputtext";
 import Dropdown from "primevue/dropdown";
 import Calendar from "primevue/calendar";
 import Button from "primevue/button";
+import Card from "primevue/card";
 
 const route = useRoute();
 const router = useRouter();
@@ -16,12 +18,8 @@ const userId = Number(route.params.userId);
 
 const user = ref(null);
 const roleOptions = ref([]);
-
-// ---------------------------------------------
-// ✔ 가상 부서 목록 하드코딩 (1~10)
-// ---------------------------------------------
 const deptOptions = Array.from({ length: 10 }, (_, i) => ({
-  label: `부서 ${i + 1}`,
+  label: `${i + 1}`,
   value: i + 1
 }));
 
@@ -31,8 +29,10 @@ const form = ref({
   retireDate: null
 });
 
+// ---------------------------------------------
+// 데이터 로딩
+// ---------------------------------------------
 async function loadData() {
-  // 사용자 정보
   const userRes = await userApi.getUser(userId);
   user.value = userRes.data;
 
@@ -43,8 +43,8 @@ async function loadData() {
     value: r.roleId
   }));
 
-  // 사용자 기존 값 세팅
-  form.value.roleId = user.value.roleId;
+  // 기존 값 매핑
+  form.value.roleId = user.value.roleId ?? null;
   form.value.dptId = user.value.dptId ?? null;
   form.value.retireDate = user.value.retireDate
     ? new Date(user.value.retireDate)
@@ -54,14 +54,16 @@ async function loadData() {
 onMounted(loadData);
 
 // ---------------------------------------------
-// ✔ 저장 처리: 역할 수정 + dptId + retireDate
+// 저장 처리
 // ---------------------------------------------
 async function save() {
   try {
-    // 역할 업데이트
-    await userApi.updateUserRole(userId, { roleId: form.value.roleId });
+    // 역할 변경
+    await userApi.updateUserRole(userId, {
+      roleId: form.value.roleId
+    });
 
-    // 부서 + 퇴사일 업데이트
+    // 부서 + 퇴사일 변경
     await userApi.updateUser(userId, {
       dptId: form.value.dptId,
       retireDate: form.value.retireDate
@@ -69,83 +71,159 @@ async function save() {
         : null
     });
 
-    alert("사용자 정보가 수정되었습니다.");
+    alert("사용자 정보가 성공적으로 수정되었습니다.");
     router.push("/admin/users");
   } catch (e) {
     console.error(e);
-    alert("수정 중 오류 발생");
+    alert("수정 중 오류가 발생했습니다.");
   }
 }
 </script>
 
 <template>
-  <div class="page">
-    <h2>사용자 편집</h2>
-    <p>관리자가 다른 사용자의 정보를 수정할 수 있는 화면입니다.</p>
+  <div class="page-wrapper">
+    <h2 class="title">사용자 편집</h2>
+    <p class="subtitle">관리자가 사용자의 정보 및 권한을 수정할 수 있는 화면입니다.</p>
 
-    <div class="card" v-if="user">
-      <h3>기본 정보</h3>
-      <div class="grid">
-        <div>
-          <label>사원명</label>
-          <InputText :model-value="user.userName" disabled />
-        </div>
-        <div>
-          <label>이메일</label>
-          <InputText :model-value="user.email" disabled />
-        </div>
-        <div>
-          <label>연락처</label>
-          <InputText :model-value="user.phone" disabled />
-        </div>
-      </div>
+    <div v-if="user" class="content-layout">
 
-      <h3 style="margin-top: 24px">관리자 편집</h3>
+      <!-- LEFT : 기본 정보 -->
+      <Card class="info-card">
+        <template #title>기본 정보</template>
+        <template #content>
+          <div class="form-column">
 
-      <div class="grid">
-        <div>
-          <label>역할</label>
-          <Dropdown v-model="form.roleId" :options="roleOptions" />
-        </div>
+            <div class="form-field">
+              <label>사원명</label>
+              <InputText :model-value="user.userName" disabled />
+            </div>
 
-        <div>
-          <label>부서</label>
-          <Dropdown v-model="form.dptId" :options="deptOptions" placeholder="부서 선택" />
-        </div>
+            <div class="form-field">
+              <label>이메일</label>
+              <InputText :model-value="user.email" disabled />
+            </div>
 
-        <div>
-          <label>퇴사일</label>
-          <Calendar v-model="form.retireDate" dateFormat="yy-mm-dd" />
-        </div>
-      </div>
+            <div class="form-field">
+              <label>연락처</label>
+              <InputText :model-value="user.phone" disabled />
+            </div>
 
-      <div class="actions">
-        <Button label="취소" class="p-button-secondary" @click="router.back()" />
-        <Button label="저장" class="p-button-primary" @click="save" />
-      </div>
+          </div>
+        </template>
+      </Card>
+
+      <!-- RIGHT : 관리자 편집 -->
+      <Card class="edit-card">
+        <template #title>관리자 편집</template>
+        <template #content>
+          <div class="form-column">
+
+            <div class="form-field">
+              <label>역할</label>
+              <Dropdown
+                v-model="form.roleId"
+                :options="roleOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="역할 선택"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>부서</label>
+              <Dropdown
+                v-model="form.dptId"
+                :options="deptOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="부서 선택"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>퇴사일</label>
+              <Calendar
+                v-model="form.retireDate"
+                dateFormat="yy-mm-dd"
+                placeholder="YYYY-MM-DD"
+              />
+            </div>
+
+            <div class="actions">
+              <Button
+                label="취소"
+                severity="secondary"
+                @click="router.back()"
+              />
+              <Button
+                label="저장"
+                severity="success"
+                @click="save"
+              />
+            </div>
+
+          </div>
+        </template>
+      </Card>
+
     </div>
   </div>
 </template>
 
 <style scoped>
-.page {
-  padding: 30px;
-  max-width: 700px;
+.page-wrapper {
+  padding: 40px;
+  max-width: 1100px;
+  margin: 0 auto;
 }
-.grid {
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin-bottom: 28px;
+  color: #666;
+}
+
+.content-layout {
   display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 32px;
 }
-.card {
-  border: 1px solid #ddd;
-  padding: 20px;
-  border-radius: 12px;
+
+/* LEFT CARD */
+.info-card {
+  flex: 1;
+  min-width: 380px;
 }
+
+/* RIGHT CARD */
+.edit-card {
+  flex: 1;
+  min-width: 380px;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+label {
+  font-weight: 600;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
   gap: 12px;
+  margin-top: 12px;
 }
 </style>
