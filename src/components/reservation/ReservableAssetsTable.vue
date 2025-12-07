@@ -33,6 +33,7 @@
     <el-table-column label="예약하기" min-width="150" align="center">
       <template #default="scope">
       <el-button
+        type="primary"
         class="reserve-btn"
         size="small"
         @click.stop="goToDetail(scope.row, {})"
@@ -116,5 +117,12 @@ const goToDetail = (row) => {
   border-color: #409EFF;
   color: #409EFF;
 }
-
+.reserve-btn:hover,
+.reserve-btn:focus,
+.el-button.reserve-btn:hover,
+.el-button.reserve-btn:focus {
+  border-color: #409EFF !important; /* 파란색 유지 */
+  background-color: #d9ecff !important;
+  color: #409EFF !important;
+}
 </style>
