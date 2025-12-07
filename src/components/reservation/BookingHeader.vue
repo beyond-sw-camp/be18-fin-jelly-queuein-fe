@@ -41,7 +41,7 @@
             :key="user.userId"
             class="tag"
           >
-            {{ user.userName }}
+            {{ user.name }}
           </span>
 
 
