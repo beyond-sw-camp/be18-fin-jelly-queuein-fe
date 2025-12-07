@@ -1,9 +1,9 @@
 <template>
+  
+  <div class="tabs-full-row">
+    <ReservationTabs />
+  </div>
   <div>
-    <div class="tabs-full-row">
-      <ReservationTabs />
-    </div>
-
     <!-- 헤더 -->
     <div class="header-row">
       <h2>예약 관리</h2>
@@ -20,23 +20,25 @@
     </el-input> -->
     </div>
 
-    <!-- 예약 목록 -->
-    <ReservationTable
-      :rows="tableData"
-      :filters="selectedFilters"
-      :key="tableKey"
-      @open-detail="openDetailModal"
-    />
+    <ReservationFilters @change="handleFilterChange" />
 
-    <ReservationDetailModal
-      v-model:visible="modalOpen"
-      :asset="reservationDetail"
-      @close="closeModal"
-      @save-reason="updateReason"
-      @approve="onApprove"
-      @reject="onReject" 
-    /><!-- 부모에서 emit reason 처리-->
-  </div>
+      <!-- 예약 목록 -->
+      <ReservationTable
+        :rows="tableData"
+        :filters="selectedFilters"
+        :key="tableKey"
+        @open-detail="openDetailModal"
+      />
+
+      <ReservationDetailModal
+        v-model:visible="modalOpen"
+        :asset="reservationDetail"
+        @close="closeModal"
+        @save-reason="updateReason"
+        @approve="onApprove"
+        @reject="onReject" 
+      /><!-- 부모에서 emit reason 처리-->
+    </div>
 </template>
 
 <script setup>

@@ -84,7 +84,7 @@ const props = defineProps({
       categoryName: "",
       layerZero: "",
       layerOne: "",
-      assetName: ""    // ✅ 여기 추가
+      assetName: ""    
     }) 
   }
 })
