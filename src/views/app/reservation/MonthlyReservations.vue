@@ -307,5 +307,40 @@ onMounted(() => {
   line-height: 1;
 }
 
+/* 이벤트 wrapper 전체 제거 */
+.fc-timegrid-event-harness,
+.fc-timegrid-event-harness-inset {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 이벤트 본체 제거 */
+.fc-timegrid-event,
+.fc-event,
+.fc-event-main,
+.fc-event-bg {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* hover / interaction 시 생기는 배경 제거 */
+.fc-event.fc-mirror,
+.fc-timegrid-selection {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 칼럼 안쪽 Event layer 자체 제거 (여기 남으면 배경처럼 보임) */
+.fc-timegrid-col-events {
+  background: transparent !important;
+}
+
+/* FullCalendar가 주별에서 시간대 강조로 넣는 하이라이트 제거 */
+.fc-timegrid-slot-lane.fc-highlight {
+  background: transparent !important;
+}
 
 </style> 
