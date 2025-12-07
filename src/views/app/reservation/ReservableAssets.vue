@@ -59,14 +59,17 @@ const total = ref(0)
 
 // 🔹 UserReservation 방식: handleFilterChange 정의
 const handleFilterChange = (filters) => {
-  selectedFilters.value = { ...filters } // 필터 전체 반영
-  refreshTable()
+  selectedFilters.value = {
+  ...selectedFilters.value,
+  ...filters,
+  page: 0   // 필터 변경 시에만 초기화
+  }
+  fetchReservableAssets()
 }
 
 // 🔹 UserReservation 방식: refreshTable 정의
 const refreshTable = () => {
   fetchReservableAssets()
-  selectedFilters.value.page = 0 // 페이지 초기화
 }
 
 // API 호출
