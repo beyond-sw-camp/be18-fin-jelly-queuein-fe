@@ -1,13 +1,11 @@
 <template>
   <div class="reservation-page">
     <!-- 헤더 -->
-    <div class="header-row">
-      <h2>예약하기</h2>
-    </div>
+
     <ReservationTabs />
 
     <!-- 자원 예약 정보 -->
-    <h2>자원 예약</h2>
+
     <BookingHeader
       :assetName="assetInfo?.assetName || assetName"
       v-model:date="date"
