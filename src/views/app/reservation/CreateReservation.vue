@@ -193,9 +193,7 @@ async function submitBooking() {
 
   const payload = {
     applicantId: currentUserId.value,
-    attendants: selectedUsers.value.map(u => ({
-      userId: u.id
-    })),
+    attendantIds: selectedUsers.value.map(u => u.id),
     startAt,
     endAt,
     description: note.value,  
