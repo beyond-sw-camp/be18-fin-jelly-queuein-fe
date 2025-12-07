@@ -75,8 +75,6 @@
 import { reservationApi } from "@/api/reservationApi"
 import { ref, watch } from "vue" 
 const props = defineProps({
-  rows: { type: Array, required: true },
-  total: { type: Number, required: true },
   filters: { 
     type: Object, 
     default: () => ({
@@ -90,7 +88,6 @@ const props = defineProps({
     }) 
   }
 })
-const localRows = ref([...props.rows])
 
 const rows = ref([])
 const total = ref(0)
@@ -128,7 +125,7 @@ const fetchReservations = async () => {
 
 const changePage = (newPage) => {
   page.value = newPage
-  emit("page-change", newPage)
+  fetchReservations()
 }
 
 watch(
@@ -140,10 +137,6 @@ watch(
   { deep: true, immediate: true }
 )
 
-
-watch(() => props.rows, (val) => {
-  rows.value = [...val] // localRows 대신 바로 rows 사용
-}, { deep: true, immediate: true })
 
 </script>
 

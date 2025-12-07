@@ -20,8 +20,6 @@
     </el-input> -->
     </div>
 
-    <ReservationFilters @change="handleFilterChange" />
-
     <!-- 예약 목록 -->
     <ReservationTable
       :rows="tableData"
@@ -70,9 +68,7 @@ const selectedFilters = ref({
   assetStatus: "",
   categoryName: "",
   layerZero: "",
-  layerOne: "",
-  page: 0,
-  size: 10,
+  layerOne: ""
 })
 
 const tableData = ref([])
@@ -82,18 +78,9 @@ const modalOpen = ref(false)
 const reservationDetail = ref(null)
 const currentUserName = ref('')
 
-onMounted(async () => {
-  selectedFilters.value.date = getKSTDateString()
 
-  try {
-    const res = await api.get('/users/me')
-    currentUserName.value = res.data.userName
-  } catch (e) {
-    console.error('유저 정보 조회 실패:', e)
-  }
 
-  fetchAppliedReservations()
-})
+
 
 async function fetchAppliedReservations() {
   const params = buildParams()
@@ -193,9 +180,8 @@ function buildParams() {
   })
   return params
 }
-
 onMounted(async () => {
-  searchParams.value.date = getKSTDateString()
+  selectedFilters.value.date = getKSTDateString()
 
   try {
     const res = await api.get('/users/me')
