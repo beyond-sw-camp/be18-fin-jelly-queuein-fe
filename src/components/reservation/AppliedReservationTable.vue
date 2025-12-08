@@ -81,7 +81,7 @@ const props = defineProps({
       date: "",
       assetType: "",
       assetStatus: "",
-      categoryName: "",
+      categoryId: "",
       layerZero: "",
       layerOne: "",
       assetName: ""    
@@ -108,7 +108,7 @@ const fetchReservations = async () => {
       date: props.filters.date,
       assetType: props.filters.assetType || undefined,
       assetStatus: props.filters.assetStatus || undefined,
-      categoryName: props.filters.categoryName || undefined,
+      categoryId: props.filters.categoryId || undefined,
       layerZero: props.filters.layerZero || undefined,
       layerOne: props.filters.layerOne || undefined,
       assetName: props.filters.assetName || undefined
