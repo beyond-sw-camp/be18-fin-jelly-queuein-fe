@@ -20,7 +20,7 @@ export const reservationApi = {
   getReservationDetail: (id) => api.get(`/reservations/${id}`),
 
   // 사용자 예약 조회
-  getUserReservations: ({ page, size, date, assetType, assetName, assetStatus, categoryName, layerZero, layerOne }) =>
+  getUserReservations: ({ page, size, date, assetType, assetName, assetStatus, categoryId, layerZero, layerOne }) =>
     api.get('/reservations/me', {
       params: {
         page,
@@ -29,12 +29,12 @@ export const reservationApi = {
         assetType,
         assetName,
         assetStatus,
-        categoryName,
+        categoryId,
         layerZero,
         layerOne
       }
     }),
-      getAppliedReservations: ({ page, size, date, assetName, assetType, assetStatus, categoryName, layerZero, layerOne }) =>
+      getAppliedReservations: ({ page, size, date, assetName, assetType, assetStatus, categoryId, layerZero, layerOne }) =>
     api.get('/reservations/pending', {
       params: {
         page,
@@ -43,7 +43,7 @@ export const reservationApi = {
         assetName,
         assetType,
         assetStatus,
-        categoryName,
+        categoryId,
         layerZero,
         layerOne
       }
