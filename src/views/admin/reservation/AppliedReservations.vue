@@ -1,9 +1,9 @@
 <template>
+  
+  <div class="tabs-full-row">
+    <ReservationTabs />
+  </div>
   <div>
-    <div class="tabs-full-row">
-      <ReservationTabs />
-    </div>
-
     <!-- 헤더 -->
     <div class="header-row">
       <h2>예약 관리</h2>
@@ -22,28 +22,28 @@
 
     <ReservationFilters @change="handleFilterChange" />
 
-    <!-- 예약 목록 -->
-    <ReservationTable
-      :rows="tableData"
-      :filters="selectedFilters"
-      :key="tableKey"
-      @open-detail="openDetailModal"
-      @approve="onApprove"
-      @reject="onReject"
-    />
+      <!-- 예약 목록 -->
+      <ReservationTable
+        :rows="tableData"
+        :filters="selectedFilters"
+        :key="tableKey"
+        @open-detail="openDetailModal"
+      />
 
-    <ReservationDetailModal
-      v-model:visible="modalOpen"
-      :asset="reservationDetail"
-      @close="closeModal"
-      @save-reason="updateReason"
-    /><!-- 부모에서 emit reason 처리-->
-  </div>
+      <ReservationDetailModal
+        v-model:visible="modalOpen"
+        :asset="reservationDetail"
+        @close="closeModal"
+        @save-reason="updateReason"
+        @approve="onApprove"
+        @reject="onReject" 
+      /><!-- 부모에서 emit reason 처리-->
+    </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import api from '@/api/axios'
+import { ref, onMounted, watch } from "vue"
+import api from "@/api/axios"
 
 import ReservationTabs from '@/components/reservation/ReservationTab.vue'
 import ReservationFilters from '@/components/reservation/ReservationFilter.vue'
@@ -65,12 +65,12 @@ const refreshTable = () => {
 
 const selectedFilters = ref({
   date: selectedDate.value,
-  assetName: '', // 검색바 입력값 포함
-  assetType: '',
-  assetStatus: '',
-  categoryName: '',
-  layerZero: '',
-  layerOne: '',
+  assetName: "",       // 검색바 입력값 포함
+  assetType: "",
+  assetStatus: "",
+  categoryId: "",
+  layerZero: "",
+  layerOne: ""
 })
 
 const tableData = ref([])
@@ -80,18 +80,9 @@ const modalOpen = ref(false)
 const reservationDetail = ref(null)
 const currentUserName = ref('')
 
-onMounted(async () => {
-  selectedFilters.value.date = getKSTDateString()
 
-  try {
-    const res = await api.get('/users/me')
-    currentUserName.value = res.data.userName
-  } catch (e) {
-    console.error('유저 정보 조회 실패:', e)
-  }
 
-  fetchAppliedReservations()
-})
+
 
 async function fetchAppliedReservations() {
   const params = buildParams()
@@ -139,47 +130,45 @@ function closeModal() {
   reservationDetail.value = null
 }
 
-// 부모 컴포넌트 (AppliedReservations.vue)
+
+
 const updateReason = ({ reservationId, reason }) => {
-  const row = tableData.value.find((r) => r.id === reservationId)
-  if (row) row.reason = reason
+  console.log("부모에서 받은 reason:", reason, "reservationId:", reservationId)
+  tableData.value = tableData.value.map(r =>
+    r.id === reservationId ? { ...r, reason } : r
+  )
 }
 
-async function onApprove(row) {
+
+// 부모 컴포넌트
+async function onApprove(payload) {
   try {
-    await api.patch(`/reservations/${row.reservationId}/approve`, {
-      version: row.version,
+    await api.patch(`/reservations/${payload.reservationId}/approve`, {
+      version: payload.version,
       approverName: currentUserName.value,
-      reason: row.reason,
+      reason: payload.reason // 모달에서 입력한 reason
     })
 
-    // UI 반영
-    row.isApproved = 'APPROVED'
-    row.respondentName = currentUserName.value
-
-    fetchAppliedReservations() // 전체 갱신
+    fetchAppliedReservations() // 갱신
   } catch (err) {
     console.error('승인 실패:', err)
   }
 }
 
-async function onReject(row) {
+async function onReject(payload) {
   try {
-    await api.patch(`/reservations/${row.reservationId}/reject`, {
-      version: row.version,
+    await api.patch(`/reservations/${payload.reservationId}/reject`, {
+      version: payload.version,
       approverName: currentUserName.value,
-      reason: row.reason,
+      reason: payload.reason
     })
-
-    // UI 반영
-    row.isApproved = 'REJECTED'
-    row.respondentName = currentUserName.value
 
     fetchAppliedReservations()
   } catch (err) {
     console.error('거절 실패:', err)
   }
 }
+
 
 function getKSTDateString() {
   const offset = 9 * 60 * 60 * 1000
@@ -193,9 +182,8 @@ function buildParams() {
   })
   return params
 }
-
 onMounted(async () => {
-  searchParams.value.date = getKSTDateString()
+  selectedFilters.value.date = getKSTDateString()
 
   try {
     const res = await api.get('/users/me')

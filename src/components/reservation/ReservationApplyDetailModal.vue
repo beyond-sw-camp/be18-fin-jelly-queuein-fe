@@ -75,8 +75,8 @@
       </div>
 
       <div style="margin-top: 20px; text-align: right;">
-        <el-button @click="close">닫기</el-button>
-        <el-button type="primary" @click="saveReason">저장</el-button>
+      <el-button type="success" @click="approve">승인</el-button>
+      <el-button type="danger" @click="reject">거절</el-button>
       </div>
 
     </div>
@@ -125,9 +125,22 @@ const props = defineProps({
   asset: Object
 })
 
-const emit = defineEmits(["close", "save-reason"])
+const emit = defineEmits(["close", "approve", "reject", "update:visible"])
+const close = () => {
+  emit("update:visible", false)
+  emit("close")
+}
 
-const close = () => emit("close")
+const approve = () => {
+  emit("approve", { reservationId: props.asset.id, ...props.asset, reason: editedReason.value})
+  close()
+}
+
+const reject = () => {
+  emit("reject", { reservationId: props.asset.id, ...props.asset,reason: editedReason.value})
+  close()
+}
+
 
 /* -------------------------------------------
   사유(reason) 수정 상태
@@ -143,6 +156,7 @@ watch( //모달 열릴 때
 )
 
 const saveReason = () => { //저장 버튼 눌렀을 때 id, reason emit -> 부모 컴포넌트에서 받는 용도
+  console.log("emit reason:", editedReason.value, "reservationId:", props.asset?.id)
   emit("save-reason", {
     reservationId: props.asset?.id,
     reason: editedReason.value

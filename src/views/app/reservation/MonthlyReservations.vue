@@ -85,11 +85,14 @@ const convertReservationsToEvents = (data) => {
     day.reservations.forEach(r => {
       const start = new Date(r.startAt)
       const localStart = new Date(start.getTime() + 9 * 60 * 60 * 1000)
-
+      const end = new Date(r.endAt)
+      const localEnd = new Date(end.getTime() + 9 * 60 * 60 * 1000)
       events.push({
         id: r.reservationId,
         title: r.assetName,
-        start: localStart
+        start: localStart,
+        // end: localEnd, //끝나는 시간까지 표현하고 싶으면 추가
+        allDay: false
       })
     })
   })
@@ -307,5 +310,62 @@ onMounted(() => {
   line-height: 1;
 }
 
+/* 이벤트 wrapper 전체 제거 */
+.fc-timegrid-event-harness,
+.fc-timegrid-event-harness-inset {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 이벤트 본체 제거 */
+.fc-timegrid-event,
+.fc-event,
+.fc-event-main,
+.fc-event-bg {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* hover / interaction 시 생기는 배경 제거 */
+.fc-event.fc-mirror,
+.fc-timegrid-selection {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 칼럼 안쪽 Event layer 자체 제거 (여기 남으면 배경처럼 보임) */
+.fc-timegrid-col-events {
+  background: transparent !important;
+}
+
+/* FullCalendar가 주별에서 시간대 강조로 넣는 하이라이트 제거 */
+.fc-timegrid-slot-lane.fc-highlight {
+  background: transparent !important;
+}
+/* 월간(month) view 이벤트 텍스트가 넘치지 않게 설정 */
+:deep(.fc-daygrid-event) {
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+}
+
+/* 이벤트 텍스트 부분 */
+:deep(.fc-daygrid-event .fc-event-title) {
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+}
+
+/* 이벤트 전체가 늘어나지 않도록 고정 */
+:deep(.fc-daygrid-event-harness) {
+  max-height: 22px !important; /* 필요에 따라 조정 */
+  overflow: hidden !important;
+}
 
 </style> 
