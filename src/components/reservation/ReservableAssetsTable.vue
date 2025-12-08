@@ -14,7 +14,7 @@
     <el-table-column prop="assetType" label="자원 유형" width="210" align="center" />
 
     <!-- categoryName -->
-    <el-table-column prop="categoryName" label="카테고리" width="210" align="center" />
+    <el-table-column prop="categoryId" label="카테고리" width="210" align="center" />
 
     <!-- reservable (문구로 표시) -->
     <el-table-column prop="reservable" label="예약 가능 여부" width="150" align="center">
