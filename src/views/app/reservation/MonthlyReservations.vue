@@ -85,11 +85,14 @@ const convertReservationsToEvents = (data) => {
     day.reservations.forEach(r => {
       const start = new Date(r.startAt)
       const localStart = new Date(start.getTime() + 9 * 60 * 60 * 1000)
-
+      const end = new Date(r.endAt)
+      const localEnd = new Date(end.getTime() + 9 * 60 * 60 * 1000)
       events.push({
         id: r.reservationId,
         title: r.assetName,
-        start: localStart
+        start: localStart,
+        // end: localEnd, //끝나는 시간까지 표현하고 싶으면 추가
+        allDay: false
       })
     })
   })
