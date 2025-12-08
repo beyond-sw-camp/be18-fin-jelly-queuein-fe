@@ -68,7 +68,7 @@ const router = createRouter({
           // meta: { requiresAuth: true }
         },
         {
-          path: 'reservations/create',
+          path: 'reservations/create-reservation',
           component: () => import('@/views/app/reservation/CreateReservation.vue'),
           meta: { title: '예약 생성', minRole: 'ADMIN' }
           // meta: { requiresAuth: true }

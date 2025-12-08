@@ -66,6 +66,8 @@ const breadcrumbMap = {
   'me': '사용자 예약',
   'applied': '신청 예약',
   'monthly': '스케쥴 확인',
+  'apply': '신청하기',
+  'create-reservation': '예약하기',
 
 
   // 기타

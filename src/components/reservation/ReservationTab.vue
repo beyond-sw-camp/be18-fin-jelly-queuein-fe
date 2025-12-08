@@ -3,7 +3,7 @@
     <el-tabs v-model="active" class="reservation-tabs" @tab-click="onTabClick" type="line">
       <el-tab-pane label="예약 현황" name="status" />
       <el-tab-pane label="예약 가능 자원 목록" name="available" />
-      <el-tab-pane label="예약하기" name="create" />
+      <el-tab-pane label="예약하기" name="createReservation" />
       <el-tab-pane label="예약 관리" name="applied" />
     </el-tabs>
   </div>
@@ -23,7 +23,8 @@ const active = ref(getTabNameByRoute(route.path))
 function getTabNameByRoute(path) {
   if (path.includes('/app/reservations/me')) return 'status'
   if (path.includes('/app/reservations/available-assets')) return 'available'
-  if (path.includes('/app/reservations/create')) return 'create'
+  if (path.includes('/app/reservations/create-reservation')) return 'create'
+  if (path.includes('/app/reservations/apply')) return 'create'
   if (path.includes('/admin/reservations/applied')) return 'applied'
   return 'status'
 }

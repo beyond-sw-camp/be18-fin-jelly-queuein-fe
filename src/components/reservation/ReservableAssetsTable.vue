@@ -80,7 +80,7 @@ const goToDetail = (row) => {
 
   const targetPath = row.needsApproval
   ? '/app/reservations/apply'   // 선착순
-  : '/app/reservations/create' //신청
+  : '/app/reservations/create-reservation' //신청
   router.push({
     path: targetPath,
     query: {
