@@ -2,7 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 const api = axios.create({
-  baseURL: '/api/v1'
+  baseURL: `${import.meta.env.VITE_API_URL}/api/v1`
 })
 
 // 요청 인터셉터 — Authorization 자동 추가
@@ -25,7 +25,7 @@ function onTokenRefreshed(newToken) {
   refreshSubscribers = []
 }
 
-function addRefreshSubscriber(callback) {
+function addRefreshSubscriber(callback) {g
   refreshSubscribers.push(callback)
 }
 
@@ -66,7 +66,7 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const res = await axios.post('/api/v1/auth/refresh', { refreshToken })
+        const res = await api.post('/auth/refresh', { refreshToken })
 
         const newAccess = res.data.accessToken
         const newRefresh = res.data.refreshToken
