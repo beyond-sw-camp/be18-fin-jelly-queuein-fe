@@ -40,7 +40,7 @@ const router = createRouter({
           path: 'users/me',
           name: 'MyPage',
           component: () => import('@/views/app/user/MyPage.vue'),
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true },
         },
 
         {
@@ -77,10 +77,8 @@ const router = createRouter({
           path: 'reservations/apply',
           component: () => import('@/views/app/reservation/ApplyReservation.vue'),
           // meta: { requiresAuth: true }
-        }
-
-      ]
-
+        },
+      ],
     },
 
     // ---------------------------------------------------------
@@ -103,16 +101,15 @@ const router = createRouter({
         // -------------------------
         {
           path: 'users',
-          component: () =>
-            import('@/views/admin/iam/user/UserManagement.vue'),
-          meta: { title: '사용자 관리', minRole: 'ADMIN' }
+          component: () => import('@/views/admin/iam/user/UserManagement.vue'),
+          meta: { title: '사용자 관리', minRole: 'ADMIN' },
         },
         // 관리자용 사용자 수정
         {
           path: 'users/:userId/edit',
           name: 'UserEdit',
           component: () => import('@/views/admin/iam/user/UserEditView.vue'),
-          meta: { title: '사용자 수정', minRole: 'ADMIN' }
+          meta: { title: '사용자 수정', minRole: 'ADMIN' },
         },
 
         // -------------------------
@@ -120,9 +117,8 @@ const router = createRouter({
         // -------------------------
         {
           path: 'roles',
-          component: () =>
-            import('@/views/admin/iam/role/RoleManagement.vue'),
-          meta: { title: '역할 관리', minRole: 'ADMIN' }
+          component: () => import('@/views/admin/iam/role/RoleManagement.vue'),
+          meta: { title: '역할 관리', minRole: 'ADMIN' },
         },
 
         // -------------------------
@@ -136,32 +132,28 @@ const router = createRouter({
 
             {
               path: 'list',
-              component: () =>
-                import('@/views/admin/iam/permission/PermissionList.vue'),
-              meta: { title: '권한 목록', minRole: 'ADMIN' }
+              component: () => import('@/views/admin/iam/permission/PermissionList.vue'),
+              meta: { title: '권한 목록', minRole: 'ADMIN' },
             },
 
             {
               path: 'create',
-              component: () =>
-                import('@/views/admin/iam/permission/PermissionCreate.vue'),
-              meta: { title: '권한 생성', minRole: 'MASTER' }
+              component: () => import('@/views/admin/iam/permission/PermissionCreate.vue'),
+              meta: { title: '권한 생성', minRole: 'MASTER' },
             },
 
             {
               path: ':permissionId/edit',
-              component: () =>
-                import('@/views/admin/iam/permission/PermissionEdit.vue'),
-              meta: { title: '권한 수정', minRole: 'MASTER' }
+              component: () => import('@/views/admin/iam/permission/PermissionEdit.vue'),
+              meta: { title: '권한 수정', minRole: 'MASTER' },
             },
 
             {
               path: 'matrix',
-              component: () =>
-                import('@/views/admin/iam/permission/PermissionMatrix.vue'),
-              meta: { title: '역할-권한 매핑', minRole: 'ADMIN' }
-            }
-          ]
+              component: () => import('@/views/admin/iam/permission/PermissionMatrix.vue'),
+              meta: { title: '역할-권한 매핑', minRole: 'ADMIN' },
+            },
+          ],
         },
 
         // ========== ⭐ 자원 관리 그룹 ==========
@@ -187,15 +179,15 @@ const router = createRouter({
               component: () => import('@/views/admin/asset/AssetEditView.vue'),
               meta: { title: '자원 수정', minRole: 'MANAGER' },
             },
+            {
+              path: 'categories',
+              component: () => import('@/views/admin/category/CategoryManagement.vue'),
+              meta: { minRole: 'MANAGER', title: '카테고리 관리' },
+            },
           ],
         },
 
         // ========== 카테고리 관리 ==========
-        {
-          path: 'categories',
-          component: () => import('@/views/admin/category/CategoryManagement.vue'),
-          meta: { minRole: 'MANAGER', title: '카테고리 관리' },
-        },
 
         // 자원 수정
         {
@@ -220,33 +212,28 @@ const router = createRouter({
           children: [
             {
               path: 'usage-history',
-              component: () =>
-                import('@/views/admin/accounting/usage_history/UsageHistory.vue'),
-              meta: { title: '자원 사용 기록' }
+              component: () => import('@/views/admin/accounting/usage_history/UsageHistory.vue'),
+              meta: { title: '자원 사용 기록' },
             },
             {
               path: 'usage-trend',
-              component: () =>
-                import('@/views/admin/accounting/usage_trend/UsageTrend.vue'),
-              meta: { title: '사용 추이' }
+              component: () => import('@/views/admin/accounting/usage_trend/UsageTrend.vue'),
+              meta: { title: '사용 추이' },
             },
             {
               path: 'performance',
-              component: () =>
-                import('@/views/admin/accounting/performance/PerformanceView.vue'),
-              meta: { title: '운영 성과 분석' }
+              component: () => import('@/views/admin/accounting/performance/PerformanceView.vue'),
+              meta: { title: '운영 성과 분석' },
             },
             {
               path: 'quarter',
-              component: () =>
-                import('@/views/admin/accounting/quarter/QuarterSettlement.vue'),
-              meta: { title: '분기 정산' }
-            }
-          ]
-        }
+              component: () => import('@/views/admin/accounting/quarter/QuarterSettlement.vue'),
+              meta: { title: '분기 정산' },
+            },
+          ],
+        },
       ],
     },
-
 
     // ---------------------------------------------------------
     // 오류 페이지
