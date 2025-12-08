@@ -64,7 +64,7 @@ const selectedFilters = ref({
   date: selectedDate.value,
   assetType: '',
   assetStatus: '',
-  categoryName: '',
+  categoryId: '',
   layerZero: '',
   layerOne: '',
   assetName: '',
@@ -76,8 +76,12 @@ const refreshTable = () => {
 }
 
 const handleFilterChange = (filters) => {
-  selectedFilters.value = { ...filters } // 필터 전체 반영
-  selectedDate.value = filters.date // 날짜도 따로 필요하면 그대로
+  selectedFilters.value = {
+    ...selectedFilters.value, // 기존 key 유지
+    ...filters,               // 변경된 필터 적용
+  }
+
+  selectedDate.value = filters.date
   refreshTable()
 }
 
@@ -183,14 +187,17 @@ async function fetchUserReservations() {
     console.error('예약 조회 실패:', err)
   }
 }
-
 function buildParams() {
   const params = {}
   Object.entries(selectedFilters.value).forEach(([key, value]) => {
-    params[key] = value === '' ? null : value
+    if (value === '' || value === undefined || value === null) {
+      return   // -> key 자체를 생략 (delete 효과)
+    }
+    params[key] = value
   })
   return params
 }
+
 </script>
 
 <style scoped>
