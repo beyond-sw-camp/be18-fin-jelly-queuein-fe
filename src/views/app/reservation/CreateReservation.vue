@@ -16,6 +16,7 @@
       :timeRange="timeRange"
       :participants="selectedUsers"
       @add="openParticipantModal"
+      @remove="removeParticipant"
     />
 
 
@@ -96,6 +97,11 @@ const date = ref(initialDate || today)
 
 // console.log("받은 값:", users);
 // console.log("저장 직전:", users.map(u => ({ id: u.userId, name: u.userName })));
+const removeParticipant = (user) => {
+  selectedUsers.value = selectedUsers.value.filter(
+    (u) => u.id !== user.id
+  );
+};
 
 
 function convertToTimeBlocks(apiData) {

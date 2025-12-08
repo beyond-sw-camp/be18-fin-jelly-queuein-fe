@@ -16,6 +16,7 @@
       :timeRange="timeRange"
       :participants="selectedUsers"
       @add="openParticipantModal"
+      @remove="removeParticipant"
     />
 
 
@@ -124,7 +125,11 @@ function convertToTimeBlocks(apiData) {
 
   return blocks
 }
-
+const removeParticipant = (user) => {
+  selectedUsers.value = selectedUsers.value.filter(
+    (u) => u.id !== user.id
+  );
+};
 const fetchAvailableTimes = async () => {
   const res = await reservationApi.getAvailableTimes(assetId, date.value)
 

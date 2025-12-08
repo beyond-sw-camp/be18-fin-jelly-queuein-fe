@@ -40,6 +40,7 @@
             v-for="user in participants" 
             :key="user.userId"
             class="tag"
+            @click="onRemove(user)"
           >
             {{ user.name }}
           </span>
@@ -97,7 +98,7 @@ const props = defineProps({
 
 
 
-const emit = defineEmits(["add", "update:date", "update:note"]);
+const emit = defineEmits(["add", "update:date", "update:note", "remove"]);
 
 const datePickerRef = ref(null);
 const internalDate = ref(props.date);
@@ -111,6 +112,9 @@ const onDateChange = (v) => {
   if (typeof v === "string") str = v;
   else if (v instanceof Date) str = v.toISOString().slice(0, 10);
   emit("update:date", str);
+};
+const onRemove = (user) => {
+  emit("remove", user);
 };
 
 const internalNote = computed({

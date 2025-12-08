@@ -342,5 +342,27 @@ onMounted(() => {
 .fc-timegrid-slot-lane.fc-highlight {
   background: transparent !important;
 }
+/* 월간(month) view 이벤트 텍스트가 넘치지 않게 설정 */
+:deep(.fc-daygrid-event) {
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+}
+
+/* 이벤트 텍스트 부분 */
+:deep(.fc-daygrid-event .fc-event-title) {
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+}
+
+/* 이벤트 전체가 늘어나지 않도록 고정 */
+:deep(.fc-daygrid-event-harness) {
+  max-height: 22px !important; /* 필요에 따라 조정 */
+  overflow: hidden !important;
+}
 
 </style> 
