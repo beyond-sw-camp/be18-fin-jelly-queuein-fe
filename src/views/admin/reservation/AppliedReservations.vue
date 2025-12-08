@@ -68,7 +68,7 @@ const selectedFilters = ref({
   assetName: "",       // 검색바 입력값 포함
   assetType: "",
   assetStatus: "",
-  categoryName: "",
+  categoryId: "",
   layerZero: "",
   layerOne: ""
 })

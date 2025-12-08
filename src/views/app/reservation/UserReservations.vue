@@ -64,7 +64,7 @@ const selectedFilters = ref({
   date: selectedDate.value,
   assetType: '',
   assetStatus: '',
-  categoryName: '',
+  categoryId: '',
   layerZero: '',
   layerOne: '',
   assetName: '',
