@@ -2,20 +2,21 @@
   <div class="reservation-page">
     <!-- 헤더 -->
     <div class="header-row">
-      <h2>예약하기</h2>
+ 
     </div>
     <ReservationTabs />
 
     <!-- 자원 예약 정보 -->
-    <h2>자원 예약</h2>
+
     <BookingHeader
       :assetName="assetInfo?.assetName || assetName"
       v-model:date="date"
       v-model:note="note"
       :reserver="currentUserName"
       :timeRange="timeRange"
-      :participants="selectedUsers.map(u => u.userId)"
+      :participants="selectedUsers"
       @add="openParticipantModal"
+      @remove="removeParticipant"
     />
 
 
@@ -66,7 +67,6 @@ const route = useRoute()
 // 목록 페이지에서 전달한 assetId와 date → params 로 변경!
 const assetId = Number(route.query.assetId) 
 
-const selectedDate = ref(route.query.date) 
 const assetName = route.query.assetName?.toString() ?? ""
 
 // 자원 정보
@@ -79,8 +79,7 @@ console.log("route.query.date =", route.query.date)
 
 // 참여자
 const participantModalVisible = ref(false)
-const selectedUsers = ref<{ userId: number; userName: string }[]>([])
-
+const selectedUsers = ref([])
 const note = ref("")
 
 // -------------------------------
@@ -126,7 +125,11 @@ function convertToTimeBlocks(apiData) {
 
   return blocks
 }
-
+const removeParticipant = (user) => {
+  selectedUsers.value = selectedUsers.value.filter(
+    (u) => u.id !== user.id
+  );
+};
 const fetchAvailableTimes = async () => {
   const res = await reservationApi.getAvailableTimes(assetId, date.value)
 
@@ -152,10 +155,15 @@ const timeRange = computed(() => {
 
 // 모달
 const openParticipantModal = () => participantModalVisible.value = true
-const onSelectParticipants = (users: any[]) => {
-  selectedUsers.value = users
-  participantModalVisible.value = false
-}
+
+const onSelectParticipants = (users) => {
+  console.log("모달에서 선택된 유저들:", users); 
+  selectedUsers.value = users.map(u => ({
+    id: u.userId,
+    name: u.userName
+  }));
+  console.log("BookingHeader로 전달할 selectedUsers:", selectedUsers.value); 
+};
 function toUtcIso(date, hour) {
   // date = "2025-12-03"
   // hour = 0~23 (KST)
@@ -175,14 +183,14 @@ async function submitBooking() {
   const startAt = toUtcIso(date.value, startHour);
   const endAt = toUtcIso(date.value, endHour);
 
+
   const payload = {
     applicantId: currentUserId.value,
-    attendantIds: selectedUsers.value.map(u => u.userId),
+    attendantIds: selectedUsers.value.map(u => u.id),
     startAt,
     endAt,
-    description: note.value || ""
+    description: note.value,  
   };
-
   console.log("UTC payload", payload);
 
   await api.post(`/reservations/${assetId}/apply`, payload);

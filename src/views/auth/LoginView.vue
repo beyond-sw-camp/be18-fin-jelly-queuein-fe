@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
+import {ref, onMounted, nextTick, watch} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAuthStore} from '@/stores/authStore'
 import Modal from '@/components/common/Modal.vue'
+import Logo from '@/assets/icons/logo.svg'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -20,7 +21,6 @@ console.log("ON LOGIN VIEW RENDER", {
   rememberEmail: localStorage.getItem("rememberEmail"),
   fullStorageDump: JSON.parse(JSON.stringify(localStorage))
 })
-
 
 // 화면 로드 시 저장된 이메일 불러오기
 onMounted(async () => {
@@ -62,9 +62,13 @@ function validate() {
 
 async function login() {
 
-  if (!validate()) return;
+  if (!validate()) {
+    return;
+  }
 
-  if (isLoading.value) return
+  if (isLoading.value) {
+    return
+  }
   isLoading.value = true
 
   try {
@@ -102,54 +106,58 @@ async function login() {
   <div class="login-layout">
     <!-- Left Section -->
     <div class="left">
-      <div class="title">Queue In</div>
-      <div class="subtitle">사내 일정 관리 시스템</div>
-
-      <form class="login-form" autocomplete="off" @submit.prevent="login">
-        <div v-if="showError" class="error-box">
-          {{ errorMessage }}
+      <div class="center-wrapper">
+        <div class="title">
+          <img :src="Logo" alt="QueueIn Logo" class="logo-img"/>
         </div>
-        <input
-          v-model="email"
-          type="text"
-          placeholder="이메일"
-          class="input"
-          autocomplete="email"
-        />
-        <input
-          v-model="password"
-          type="password"
-          placeholder="비밀번호"
-          class="input"
-          autocomplete="current-password"
-        />
+        <div class="subtitle">사내 일정 관리 시스템</div>
 
-        <div class="options">
-          <label>
-            <input type="checkbox" v-model="rememberMe"/> 사용자 기억하기
-          </label>
-          <a href="#" class="find-pw">비밀번호 찾기</a>
+        <form class="login-form" autocomplete="off" @submit.prevent="login">
+          <div v-if="showError" class="error-box">
+            {{ errorMessage }}
+          </div>
+          <input
+            v-model="email"
+            type="text"
+            placeholder="이메일"
+            class="input"
+            autocomplete="email"
+          />
+          <input
+            v-model="password"
+            type="password"
+            placeholder="비밀번호"
+            class="input"
+            autocomplete="current-password"
+          />
+
+          <div class="options">
+            <label>
+              <input type="checkbox" v-model="rememberMe"/> 사용자 기억하기
+            </label>
+            <a href="#" class="find-pw">비밀번호 찾기</a>
+          </div>
+
+          <button
+            type="submit"
+            class="login-btn"
+            :disabled="isLoading"
+          >
+            {{ isLoading ? '로그인 중 입니다...' : '로그인' }}
+          </button>
+        </form>
+
+        <div class="footer">
+          <span>Terms and conditions</span>
+          <span class="dot">•</span>
+          <span>Privacy policy</span>
         </div>
-
-        <button
-          type="submit"
-          class="login-btn"
-          :disabled="isLoading"
-        >
-          {{ isLoading ? '로그인 중 입니다...' : '로그인' }}
-        </button>
-      </form>
-
-      <div class="footer">
-        <span>Terms and conditions</span>
-        <span class="dot">•</span>
-        <span>Privacy policy</span>
       </div>
     </div>
 
     <!-- Right Section -->
     <div class="right">
-      <img src="../../assets/img/qiinMain.png" class="hero-img" alt="calendar" />
+      <img src="../../assets/img/qiinMain.png" class="hero-img" alt="calendar"/>
     </div>
 
     <!-- Brand -->
@@ -179,14 +187,26 @@ async function login() {
   display: flex;
   flex-direction: column;
   justify-content: center; /* 세로 가운데 정렬 유지 */
-  align-items: center;  /* 가로 가운데 정렬 유지 */
+  align-items: center; /* 가로 가운데 정렬 유지 */
+}
+
+.center-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;      /* 자식 모두 가로 중앙 */
+  width: 100%;
 }
 
 .title {
-  font-size: 110px;
-  font-weight: 700;
-  color: #243540;
   margin-bottom: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.logo-img {
+  width: 600px; /* 로고 크기 조정 */
+  height: auto;
+  object-fit: contain;
 }
 
 

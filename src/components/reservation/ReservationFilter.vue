@@ -27,7 +27,7 @@
         />
       </div>
       <div class="cell">
-        <CategoryDropDownMenu v-model="filters.categoryName" @update:modelValue="emitChange" />
+        <CategoryDropDownMenu v-model="filters.categoryId" @update:modelValue="emitChange" />
       </div>
       <div class="cell">
         <AssetTypeDropdown v-model="filters.assetType" @update:modelValue="emitChange" />
@@ -98,7 +98,7 @@ const filters = ref({
   date: today,
   assetType: '',
   assetStatus: '',
-  categoryName: '',
+  categoryId: '',
   layerZero: '',
   layerOne: '',
   assetName: '',

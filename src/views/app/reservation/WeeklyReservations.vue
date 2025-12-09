@@ -106,5 +106,46 @@ const calendarOptions = ref({
   display: inline-block;
 }
 
+/* 이벤트가 들어가는 전체 column 자체 배경 제거 */
+:deep(.fc-timegrid-col-events) {
+  background: transparent !important;
+}
+
+/* 이벤트 외부를 감싸는 harness 제거 */
+:deep(.fc-timegrid-event-harness) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* inset harness 레이어도 제거 */
+:deep(.fc-timegrid-event-harness-inset) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 기본 이벤트 박스 제거 */
+:deep(.fc-timegrid-event) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 이벤트 메인 콘텐츠 제거 */
+:deep(.fc-event-main),
+:deep(.fc-event-bg) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 드래그/resize/mirror 등 interaction 배경 제거 */
+:deep(.fc-event.fc-mirror),
+:deep(.fc-timegrid-selection) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
 
 </style>

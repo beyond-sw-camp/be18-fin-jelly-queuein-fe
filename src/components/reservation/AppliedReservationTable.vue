@@ -26,7 +26,7 @@
     </el-table-column>
 
     <!-- 승인/거절 버튼 -->
-    <el-table-column label="승인 / 거절" min-width="250" align="center">
+    <!-- <el-table-column label="승인 / 거절" min-width="250" align="center">
       <template #default="scope">
         <el-button type="success" size="small" @click.stop="emit('approve', scope.row)">
           승인
@@ -36,13 +36,13 @@
           거절
         </el-button>
       </template>
-    </el-table-column>
+    </el-table-column> -->
 
     <!-- 예약 결과 -->
     <el-table-column label="예약 결과" min-width="180" align="center">
       <template #default="scope">
-        <el-tag v-if="scope.row.isApproved === 'APPROVED'" type="success">승인</el-tag>
-        <el-tag v-else-if="scope.row.isApproved === 'REJECTED'" type="danger">거절</el-tag>
+        <el-tag v-if="scope.row.isApproved === true" type="success">승인</el-tag>
+        <el-tag v-else-if="scope.row.isApproved === false" type="danger">거절</el-tag>
         <span v-else>-</span>
       </template>
     </el-table-column>
@@ -66,6 +66,7 @@
       :current-page="page"
       @current-change="changePage"
     />
+
   </div>
 </template>
 
@@ -74,22 +75,19 @@
 import { reservationApi } from "@/api/reservationApi"
 import { ref, watch } from "vue" 
 const props = defineProps({
-  rows: { type: Array, required: true },
-  total: { type: Number, required: true },
   filters: { 
     type: Object, 
     default: () => ({
       date: "",
       assetType: "",
       assetStatus: "",
-      categoryName: "",
+      categoryId: "",
       layerZero: "",
       layerOne: "",
-      assetName: ""    // ✅ 여기 추가
+      assetName: ""    
     }) 
   }
 })
-const localRows = ref([...props.rows])
 
 const rows = ref([])
 const total = ref(0)
@@ -110,7 +108,7 @@ const fetchReservations = async () => {
       date: props.filters.date,
       assetType: props.filters.assetType || undefined,
       assetStatus: props.filters.assetStatus || undefined,
-      categoryName: props.filters.categoryName || undefined,
+      categoryId: props.filters.categoryId || undefined,
       layerZero: props.filters.layerZero || undefined,
       layerOne: props.filters.layerOne || undefined,
       assetName: props.filters.assetName || undefined
@@ -124,6 +122,12 @@ const fetchReservations = async () => {
     console.error("예약 조회 실패:", err)
   }
 }
+
+const changePage = (newPage) => {
+  page.value = newPage
+  fetchReservations()
+}
+
 watch(
   () => props.filters,
   () => {
@@ -133,11 +137,6 @@ watch(
   { deep: true, immediate: true }
 )
 
-watch(() => props.rows, (val) => {
-  localRows.value = [...val]
-}, { deep: true, immediate: true })
-
-// 모달에서 입력한 임시 사유 업데이트
 
 </script>
 

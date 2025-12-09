@@ -46,36 +46,37 @@ const router = createRouter({
         {
           path: 'reservations/me',
           component: () => import('@/views/app/reservation/UserReservations.vue'),
-          // meta: { requiresAuth: true }
+          meta: { title: '사용자 예약', minRole: 'GENERAL' },
         },
         {
           path: 'reservations/available-assets',
           component: () => import('@/views/app/reservation/ReservableAssets.vue'),
+          meta: { title: '예약 가능 자원', minRole: 'GENERAL' },
           // meta: { requiresAuth: true }
         },
-        {
-          path: 'reservations/applied',
-          component: () => import('@/views/app/reservation/AppliedReservations.vue'),
-          // meta: { requiresAuth: true }
-        },
+
         {
           path: 'reservations/monthly',
           component: () => import('@/views/app/reservation/MonthlyReservations.vue'),
+          meta: { title: '월별 예약', minRole: 'GENERAL' },
           // meta: { requiresAuth: true }
         },
         {
           path: 'reservations/weekly',
           component: () => import('@/views/app/reservation/WeeklyReservations.vue'),
+          meta: { title: '주별 예약', minRole: 'GENERAL' },
           // meta: { requiresAuth: true }
         },
         {
-          path: 'reservations/create',
+          path: 'reservations/create-reservation',
           component: () => import('@/views/app/reservation/CreateReservation.vue'),
+          meta: { title: '예약 생성', minRole: 'GENERAL' },
           // meta: { requiresAuth: true }
         },
         {
           path: 'reservations/apply',
           component: () => import('@/views/app/reservation/ApplyReservation.vue'),
+          meta: { title: '예약 신청', minRole: 'GENERAL' },
           // meta: { requiresAuth: true }
         },
       ],
@@ -231,6 +232,12 @@ const router = createRouter({
               meta: { title: '분기 정산' },
             },
           ],
+        },
+        {
+          path: 'reservations/applied',
+          component: () => import('@/views/admin/reservation/AppliedReservations.vue'),
+          meta: { title: '신청 예약 관리', requiresAuth: true, minRole: 'MANAGER' },
+          // meta: { requiresAuth: true }
         },
       ],
     },

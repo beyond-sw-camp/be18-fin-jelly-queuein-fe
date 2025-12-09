@@ -48,8 +48,9 @@
       </el-table-column>
 
       <!-- 예약 상태 -->
-      <el-table-column label="예약 상태" min-width="150"  align="center">
+      <el-table-column label="예약 상태" min-width="150" align="center">
         <template #default="{ row }">
+          <!-- 백에서 온 reservationStatus 그대로 StatusTag로 전달 -->
           <StatusTag :status="row.reservationStatus" />
         </template>
       </el-table-column>
@@ -132,7 +133,7 @@ const fetchReservations = async () => {
       date: props.filters.date,
       assetType: props.filters.assetType || undefined,
       assetStatus: props.filters.assetStatus || undefined,
-      categoryName: props.filters.categoryName || undefined,
+      categoryId: props.filters.categoryId || undefined,
       layerZero: props.filters.layerZero || undefined,
       layerOne: props.filters.layerOne || undefined,
       assetName: props.filters.assetName || undefined
@@ -142,6 +143,11 @@ const fetchReservations = async () => {
 
     rows.value = res?.data?.content ?? []
     total.value = res?.data?.totalElements ?? 0
+
+    rows.value.forEach(row => {
+      console.log("reservationStatus =", row.reservationStatus)
+      console.log("isApproved =", row.isApproved)
+    })
   } catch (err) {
     console.error("예약 조회 실패:", err)
   }

@@ -2,12 +2,12 @@
   <div class="reservation-page">
     <!-- 헤더 -->
     <div class="header-row">
-      <h2>예약하기</h2>
+ 
     </div>
     <ReservationTabs />
 
     <!-- 자원 예약 정보 -->
-    <h2>자원 예약</h2>
+    
     <BookingHeader
       :assetName="assetInfo?.assetName || assetName"
       v-model:date="date"
@@ -16,6 +16,7 @@
       :timeRange="timeRange"
       :participants="selectedUsers"
       @add="openParticipantModal"
+      @remove="removeParticipant"
     />
 
 
@@ -29,6 +30,7 @@
         v-model="selectedHours"
       />
     </div>
+    
 
     <!-- 선택된 참여자 표시
     <div v-if="selectedUsers.length" class="selected-users">
@@ -81,9 +83,7 @@ console.log("route.query.date =", route.query.date)
 const participantModalVisible = ref(false)
 const selectedUsers = ref([])
 const note = ref("")
-const onSelectParticipants = (users) => {
-  selectedUsers.value = users   // ✅ 그대로 전달
-}
+
 // -------------------------------
 //  예약 가능 시간 조회 API
 // -------------------------------
@@ -97,6 +97,11 @@ const date = ref(initialDate || today)
 
 // console.log("받은 값:", users);
 // console.log("저장 직전:", users.map(u => ({ id: u.userId, name: u.userName })));
+const removeParticipant = (user) => {
+  selectedUsers.value = selectedUsers.value.filter(
+    (u) => u.id !== user.id
+  );
+};
 
 
 function convertToTimeBlocks(apiData) {
@@ -194,9 +199,7 @@ async function submitBooking() {
 
   const payload = {
     applicantId: currentUserId.value,
-    attendants: selectedUsers.value.map(u => ({
-      userId: u.id
-    })),
+    attendantIds: selectedUsers.value.map(u => u.id),
     startAt,
     endAt,
     description: note.value,  
@@ -222,6 +225,14 @@ onMounted(async () => {
 })
 
 
+const onSelectParticipants = (users) => {
+  console.log("모달에서 선택된 유저들:", users); 
+  selectedUsers.value = users.map(u => ({
+    id: u.userId,
+    name: u.userName
+  }));
+  console.log("BookingHeader로 전달할 selectedUsers:", selectedUsers.value); 
+};
 
 // -------------------------------
 // 페이지 로딩 시 API 호출
@@ -236,6 +247,9 @@ onMounted(async () => {
 
 .time-section {
   margin-top: 40px;
+}
+.time-section h2{
+  margin-top: 20px;
 }
 
 .header-row {

@@ -61,6 +61,14 @@ const breadcrumbMap = {
   'usage-trend': '사용 추이',
   'performance': '운영 성과 분석',
   'quarter': '분기 정산',
+  'reservations' : '예약',
+  'available-assets': '가능 자원',
+  'me': '사용자 예약',
+  'applied': '신청 예약',
+  'monthly': '스케쥴 확인',
+  'apply': '신청하기',
+  'create-reservation': '예약하기',
+
 
   // 기타
   categories: '카테고리 관리',
