@@ -182,7 +182,7 @@ const actionLabel = computed(() => {
 })
 
 const isActionDisabled = computed(() =>
-  ["COMPLETED", "CANCELED"].includes(normalizedUsage.value)
+  ["COMPLETED", "CANCELED", "REJECTED"].includes(normalizedUsage.value)
 )
 
 /* -------------------------------------------
