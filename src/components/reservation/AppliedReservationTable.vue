@@ -41,8 +41,8 @@
     <!-- 예약 결과 -->
     <el-table-column label="예약 결과" min-width="180" align="center">
       <template #default="scope">
-        <el-tag v-if="scope.row.isApproved === 'APPROVED'" type="success">승인</el-tag>
-        <el-tag v-else-if="scope.row.isApproved === 'REJECTED'" type="danger">거절</el-tag>
+        <el-tag v-if="scope.row.isApproved === true" type="success">승인</el-tag>
+        <el-tag v-else-if="scope.row.isApproved === false" type="danger">거절</el-tag>
         <span v-else>-</span>
       </template>
     </el-table-column>
