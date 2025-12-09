@@ -25,7 +25,7 @@ function onTokenRefreshed(newToken) {
   refreshSubscribers = []
 }
 
-function addRefreshSubscriber(callback) {g
+function addRefreshSubscriber(callback) {
   refreshSubscribers.push(callback)
 }
 
