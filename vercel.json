@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://api.queuein.store/api/$1"
+      "destination": "${VITE_API_URL}/api/v1/$1"
     },
     {
       "source": "/(.*)",
