@@ -115,7 +115,8 @@ async function loadMatrix() {
     roles: Object.fromEntries(
       roles.value.map((r) => [
         r.roleId,
-        r.permissions.some((x) => x.permissionId === perm.permissionId),
+        // MASTER 역할은 항상 true로 설정
+        r.roleName === 'MASTER' ? true : r.permissions.some((x) => x.permissionId === perm.permissionId),
       ]),
     ),
   }))
@@ -163,7 +164,15 @@ const groupedMatrix = computed(() => {
 })
 
 // 토글 변경
-function manualToggle(row, roleId) {
+function manualToggle(row, roleId, roleName) {
+  // MASTER 역할은 수정 불가
+  if (roleName === 'MASTER') {
+    ElMessage.warning('MASTER의 권한은 수정할 수 없습니다.')
+    // 원래 상태로 되돌림
+    row.roles[roleId] = true
+    return
+  }
+  
   row.roles[roleId] = !row.roles[roleId]
   changes.value = diffChanges(original.value, matrix.value, roles.value)
 }
@@ -411,8 +420,8 @@ onMounted(() => {
                   <template #body="{ data }">
                     <div class="toggle-center">
                       <ToggleSwitch
-                        :modelValue="data.roles[role.roleId]"
-                        @change="manualToggle(data, role.roleId)"
+                        :modelValue="role.roleName === 'MASTER' ? true : data.roles[role.roleId]"
+                        @change="manualToggle(data, role.roleId, role.roleName)"
                       />
                     </div>
                   </template>
@@ -601,6 +610,21 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* MASTER 역할 토글 비활성화 스타일 - 초록색 유지 */
+:deep(.p-toggleswitch.p-disabled) {
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+/* MASTER 역할 토글이 비활성화되어도 초록색 유지 */
+:deep(.p-toggleswitch.p-disabled.p-toggleswitch-checked .p-toggleswitch-slider) {
+  background: #10b981 !important;
+}
+
+:deep(.p-toggleswitch.p-disabled.p-toggleswitch-checked .p-toggleswitch-handle) {
+  background: white !important;
 }
 
 .save-btn {
