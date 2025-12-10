@@ -2,6 +2,10 @@ import { hasRole } from '@/utils/role'
 
 export function setupGuards(router) {
   router.beforeEach((to, from, next) => {
+    // 이전 경로를 sessionStorage에 저장 (컴포넌트 재생성 시 사용)
+    if (from.path) {
+      sessionStorage.setItem('previousRoutePath', from.path)
+    }
 
     const token = localStorage.getItem('accessToken')
 

@@ -4,11 +4,7 @@
     <AppHeader @toggle-sidebar="toggleSidebar" />
 
     <!-- 사이드바 오버레이(모바일/좁은 화면일 때) -->
-    <div
-      v-if="isSidebarOpen"
-      class="overlay"
-      @click="isFixedOpen = false"
-    />
+    <div v-if="isSidebarOpen" class="overlay" @click="isFixedOpen = false" />
 
     <!-- 사이드바 -->
     <AppSidebar
@@ -23,7 +19,16 @@
 
     <!-- 메인 컨텐츠 -->
     <main class="content">
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <Transition
+          :name="transitionName"
+          mode="out-in"
+          @after-enter="onTransitionEnter"
+          @enter="onTransitionEnterStart"
+        >
+          <component :is="Component" :key="route.path" />
+        </Transition>
+      </RouterView>
     </main>
 
     <!-- 푸터 -->
@@ -32,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import AppHeader from '@/components/layout/AppHeader.vue'
@@ -43,9 +48,7 @@ import AccountingTabMenu from '@/components/accounting/AccountingTabMenu.vue'
 const route = useRoute()
 
 /* ✔ 경로가 /admin/accounting/** 일 때만 탭 메뉴 표시 */
-const isAccountingPage = computed(() =>
-  route.path.startsWith('/admin/accounting')
-)
+const isAccountingPage = computed(() => route.path.startsWith('/admin/accounting'))
 
 /* ✔ 사이드바 동작 상태 */
 const isFixedOpen = ref(false)
@@ -62,6 +65,69 @@ function openHover() {
 
 function closeHover() {
   if (!isFixedOpen.value) isHoverOpen.value = false
+}
+
+// IAM 페이지 경로 순서 정의 (슬라이드 방향 결정용)
+const iamRouteOrder = {
+  '/admin/users': 1,
+  '/admin/roles': 2,
+  '/admin/permissions/matrix': 3,
+}
+
+// 이전 경로 추적
+const previousPath = ref(null)
+const transitionName = ref('fade')
+
+// 경로 변경 감지 및 Transition 이름 결정
+watch(
+  () => route.path,
+  (newPath, oldPath) => {
+    // IAM 페이지 간 이동인지 확인
+    const currentOrder = iamRouteOrder[newPath]
+    const prevOrder = oldPath ? iamRouteOrder[oldPath] : null
+
+    if (currentOrder && prevOrder) {
+      // 순서가 증가하면 우측 슬라이드, 감소하면 좌측 슬라이드
+      transitionName.value = currentOrder > prevOrder ? 'slide-right' : 'slide-left'
+    } else {
+      // IAM 페이지가 아니면 기본 페이드
+      transitionName.value = 'fade'
+    }
+
+    previousPath.value = oldPath
+    
+    // 경로 변경 정보를 sessionStorage에 저장 (컴포넌트 재생성 시 사용)
+    if (oldPath) {
+      sessionStorage.setItem('previousRoutePath', oldPath)
+    }
+  },
+  { immediate: false },
+)
+
+// Transition 시작 시 컴포넌트 마운트 보장
+function onTransitionEnterStart() {
+  // Transition이 시작되면 즉시 이벤트 발생 (컴포넌트가 마운트되기 전)
+  // 이렇게 하면 컴포넌트가 마운트된 후 리스너가 등록되어도 이벤트를 받을 수 있음
+}
+
+// Transition 완료 후 이벤트 발생 (약간의 지연을 두어 컴포넌트 마운트 완료 보장)
+function onTransitionEnter() {
+  // 더 긴 지연을 두어 컴포넌트가 완전히 마운트된 후 이벤트 발생
+  setTimeout(() => {
+    const prevPath = previousPath.value || sessionStorage.getItem('previousRoutePath')
+    window.dispatchEvent(
+      new CustomEvent('route-transition-complete', { 
+        detail: { 
+          path: route.path,
+          previousPath: prevPath
+        } 
+      }),
+    )
+    // 이벤트 발생 후 sessionStorage 정리
+    if (prevPath) {
+      sessionStorage.removeItem('previousRoutePath')
+    }
+  }, 100)
 }
 </script>
 
@@ -94,5 +160,62 @@ function closeHover() {
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   z-index: 20;
+}
+
+/* ===== 페이지 전환 애니메이션 ===== */
+
+/* 우측 슬라이드 (사용자 → 역할, 역할 → 권한) */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-right-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.slide-right-enter-to,
+.slide-right-leave-from {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 좌측 슬라이드 (역할 → 사용자, 권한 → 역할) */
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.slide-left-enter-to,
+.slide-left-leave-from {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 기본 페이드 (IAM 페이지가 아닌 경우) */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

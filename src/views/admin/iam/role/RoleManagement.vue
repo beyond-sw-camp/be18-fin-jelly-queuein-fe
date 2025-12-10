@@ -1,9 +1,12 @@
 <!-- file: src/views/admin/iam/role/RoleManagement.vue -->
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute } from 'vue-router'
 import { roleApi } from '@/api/iam/roleApi.js'
 
 import IamTabs from '@/components/iam/IamTabs.vue'
+
+const route = useRoute()
 
 // PrimeVue
 import Card from 'primevue/card'
@@ -42,9 +45,7 @@ async function loadRoles() {
   roles.value = res.data.roles
 
   // 초기에는 모두 접힌 상태
-  expanded.value = Object.fromEntries(
-    roles.value.map(r => [r.roleId, false])
-  )
+  expanded.value = Object.fromEntries(roles.value.map((r) => [r.roleId, false]))
 
   loading.value = false
 }
@@ -54,7 +55,33 @@ function toggleExpand(roleId) {
   expanded.value[roleId] = !expanded.value[roleId]
 }
 
-onMounted(loadRoles)
+let transitionHandler = null
+
+// 마운트 시 데이터 로드
+onMounted(() => {
+  // 즉시 로드
+  loadRoles()
+
+  // Transition 완료 이벤트 리스너 등록
+  transitionHandler = (event) => {
+    const { path, previousPath } = event.detail
+    if (path === '/admin/roles' && route.path === '/admin/roles') {
+      // permission에서 온 경우에만 재로드
+      if (previousPath && previousPath.startsWith('/admin/permissions')) {
+        console.log('[RoleManagement] Transition 완료 - permission에서 옴, 데이터 재로드')
+        loadRoles()
+      }
+    }
+  }
+
+  window.addEventListener('route-transition-complete', transitionHandler)
+})
+
+onBeforeUnmount(() => {
+  if (transitionHandler) {
+    window.removeEventListener('route-transition-complete', transitionHandler)
+  }
+})
 
 // --------------------------------------------------
 // 역할 편집 메뉴 (···)
@@ -71,13 +98,13 @@ const menuItems = [
   {
     label: '역할 수정',
     icon: 'pi pi-pencil',
-    command: () => openEdit(selectedRole.value)
+    command: () => openEdit(selectedRole.value),
   },
   {
     label: '역할 삭제',
     icon: 'pi pi-trash',
-    command: () => deleteRole(selectedRole.value)
-  }
+    command: () => deleteRole(selectedRole.value),
+  },
 ]
 
 // --------------------------------------------------
@@ -111,12 +138,12 @@ async function saveRole() {
   if (editMode.value) {
     await roleApi.updateRole(form.value.roleId, {
       roleName: form.value.roleName,
-      roleDescription: form.value.roleDescription
+      roleDescription: form.value.roleDescription,
     })
   } else {
     await roleApi.createRole({
       roleName: form.value.roleName,
-      roleDescription: form.value.roleDescription
+      roleDescription: form.value.roleDescription,
     })
   }
 
@@ -136,7 +163,6 @@ async function deleteRole(role) {
 
 <template>
   <div class="page">
-
     <IamTabs />
 
     <!-- Header -->
@@ -146,23 +172,14 @@ async function deleteRole(role) {
         <p class="desc">사용자, 역할, 권한을 관리할 수 있습니다.</p>
       </div>
 
-      <Button
-        label="역할 추가"
-        icon="pi pi-plus"
-        class="add-btn"
-        @click="openAdd"
-      />
+      <Button label="역할 추가" icon="pi pi-plus" class="add-btn" @click="openAdd" />
     </div>
 
     <p class="sub">{{ roles.length }}개의 역할</p>
 
     <!-- Roles as Cards -->
     <div class="role-grid">
-      <Card
-        v-for="role in roles"
-        :key="role.roleId"
-        class="role-card"
-      >
+      <Card v-for="role in roles" :key="role.roleId" class="role-card">
         <template #title>
           <div class="title-box">
             <div class="title">
@@ -172,17 +189,12 @@ async function deleteRole(role) {
               <!-- <Chip v-if="role.isSystem" label="System" class="system-tag" /> -->
             </div>
 
-            <Button
-              icon="pi pi-ellipsis-v"
-              text
-              rounded
-              @click="(e) => openMenu(e, role)"
-            />
+            <Button icon="pi pi-ellipsis-v" text rounded @click="(e) => openMenu(e, role)" />
           </div>
         </template>
 
         <template #subtitle>
-           <div class="sub-info">
+          <div class="sub-info">
             <i class="pi pi-users"></i>
             {{ role.userCount }} 명
           </div>

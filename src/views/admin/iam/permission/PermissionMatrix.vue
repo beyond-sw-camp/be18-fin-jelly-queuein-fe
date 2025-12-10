@@ -1,16 +1,19 @@
 <!-- file: src/views/admin/iam/permission/PermissionMatrix.vue -->
 <script setup>
-import { ref, computed, onMounted } from "vue"
-import { roleApi } from "@/api/iam/roleApi.js"
-import { permissionApi } from "@/api/iam/permissionApi.js"
-import IamTabs from "@/components/iam/IamTabs.vue"
-import Button from "primevue/button"
-import InputText from "primevue/inputtext"
-import ToggleSwitch from "primevue/toggleswitch"
-import DataTable from "primevue/datatable"
-import Column from "primevue/column"
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
+import { roleApi } from '@/api/iam/roleApi.js'
+import { permissionApi } from '@/api/iam/permissionApi.js'
+import IamTabs from '@/components/iam/IamTabs.vue'
 
-import { diffChanges } from "@/utils/permissionDiff"
+const route = useRoute()
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import ToggleSwitch from 'primevue/toggleswitch'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+
+import { diffChanges } from '@/utils/permissionDiff'
 
 // -------------------------------------
 // 상태
@@ -20,7 +23,7 @@ const permissions = ref([])
 const matrix = ref([])
 const original = ref([])
 
-const keyword = ref("")
+const keyword = ref('')
 const saving = ref(false)
 
 const summaryOpen = ref(false)
@@ -30,7 +33,7 @@ const showCreate = ref(false)
 
 const createForm = ref({
   permissionName: '',
-  permissionDescription: ''
+  permissionDescription: '',
 })
 
 // -------------------------------------
@@ -52,7 +55,7 @@ async function loadData() {
       roles.value.map((r) => [
         r.roleId,
         r.permissions.some((x) => x.permissionId === perm.permissionId),
-      ])
+      ]),
     ),
   }))
 
@@ -62,20 +65,20 @@ async function loadData() {
 
 async function createPermission() {
   if (!createForm.value.permissionName.trim()) {
-    return alert("권한명을 입력하세요.")
+    return alert('권한명을 입력하세요.')
   }
 
   await permissionApi.createPermission({
     permissionName: createForm.value.permissionName,
-    permissionDescription: createForm.value.permissionDescription
+    permissionDescription: createForm.value.permissionDescription,
   })
 
-  alert("권한이 생성되었습니다.")
+  alert('권한이 생성되었습니다.')
 
   // 폼 초기화
   createForm.value = {
     permissionName: '',
-    permissionDescription: ''
+    permissionDescription: '',
   }
 
   showCreate.value = false
@@ -84,8 +87,24 @@ async function createPermission() {
   await loadData()
 }
 
+// 마운트 시 항상 데이터 로드
+onMounted(() => {
+  loadData()
+})
 
-onMounted(loadData)
+// 라우트 변경 감지 - Transition 완료 후 데이터 로드
+watch(
+  () => route.path,
+  async (newPath, oldPath) => {
+    if (newPath.startsWith('/admin/permissions') && oldPath && !oldPath.startsWith('/admin/permissions')) {
+      // Transition 완료를 기다림 (300ms + 약간의 여유)
+      await new Promise((resolve) => setTimeout(resolve, 350))
+      await nextTick()
+      loadData()
+    }
+  },
+  { immediate: false },
+)
 
 // -------------------------------------
 // 검색
@@ -95,9 +114,7 @@ const filteredMatrix = computed(() => {
   const q = keyword.value.toLowerCase()
 
   return matrix.value.filter(
-    (p) =>
-      p.name.toLowerCase().includes(q) ||
-      (p.desc || "").toLowerCase().includes(q)
+    (p) => p.name.toLowerCase().includes(q) || (p.desc || '').toLowerCase().includes(q),
   )
 })
 
@@ -110,7 +127,6 @@ function manualToggle(row, roleId) {
 
   // diff 즉시 계산
   changes.value = diffChanges(original.value, matrix.value, roles.value)
-
 }
 
 // -------------------------------------
@@ -121,9 +137,7 @@ async function saveChanges() {
 
   try {
     for (const role of roles.value) {
-      const allowedIds = matrix.value
-      .filter((p) => p.roles[role.roleId])
-      .map((p) => p.permissionId)
+      const allowedIds = matrix.value.filter((p) => p.roles[role.roleId]).map((p) => p.permissionId)
 
       await roleApi.replacePermissions(role.roleId, {
         permissionIds: allowedIds,
@@ -135,26 +149,23 @@ async function saveChanges() {
     changes.value = []
     summaryOpen.value = false
 
-    alert("저장되었습니다.")
+    alert('저장되었습니다.')
   } finally {
     saving.value = false
   }
 }
-
 </script>
 
 <template>
   <div class="page">
-
     <!-- ⭐ SummaryBar + Panel 전체를 하나의 sticky 덩어리로 묶음 ⭐ -->
     <div class="summary-wrapper">
-
       <!-- SummaryBar -->
       <div class="summary-bar">
         <div class="summary-left" @click="summaryOpen = !summaryOpen">
           <span class="arrow" :class="{ open: summaryOpen }"></span>
           <span class="label">
-            {{ changes.length === 0 ? "변경된 내용 없음" : `변경된 내용 ${changes.length}건` }}
+            {{ changes.length === 0 ? '변경된 내용 없음' : `변경된 내용 ${changes.length}건` }}
           </span>
         </div>
 
@@ -168,7 +179,6 @@ async function saveChanges() {
           :disabled="changes.length === 0 || saving"
           @click="saveChanges"
         />
-
       </div>
 
       <!-- SummaryPanel (SummaryBar 바로 아래에서 함께 sticky 동작) -->
@@ -178,11 +188,10 @@ async function saveChanges() {
           <span>역할에</span>
           <span class="perm">{{ item.permissionName }}</span>
           <span :class="{ on: item.now, off: !item.now }">
-            {{ item.now ? "권한을 활성화했습니다." : "권한을 비활성화했습니다." }}
+            {{ item.now ? '권한을 활성화했습니다.' : '권한을 비활성화했습니다.' }}
           </span>
         </div>
       </div>
-
     </div>
 
     <!-- Tabs -->
@@ -190,12 +199,7 @@ async function saveChanges() {
 
     <!-- Search -->
     <InputText v-model="keyword" placeholder="Search permissions..." class="search-input" />
-    <Button
-      label="권한 추가"
-      icon="pi pi-plus"
-      class="add-btn"
-      @click="showCreate = true"
-    />
+    <Button label="권한 추가" icon="pi pi-plus" class="add-btn" @click="showCreate = true" />
     <!-- Table -->
     <DataTable :value="filteredMatrix" :rowKey="'key'" stripedRows class="perm-table">
       <Column header="Permission" field="name">
@@ -223,12 +227,7 @@ async function saveChanges() {
     </DataTable>
   </div>
 
-  <Dialog
-    v-model:visible="showCreate"
-    header="권한 생성"
-    modal
-    class="create-dialog"
-  >
+  <Dialog v-model:visible="showCreate" header="권한 생성" modal class="create-dialog">
     <div class="dialog-body">
       <label>권한명</label>
       <InputText v-model="createForm.permissionName" class="w-full" />
@@ -356,4 +355,3 @@ async function saveChanges() {
   width: 100%;
 }
 </style>
-
