@@ -255,19 +255,19 @@ watch(() => props.selectedDate, (newDate) => {
 
 <style scoped>
 .mini-calendar-container {
-  width: 320px;
+  width: 300px;
   background: #f8f9fa;
   border-radius: 12px;
-  padding: 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
-  height: calc(100vh - 148px);
+  height: calc(100vh - 160px);
   overflow-y: auto;
   position: sticky;
-  top: 24px;
+  top: 20px;
   align-self: flex-start;
 }
 

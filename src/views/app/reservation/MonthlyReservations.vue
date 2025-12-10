@@ -112,10 +112,12 @@ const calendarOptions = computed(() => ({
     timeGridDay: {
       slotMinTime: '04:00:00',
       slotMaxTime: '24:00:00',
+      slotDuration: '00:30:00',
     },
     timeGridWeek: {
       slotMinTime: '04:00:00',
       slotMaxTime: '24:00:00',
+      slotDuration: '00:30:00',
     }
   },
   contentHeight: 'auto',
@@ -150,7 +152,26 @@ const calendarOptions = computed(() => ({
     }
   },
   
-  // 이벤트가 마운트될 때 배경색을 fc-event-main에도 적용
+  eventClick: (info) => {
+    const reservationId = info.event.id
+    if (reservationId) {
+      openDetailModal(reservationId)
+    }
+  },
+  events: [],
+  
+  // 주간/일간 뷰일 때 타임슬롯 배경색 적용
+  datesSet: async (info) => {
+    // 주간/일간 뷰일 때만 배경색 적용
+    if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
+      await nextTick()
+      setTimeout(() => {
+        applySlotBackgrounds()
+      }, 600)
+    }
+  },
+  
+  // 이벤트가 마운트될 때 타임슬롯 배경색 적용 (주간/일간 뷰일 때만)
   eventDidMount: (arg) => {
     const event = arg.event
     if (!event.start || !event.end) return
@@ -168,36 +189,7 @@ const calendarOptions = computed(() => ({
     if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
       setTimeout(() => {
         applySlotBackgrounds()
-      }, 100)
-    }
-  },
-  eventClick: (info) => {
-    const reservationId = info.event.id
-    if (reservationId) {
-      openDetailModal(reservationId)
-    }
-  },
-  events: [],
-  
-  // 주간/일간 뷰일 때 타임슬롯 배경색 적용
-  datesSet: async (info) => {
-    // 주간/일간 뷰일 때만 배경색 적용
-    if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
-      console.log(`[MonthlyReservations] datesSet - ${currentView.value} view`)
-      await nextTick()
-      setTimeout(() => {
-        console.log('[MonthlyReservations] Calling applySlotBackgrounds from datesSet')
-        applySlotBackgrounds()
-      }, 500)
-    }
-  },
-  
-  // 이벤트가 마운트될 때 타임슬롯 배경색 적용 (주간/일간 뷰일 때만)
-  eventDidMount: (arg) => {
-    if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
-      setTimeout(() => {
-        applySlotBackgrounds()
-      }, 100)
+      }, 200)
     }
   },
 }))
@@ -333,23 +325,19 @@ const loadCalendarEvents = async () => {
     await nextTick()
     setTimeout(() => {
       applySlotBackgrounds()
-    }, 500)
+    }, 600)
   }
 }
 
 // 타임슬롯 배경색 적용 함수
 function applySlotBackgrounds() {
-  console.log('[MonthlyReservations] applySlotBackgrounds called')
   const calendarEl = calendarRef.value?.getApi()?.el
   if (!calendarEl) {
-    console.warn('[MonthlyReservations] Calendar element not found')
     return
   }
-  console.log('[MonthlyReservations] Calendar element found')
   
   // 모든 타임슬롯 배경색 초기화
   const allSlots = calendarEl.querySelectorAll('.fc-timegrid-slot')
-  console.log('[MonthlyReservations] Found slots:', allSlots.length)
   allSlots.forEach(slot => {
     slot.style.backgroundColor = ''
     slot.classList.remove('has-event-slot')
@@ -357,49 +345,40 @@ function applySlotBackgrounds() {
   
   // 모든 이벤트 엘리먼트 찾기
   const allEvents = calendarEl.querySelectorAll('.fc-timegrid-event')
-  console.log('[MonthlyReservations] Found events:', allEvents.length)
   
   if (allEvents.length === 0) {
-    console.warn('[MonthlyReservations] No events found')
     return
   }
   
-  allEvents.forEach((eventEl, eventIndex) => {
-    console.log(`[MonthlyReservations] Processing event ${eventIndex + 1}...`)
+  allEvents.forEach((eventEl) => {
     // 이벤트의 배경색 가져오기 (인라인 스타일에서)
     const eventChip = eventEl.querySelector('.custom-event-chip')
     if (!eventChip) {
-      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: custom-event-chip not found`)
       return
     }
     
     // 인라인 스타일에서 배경색 가져오기
     const bgColorStyle = eventChip.getAttribute('style')
     if (!bgColorStyle || !bgColorStyle.includes('background-color')) {
-      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: no background-color in style`)
       return
     }
     
     const bgColorMatch = bgColorStyle.match(/background-color:\s*([^;]+)/)
     if (!bgColorMatch) {
-      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: could not parse background-color`)
       return
     }
     
     const bgColor = bgColorMatch[1].trim()
     const rgba = hexToRgbaFromString(bgColor, 0.3)
-    console.log(`[MonthlyReservations] Event ${eventIndex + 1}: bgColor=${bgColor}, rgba=${rgba}`)
     
     // 이벤트가 속한 타임슬롯 찾기
     const timeGridCol = eventEl.closest('.fc-timegrid-col')
     if (!timeGridCol) {
-      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: timeGridCol not found`)
       return
     }
     
     const colFrame = timeGridCol.querySelector('.fc-timegrid-col-frame')
     if (!colFrame) {
-      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: colFrame not found`)
       return
     }
     
@@ -409,41 +388,31 @@ function applySlotBackgrounds() {
     const eventTop = eventRect.top - colRect.top
     const eventBottom = eventRect.bottom - colRect.top
     
-    console.log(`[MonthlyReservations] Event ${eventIndex + 1}: eventTop=${eventTop}, eventBottom=${eventBottom}`)
-    
     // 실제 타임슬롯 높이 계산 (첫 번째 슬롯의 높이 사용)
-    const firstSlot = colFrame.querySelector('.fc-timegrid-slot')
-    if (!firstSlot) {
-      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: firstSlot not found`)
+    const slots = colFrame.querySelectorAll('.fc-timegrid-slot')
+    if (slots.length === 0) {
       return
     }
+    
+    const firstSlot = slots[0]
     const slotHeight = firstSlot.getBoundingClientRect().height || 60
-    console.log(`[MonthlyReservations] Event ${eventIndex + 1}: slotHeight=${slotHeight}`)
     
     // 시작/종료 인덱스 계산
-    const slots = colFrame.querySelectorAll('.fc-timegrid-slot')
     const startSlotIndex = Math.max(0, Math.floor(eventTop / slotHeight))
     const endSlotIndex = Math.min(
       slots.length,
       Math.ceil(eventBottom / slotHeight)
     )
     
-    console.log(`[MonthlyReservations] Event ${eventIndex + 1}: startSlotIndex=${startSlotIndex}, endSlotIndex=${endSlotIndex}, slots.length=${slots.length}`)
-    
     // 해당 범위의 모든 타임슬롯에 배경색 적용
-    let appliedCount = 0
     for (let i = startSlotIndex; i < endSlotIndex && i < slots.length; i++) {
       const slot = slots[i]
       if (slot) {
         slot.style.backgroundColor = rgba
         slot.classList.add('has-event-slot')
-        appliedCount++
       }
     }
-    console.log(`[MonthlyReservations] Event ${eventIndex + 1}: Applied to ${appliedCount} slots`)
   })
-  
-  console.log('[MonthlyReservations] applySlotBackgrounds finished')
 }
 
 // 문자열에서 hex 색상을 rgba로 변환
@@ -508,7 +477,7 @@ const changeView = async (view) => {
     await nextTick()
     setTimeout(() => {
       applySlotBackgrounds()
-    }, 500)
+    }, 600)
   }
 }
 
@@ -607,13 +576,13 @@ const onMiniCalendarEventClick = (event) => {
 <style scoped>
 .calendar-page {
   display: flex;
-  gap: 24px;
-  padding: 24px;
+  gap: 20px;
+  padding: 20px;
   max-width: 1920px;
   margin: 0 auto;
-  height: calc(100vh - 100px);
+  height: calc(100vh - 120px);
   overflow: hidden;
-  align-items: stretch;
+  align-items: flex-start;
 }
 
 .main-calendar-container {
@@ -622,7 +591,7 @@ const onMiniCalendarEventClick = (event) => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: calc(100vh - 148px);
+  height: calc(100vh - 160px);
 }
 
 .calendar-container {
@@ -702,7 +671,8 @@ const onMiniCalendarEventClick = (event) => {
 
 .calendar-wrapper :deep(.fc-view-harness) {
   flex: 1;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
 }
 
@@ -714,6 +684,10 @@ const onMiniCalendarEventClick = (event) => {
 
 .calendar-wrapper :deep(.fc-timegrid-body) {
   overflow-y: visible;
+}
+
+.calendar-wrapper :deep(.fc-timegrid-body .fc-scroller) {
+  overflow-y: auto !important;
 }
 
 /* FullCalendar 한국어 스타일 개선 */
@@ -821,7 +795,7 @@ const onMiniCalendarEventClick = (event) => {
 
 /* 주별 뷰 시간 슬롯 */
 :deep(.fc-timegrid-slot) {
-  height: 60px;
+  min-height: 60px;
   border-top: 1px solid #f3f4f6;
 }
 
