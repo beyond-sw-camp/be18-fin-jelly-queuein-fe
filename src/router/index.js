@@ -93,10 +93,8 @@ const router = createRouter({
     {
       path: '/admin',
       component: AdminLayout,
-      meta: { requiresAuth: true, role: 'ADMIN' },
+      meta: { requiresAuth: true },
       children: [
-        { path: '', component: AdminDashboard },
-
         // -------------------------
         // 기본 이동: /admin → /admin/users
         // -------------------------
@@ -193,16 +191,7 @@ const router = createRouter({
           ],
         },
 
-        // ========== 카테고리 관리 ==========
-
-        // 자원 수정
-        {
-          path: 'assets/:assetId/edit',
-          component: () => import('@/views/admin/asset/AssetEditView.vue'),
-          meta: { minRole: 'MANAGER' },
-        },
-
-        // 자원 상세 조회
+        // 자원 상세 조회 (assets children 밖에 별도로 정의)
         {
           path: 'assets/:assetId',
           component: () => import('@/views/admin/asset/AssetDetailView.vue'),

@@ -24,6 +24,7 @@
 import { ref } from "vue"
 import UsageHistoryFilter from "./UsageHistoryFilter.vue"
 import UsageHistoryTable from "./UsageHistoryTable.vue"
+import AccountingTabMenu from "@/components/accounting/AccountingTabMenu.vue"
 import api from "@/api/axios.js"
 
 const rows = ref([])

@@ -20,16 +20,15 @@ export function setupGuards(router) {
       return next('/app')
     }
 
-    // /admin 경로 접근 시 ADMIN 권한 체크
-    if (to.path.startsWith('/admin')) {
-      if (!hasRole('ADMIN')) {
+    // 권한 체크 (meta.minRole이 있으면 그것을 우선, 없으면 /admin 경로는 ADMIN 필요)
+    if (to.meta.minRole) {
+      // meta에 명시된 권한 체크
+      if (!hasRole(to.meta.minRole)) {
         return next('/403')
       }
-    }
-
-    // 권한 체크
-    if (to.meta.minRole) {
-      if (!hasRole(to.meta.minRole)) {
+    } else if (to.path.startsWith('/admin')) {
+      // meta.minRole이 없고 /admin 경로면 ADMIN 권한 필요
+      if (!hasRole('ADMIN')) {
         return next('/403')
       }
     }

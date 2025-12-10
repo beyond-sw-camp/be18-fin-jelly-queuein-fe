@@ -2,6 +2,13 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
+// Vue 3 + Vite 표준: asset import
+import reserveIcon from '@/assets/icons/reserve.svg'
+import scheduleIcon from '@/assets/icons/schedule.svg'
+import resourceIcon from '@/assets/icons/resource.svg'
+import statsIcon from '@/assets/icons/stats.svg'
+import userIcon from '@/assets/icons/user.svg'
+
 const props = defineProps({
   open: Boolean,
 })
@@ -36,7 +43,7 @@ function isActiveStartsWith(basePath) {
         :class="{ active: isActiveStartsWith('/app/reservations/me') }"
         @click="$emit('close-sidebar')"
       >
-        <img src="@/assets/icons/reserve.svg" class="icon" />
+        <img :src="reserveIcon" class="icon" />
         <span v-if="props.open">예약 관리</span>
       </router-link>
 
@@ -47,7 +54,7 @@ function isActiveStartsWith(basePath) {
         :class="{ active: isActiveStartsWith('/app/reservations/monthly') }"
         @click="$emit('close-sidebar')"
       >
-        <img src="@/assets/icons/schedule.svg" class="icon" />
+        <img :src="scheduleIcon" class="icon" />
         <span v-if="props.open">일정 관리</span>
       </router-link>
 
@@ -59,7 +66,7 @@ function isActiveStartsWith(basePath) {
         :class="{ active: isActiveStartsWith('/admin/assets') }"
         @click="$emit('close-sidebar')"
       >
-        <img src="@/assets/icons/resource.svg" class="icon" />
+        <img :src="resourceIcon" class="icon" />
         <span v-if="props.open">자원 관리</span>
       </router-link>
 
@@ -71,7 +78,7 @@ function isActiveStartsWith(basePath) {
         :class="{ active: isActiveStartsWith('/admin/accounting') }"
         @click="$emit('close-sidebar')"
       >
-        <img src="@/assets/icons/stats.svg" class="icon" />
+        <img :src="statsIcon" class="icon" />
         <span v-if="props.open">정산 관리</span>
       </router-link>
 
@@ -83,7 +90,7 @@ function isActiveStartsWith(basePath) {
         :class="{ active: isActiveStartsWith('/admin/users') }"
         @click="$emit('close-sidebar')"
       >
-        <img src="@/assets/icons/user.svg" class="icon" />
+        <img :src="userIcon" class="icon" />
         <span v-if="props.open">유저 관리</span>
       </router-link>
 

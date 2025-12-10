@@ -3,7 +3,11 @@ import { ref, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import Modal from '@/components/common/Modal.vue'
-import Logo from '@/assets/icons/logo.svg'
+
+// Vue 3 + Vite 표준: import를 사용하여 asset 경로 처리
+// Vite는 이미지를 자동으로 URL로 변환합니다
+import logoUrl from '@/assets/icons/logo.svg'
+import heroImageUrl from '@/assets/img/qiinMain.png'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -106,7 +110,7 @@ async function login() {
     <div class="left">
       <div class="center-wrapper">
         <div class="title">
-          <img :src="Logo" alt="QueueIn Logo" class="logo-img" />
+          <img :src="logoUrl" alt="QueueIn Logo" class="logo-img" />
         </div>
         <div class="subtitle">사내 일정 관리 시스템</div>
 
@@ -149,7 +153,7 @@ async function login() {
 
     <!-- Right Section -->
     <div class="right">
-      <img src="../../assets/img/qiinMain.png" class="hero-img" alt="calendar" />
+      <img :src="heroImageUrl" class="hero-img" alt="calendar" />
     </div>
 
     <!-- Brand -->
