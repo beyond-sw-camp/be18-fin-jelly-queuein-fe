@@ -435,8 +435,8 @@ onMounted(() => {
 
 <style scoped>
 .guide-view {
-  padding: 24px;
-  max-width: 1400px;
+  padding: 21.6px;
+  max-width: 1260px;
   margin: 0 auto;
   position: relative;
 }
@@ -457,13 +457,13 @@ onMounted(() => {
 .dialog-header-content {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 20px;
+  gap: 10.8px;
+  font-size: 18px;
   font-weight: 600;
 }
 
 .dialog-header-content i {
-  font-size: 24px;
+  font-size: 21.6px;
   color: #3b82f6;
 }
 
@@ -505,32 +505,32 @@ onMounted(() => {
 /* 가이드 레이아웃 */
 .guide-layout {
   display: flex;
-  gap: 32px;
+  gap: 28.8px;
   align-items: flex-start;
 }
 
 /* 좌측 목차 */
 .guide-toc {
   position: sticky;
-  top: 100px;
-  width: 280px;
+  top: 90px;
+  width: 252px;
   flex-shrink: 0;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  max-height: calc(100vh - 120px);
+  border-radius: 10.8px;
+  box-shadow: 0 1.8px 7.2px rgba(0, 0, 0, 0.1);
+  padding: 18px;
+  max-height: calc(100vh - 108px);
   overflow-y: auto;
 }
 
 .toc-header {
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  margin-bottom: 14.4px;
+  padding-bottom: 10.8px;
   border-bottom: 2px solid #e5e7eb;
 }
 
 .toc-header h3 {
-  font-size: 18px;
+  font-size: 16.2px;
   font-weight: 700;
   color: #1f2937;
   margin: 0;
@@ -539,19 +539,20 @@ onMounted(() => {
 .toc-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7.2px;
 }
 
 .toc-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
+  gap: 10.8px;
+  padding: 10.8px 14.4px;
+  border-radius: 7.2px;
   cursor: pointer;
   transition: all 0.2s ease;
   color: #4b5563;
   font-weight: 500;
+  font-size: 14.4px;
 }
 
 .toc-item:hover {
@@ -566,7 +567,7 @@ onMounted(() => {
 }
 
 .toc-item i {
-  font-size: 18px;
+  font-size: 16.2px;
   flex-shrink: 0;
   color: #6b7280;
   transition: color 0.2s ease;
@@ -597,68 +598,68 @@ onMounted(() => {
 }
 
 .guide-header {
-  margin-bottom: 32px;
+  margin-bottom: 28.8px;
   text-align: center;
 }
 
 .guide-title {
-  font-size: 32px;
+  font-size: 28.8px;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 12px;
+  margin-bottom: 10.8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10.8px;
 }
 
 .guide-title i {
-  font-size: 36px;
+  font-size: 32.4px;
   color: #3b82f6;
 }
 
 .guide-subtitle {
-  font-size: 16px;
+  font-size: 14.4px;
   color: #6b7280;
 }
 
 .guide-card {
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10.8px;
+  box-shadow: 0 1.8px 7.2px rgba(0, 0, 0, 0.1);
 }
 
 .tab-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10.8px;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14.4px;
 }
 
 .tab-header i {
-  font-size: 20px;
+  font-size: 18px;
   color: #3b82f6;
 }
 
 .tab-content {
-  padding: 16px 0;
+  padding: 14.4px 0;
 }
 
 .section-actions {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
+  margin-bottom: 21.6px;
+  padding-bottom: 14.4px;
   border-bottom: 1px solid #e5e7eb;
   display: flex;
-  gap: 12px;
+  gap: 10.8px;
   flex-wrap: wrap;
 }
 
 .tab-content h3 {
-  font-size: 18px;
+  font-size: 16.2px;
   font-weight: 600;
   color: #1f2937;
-  margin-top: 24px;
-  margin-bottom: 12px;
+  margin-top: 21.6px;
+  margin-bottom: 10.8px;
 }
 
 .tab-content h3:first-child {
@@ -668,28 +669,31 @@ onMounted(() => {
 .tab-content p {
   color: #4b5563;
   line-height: 1.6;
-  margin-bottom: 12px;
+  margin-bottom: 10.8px;
+  font-size: 14.4px;
 }
 
 .tab-content ul {
   color: #4b5563;
   line-height: 1.8;
-  margin-left: 20px;
-  margin-bottom: 16px;
+  margin-left: 18px;
+  margin-bottom: 14.4px;
+  font-size: 14.4px;
 }
 
 .tab-content li {
-  margin-bottom: 8px;
+  margin-bottom: 7.2px;
 }
 
 .tip-box,
 .warning-box {
-  padding: 16px;
-  border-radius: 8px;
-  margin-top: 16px;
+  padding: 14.4px;
+  border-radius: 7.2px;
+  margin-top: 14.4px;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10.8px;
+  font-size: 14.4px;
 }
 
 .tip-box {
@@ -700,36 +704,36 @@ onMounted(() => {
 
 .tip-box i {
   color: #3b82f6;
-  font-size: 20px;
+  font-size: 18px;
   flex-shrink: 0;
 }
 
 .warning-box {
   background: #fef3c7;
-  border-left: 4px solid #f59e0b;
+  border-left: 3.6px solid #f59e0b;
   color: #92400e;
 }
 
 .warning-box i {
   color: #f59e0b;
-  font-size: 20px;
+  font-size: 18px;
   flex-shrink: 0;
 }
 
 /* PrimeVue Accordion 커스터마이징 */
 :deep(.p-accordion-header) {
-  border-radius: 8px;
-  margin-bottom: 8px;
+  border-radius: 7.2px;
+  margin-bottom: 7.2px;
 }
 
 :deep(.p-accordion-header-link) {
-  padding: 16px 20px;
-  border-radius: 8px;
+  padding: 14.4px 18px;
+  border-radius: 7.2px;
   transition: all 0.3s ease;
 }
 
 :deep(.p-accordion-content) {
-  padding: 0 20px 20px 20px;
+  padding: 0 18px 18px 18px;
   transition: all 0.3s ease;
 }
 
