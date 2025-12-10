@@ -220,20 +220,35 @@ function getBreadcrumbHtml() {
   font-size: 15px;
   color: #777;
   margin-left: 50px;
-}
-
-::v-deep .breadcrumb-item:first-child {
-  color: #000;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 ::v-deep .breadcrumb-item {
-  color: #888;
+  color: #4b5563;
+  background: #f3f4f6;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 500;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+::v-deep .breadcrumb-item:first-child {
+  color: #1f2937;
+  background: #e5e7eb;
+  font-weight: 600;
+}
+
+::v-deep .breadcrumb-item:hover {
+  background: #e5e7eb;
 }
 
 ::v-deep .breadcrumb-divider {
-  color: #aaa;
-  margin: 0 15px;
+  color: #9ca3af;
+  margin: 0 4px;
+  font-size: 12px;
 }
 
 /* RIGHT */

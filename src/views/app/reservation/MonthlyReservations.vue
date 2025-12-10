@@ -1,53 +1,68 @@
 <template>
-  <div class="calendar-top">
-    <!-- 날짜 선택 -->
-    <el-date-picker
-      v-model="selectedDate"
-      type="date"
-      format="YYYY.MM.DD"
-      value-format="YYYY-MM-DD"
-      @change="onDateChange"
-      class="date-picker"
+  <div class="calendar-container">
+    <Card class="calendar-card">
+      <template #content>
+        <div class="calendar-top">
+          <!-- 날짜 선택 -->
+          <Calendar
+            v-model="selectedDate"
+            dateFormat="yy.mm.dd"
+            showIcon
+            iconDisplay="input"
+            inputId="calendar-date"
+            class="date-picker"
+            @date-select="onDateChange"
+          />
+
+          <!-- 월별/주별 버튼 -->
+          <div class="calendar-toggle">
+            <Button
+              label="월별"
+              :outlined="currentView !== 'dayGridMonth'"
+              :class="{ 'active-view': currentView === 'dayGridMonth' }"
+              @click="changeView('dayGridMonth')"
+            />
+            <Button
+              label="주별"
+              :outlined="currentView !== 'timeGridWeek'"
+              :class="{ 'active-view': currentView === 'timeGridWeek' }"
+              @click="changeView('timeGridWeek')"
+            />
+          </div>
+        </div>
+
+        <div class="calendar-wrapper">
+          <FullCalendar ref="calendarRef" :options="calendarOptions" />
+        </div>
+      </template>
+    </Card>
+
+    <!-- 예약 상세 모달 -->
+    <ReservationDetailModal
+      :visible="modalOpen"
+      :asset="reservationDetail"
+      @close="closeModal"
+      @start="handleStart"
+      @end="handleEnd"
+      @cancel="handleCancel"
     />
-
-    <!-- 월별/주별 버튼 -->
-    <div class="calendar-toggle">
-      <button 
-        @click="changeView('dayGridMonth')" 
-        :class="{ active: currentView === 'dayGridMonth' }"
-      >월별</button>
-
-      <button 
-        @click="changeView('timeGridWeek')" 
-        :class="{ active: currentView === 'timeGridWeek' }"
-      >주별</button>
-    </div>
   </div>
-
-  <div class="calendar-wrapper">
-    <FullCalendar ref="calendarRef" :options="calendarOptions" />
-  </div>
-
-  <!-- 예약 상세 모달 -->
-  <ReservationDetailModal
-    :visible="modalOpen"
-    :asset="reservationDetail"
-    @close="closeModal"
-    @start="handleStart"
-    @end="handleEnd"
-    @cancel="handleCancel"
-  />
 </template>
+
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
+import koLocale from '@fullcalendar/core/locales/ko.js'
 import { reservationApi } from '@/api/reservationApi'
 import ReservationDetailModal from '@/components/reservation/ReservationDetailModal.vue'
+import Card from 'primevue/card'
+import Calendar from 'primevue/calendar'
+import Button from 'primevue/button'
 
 const calendarRef = ref(null)
-const today = new Date().toISOString().slice(0, 10)
+const today = new Date()
 const selectedDate = ref(today)
 const currentView = ref('dayGridMonth')
 
@@ -55,29 +70,60 @@ const currentView = ref('dayGridMonth')
 const modalOpen = ref(false)
 const reservationDetail = ref(null)
 
+// 날짜를 YYYY-MM-DD 형식으로 변환
+const formatDateForApi = (date) => {
+  if (!date) return new Date().toISOString().slice(0, 10)
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 /* ---------------------------
    FullCalendar 옵션
 ---------------------------- */
-const calendarOptions = {
+const calendarOptions = computed(() => ({
   plugins: [dayGridPlugin, timeGridPlugin],
-  initialView: 'dayGridMonth',
-  headerToolbar: false,
-  contentHeight: 490,
+  locale: koLocale,
+  initialView: currentView.value,
+  headerToolbar: {
+    left: 'prev,next today',
+    center: 'title',
+    right: ''
+  },
+  buttonText: {
+    today: '오늘',
+    month: '월',
+    week: '주',
+    day: '일'
+  },
+  contentHeight: 'auto',
+  height: 'auto',
   displayEventTime: false,
   eventOverlap: false,
   slotEventOverlap: false,
   eventMaxStack: 1,
-  allDaySlot: false,  // ← 추가: 주별 뷰 all-day 숨김
+  allDaySlot: false,
+  firstDay: 0, // 일요일부터 시작
+  dayHeaderFormat: { weekday: 'short' }, // 요일을 짧게 표시 (일, 월, 화...)
+  slotLabelFormat: {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  },
   
   eventContent: (arg) => {
-    const d = arg.event.start
-    const time = d ? d.toTimeString().slice(0, 5) : ''
+    const startTime = arg.event.start ? arg.event.start.toTimeString().slice(0, 5) : ''
+    const endTime = arg.event.end ? arg.event.end.toTimeString().slice(0, 5) : ''
+    const timeText = endTime ? `${startTime} - ${endTime}` : startTime
     const count = arg.event.extendedProps.count ?? 1
+    const bgColor = arg.event.backgroundColor || '#fce7f3'
+    const textColor = arg.event.textColor || '#9f1239'
     return {
       html: `
-        <div class="custom-event-chip">
-          <span class="event-title">${time} ${arg.event.title}</span>
+        <div class="custom-event-chip" style="background-color: ${bgColor}; color: ${textColor};">
+          <span class="event-title">${timeText} ${arg.event.title}</span>
           ${count > 1 ? `<span class="event-badge">+${count - 1}</span>` : ""}
         </div>
       `
@@ -90,8 +136,51 @@ const calendarOptions = {
     }
   },
   events: [],
+}))
+
+/* ---------------------------
+   예약 상태별 옅은 색상 매핑
+---------------------------- */
+const getEventColor = (status) => {
+  const statusUpper = (status || '').toUpperCase()
+  switch (statusUpper) {
+    case 'PENDING':
+      return '#fef3c7' // 옅은 노란색
+    case 'APPROVED':
+      return '#d1fae5' // 옅은 초록색
+    case 'USING':
+      return '#dbeafe' // 옅은 파란색
+    case 'COMPLETED':
+      return '#f3f4f6' // 옅은 회색
+    case 'REJECTED':
+      return '#fee2e2' // 옅은 빨간색
+    case 'CANCELED':
+      return '#f9fafb' // 옅은 회색
+    default:
+      return '#fce7f3' // 옅은 분홍색 (기본)
+  }
 }
 
+/* 텍스트 색상 매핑 */
+const getEventTextColor = (status) => {
+  const statusUpper = (status || '').toUpperCase()
+  switch (statusUpper) {
+    case 'PENDING':
+      return '#92400e' // 진한 노란색 텍스트
+    case 'APPROVED':
+      return '#065f46' // 진한 초록색 텍스트
+    case 'USING':
+      return '#1e40af' // 진한 파란색 텍스트
+    case 'COMPLETED':
+      return '#374151' // 진한 회색 텍스트
+    case 'REJECTED':
+      return '#991b1b' // 진한 빨간색 텍스트
+    case 'CANCELED':
+      return '#6b7280' // 회색 텍스트
+    default:
+      return '#9f1239' // 진한 분홍색 텍스트
+  }
+}
 
 /* ---------------------------
    API 데이터 → FullCalendar event 변환
@@ -109,8 +198,16 @@ const convertReservationsToEvents = (data) => {
         id: r.reservationId,
         title: r.assetName,
         start: localStart,
-        // end: localEnd, //끝나는 시간까지 표현하고 싶으면 추가
-        allDay: false
+        end: localEnd, // 끝나는 시간까지 표시
+        allDay: false,
+        backgroundColor: getEventColor(r.reservationStatus),
+        borderColor: getEventColor(r.reservationStatus),
+        textColor: getEventTextColor(r.reservationStatus),
+        extendedProps: {
+          status: r.reservationStatus,
+          startAt: r.startAt,
+          endAt: r.endAt
+        }
       })
     })
   })
@@ -121,7 +218,13 @@ const convertReservationsToEvents = (data) => {
 /* ---------------------------
    YYYY-MM-DD → YYYY-MM 변환
 ---------------------------- */
-const getYearMonth = (dateStr) => dateStr.slice(0, 7)
+const getYearMonth = (date) => {
+  if (!date) return new Date().toISOString().slice(0, 7)
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  return `${year}-${month}`
+}
 
 /* ---------------------------
    API 호출하여 FullCalendar 갱신
@@ -160,19 +263,21 @@ const loadCalendarEvents = async () => {
 }
 
 /* 날짜 변경 */
-const onDateChange = async (newDate) => {
+const onDateChange = async () => {
   const api = calendarRef.value.getApi()
-  selectedDate.value = newDate
-  api.gotoDate(newDate)
+  const dateStr = formatDateForApi(selectedDate.value)
+  api.gotoDate(dateStr)
   await loadCalendarEvents()
 }
 
 /* 뷰 변경 */
 const changeView = async (view) => {
   const api = calendarRef.value.getApi()
+  const currentDate = api.getDate() // 현재 캘린더의 날짜 저장
   currentView.value = view
   api.changeView(view)
-  api.gotoDate(selectedDate.value)
+  // 뷰 변경 후 날짜 유지
+  api.gotoDate(currentDate)
   await loadCalendarEvents()
 }
 
@@ -256,262 +361,312 @@ const closeModal = () => {
 }
 </script>
 
+<style scoped>
+.calendar-container {
+  padding: 24px;
+  max-width: 100%;
+}
 
-<style>
+.calendar-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
 
 .calendar-top {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
 .date-picker {
-  width: 195px !important;
+  flex: 0 0 auto;
 }
 
 .calendar-toggle {
   display: flex;
   gap: 8px;
+  margin-left: auto;
 }
 
-.calendar-toggle button {
-  padding: 8px 20px;
-  border: 1.5px solid #dddddd;
+.calendar-toggle :deep(.p-button) {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.calendar-toggle .active-view {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.calendar-wrapper {
+  min-height: 600px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+/* FullCalendar 한국어 스타일 개선 */
+:deep(.fc) {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+}
+
+:deep(.fc-header-toolbar) {
+  margin-bottom: 24px;
+  padding: 16px;
   background: white;
-  border-radius: 12px;
-  font-size: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.fc-toolbar-title) {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+:deep(.fc-button) {
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #4b5563;
+  padding: 8px 16px;
+  border-radius: 8px;
   font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.calendar-toggle button.active {
-  background: #B6CEB4;
-  color: #000;
-  border-color: #B6CEB4;
-}
-
-/* 1) 기본 이벤트 배경 제거 */
-:deep(.fc-event-bg),
-:deep(.fc-event-main) {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* 2) timegrid 이벤트 기본 박스 제거 */
-:deep(.fc-timegrid-event) {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* 3) FullCalendar가 interaction layer로 넣는 파란 박스 제거 */
-:deep(.fc-timegrid-event-harness-inset) {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* 4) selection / mirror 이벤트 제거 (클릭/드래그 시 생기는 파란색) */
-:deep(.fc-event.fc-mirror),
-:deep(.fc-timegrid-selection) {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-/* 1) 기본 파란 테두리 제거 */
-:deep(.fc-timegrid-event) {
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-}
-
-/* 2) 이벤트 내부 영역도 전부 제거 */
-:deep(.fc-event-main),
-:deep(.fc-event-bg) {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* 3) interaction / inset 레이어도 제거 */
-:deep(.fc-timegrid-event-harness-inset) {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* 이벤트 전체 박스를 덮도록 */
-.custom-event-chip {
-  width: 100% !important;
-  height: 100% !important;   /* ← 이게 핵심 */
-  display: flex !important;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 8px;
-  box-sizing: border-box;
-  border-radius: 6px;
-
-  background: #e6f0ff; /* 네가 원하는 색 */
-  color: #1677ff;
-  font-weight: 600;
-}
-/* 기본 이벤트 배경(파란색) 완전히 투명하게 만들기 */
-:deep(.fc-event-bg),
-:deep(.fc-event-main),
-:deep(.fc-timegrid-event) {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.custom-event-chip {
-  position: relative;             /* badge 기준점 */
-  width: 100%;
-  height: 100%;
-  background: #e6f0ff;
-  border-radius: 6px;
-  padding: 6px 12px;
-  box-sizing: border-box;
-
-  display: flex;
-  align-items: center;
-  font-weight: 600;
-  color: #1677ff;
-  cursor: pointer;
   transition: all 0.2s ease;
 }
 
+:deep(.fc-button:hover) {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #1f2937;
+}
+
+:deep(.fc-button:active),
+:deep(.fc-button-active) {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+:deep(.fc-button-primary:not(:disabled):active),
+:deep(.fc-button-primary:not(:disabled).fc-button-active) {
+  background: #667eea;
+  border-color: #667eea;
+}
+
+/* 요일 헤더 스타일 - 단색 배경 */
+:deep(.fc-col-header-cell) {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-weight: 600;
+  padding: 12px 8px;
+  text-align: center;
+}
+
+:deep(.fc-col-header-cell-cushion) {
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 일요일 빨간 글씨 */
+:deep(.fc-col-header-cell.fc-day-sun .fc-col-header-cell-cushion) {
+  color: #ef4444;
+}
+
+/* 토요일 파란 글씨 */
+:deep(.fc-col-header-cell.fc-day-sat .fc-col-header-cell-cushion) {
+  color: #3b82f6;
+}
+
+/* 날짜 셀 스타일 */
+:deep(.fc-daygrid-day) {
+  background: white;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+:deep(.fc-daygrid-day:hover) {
+  background: #f9fafb;
+}
+
+:deep(.fc-day-today) {
+  background: #eff6ff !important;
+  border: 2px solid #3b82f6 !important;
+}
+
+:deep(.fc-daygrid-day-number) {
+  padding: 8px;
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+:deep(.fc-day-today .fc-daygrid-day-number) {
+  color: #3b82f6;
+  font-weight: 700;
+}
+
+/* 주별 뷰 시간 슬롯 */
+:deep(.fc-timegrid-slot) {
+  height: 60px;
+  border-top: 1px solid #f3f4f6;
+}
+
+:deep(.fc-timegrid-slot-label) {
+  padding: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+:deep(.fc-timegrid-col) {
+  border-left: 1px solid #e5e7eb;
+}
+
+:deep(.fc-timegrid-col.fc-day-today) {
+  background: #f0f9ff;
+}
+
+/* 이벤트 스타일 */
+:deep(.fc-event-bg),
+:deep(.fc-event-main),
+:deep(.fc-timegrid-event) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.custom-event-chip {
+  position: relative;
+  width: 100% !important;
+  height: 100%;
+  border-radius: 0;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0 !important;
+}
+
 .custom-event-chip:hover {
-  background: #b3d9ff;
-  transform: scale(1.02);
+  opacity: 0.8;
+}
+
+/* 월간 뷰에서 이벤트가 날짜 가로 전체를 차지하도록 */
+:deep(.fc-daygrid-event) {
+  margin: 0 !important;
+  width: 100% !important;
+  border-radius: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+}
+
+:deep(.fc-daygrid-event-harness) {
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+}
+
+:deep(.fc-daygrid-event-harness > a) {
+  width: 100% !important;
+  margin: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+}
+
+/* 주별 뷰에서도 이벤트가 가로 전체를 차지하도록 */
+:deep(.fc-timegrid-event) {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+}
+
+:deep(.fc-timegrid-event-harness) {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
 }
 
 .event-title {
   flex: 1;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
 }
 
-/* 🎯 오른쪽 위에 작게 붙는 +3 뱃지 */
 .event-badge {
   position: absolute;
   top: 2px;
   right: 2px;
-  background: #d9d9d9;
-  color: #333;
-  
+  background: rgba(255, 255, 255, 0.95);
+  color: #1f2937;
   font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 10px;
+  line-height: 1.2;
+  font-weight: 700;
 }
 
-/* 이벤트 wrapper 전체 제거 */
-.fc-timegrid-event-harness,
-.fc-timegrid-event-harness-inset {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* 이벤트 본체 제거 */
-.fc-timegrid-event,
-.fc-event,
-.fc-event-main,
-.fc-event-bg {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* hover / interaction 시 생기는 배경 제거 */
-.fc-event.fc-mirror,
-.fc-timegrid-selection {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* 칼럼 안쪽 Event layer 자체 제거 (여기 남으면 배경처럼 보임) */
-.fc-timegrid-col-events {
-  background: transparent !important;
-}
-
-/* FullCalendar가 주별에서 시간대 강조로 넣는 하이라이트 제거 */
-.fc-timegrid-slot-lane.fc-highlight {
-  background: transparent !important;
-}
-/* 월간(month) view 이벤트 텍스트가 넘치지 않게 설정 */
+/* 월간 뷰 이벤트 */
 :deep(.fc-daygrid-event) {
-  overflow: hidden !important;
-  white-space: nowrap !important;
-  text-overflow: ellipsis !important;
-  padding: 2px 6px !important;
-  border-radius: 6px !important;
+  margin: 2px 4px;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-/* 이벤트 텍스트 부분 */
-:deep(.fc-daygrid-event .fc-event-title) {
-  overflow: hidden !important;
-  white-space: nowrap !important;
-  text-overflow: ellipsis !important;
-  display: block !important;
-}
-
-/* 이벤트 전체가 늘어나지 않도록 고정 */
 :deep(.fc-daygrid-event-harness) {
-  max-height: 22px !important; /* 필요에 따라 조정 */
-  overflow: hidden !important;
-}
-/* 주별 뷰 all-day 영역 관련 화살표 제거 */
-:deep(.fc-timegrid-all-day) {
-  display: none !important;
+  max-height: 24px;
 }
 
-:deep(.fc-timegrid-all-day-shared) {
-  display: none !important;
-}
-
-:deep(.fc-col-header-cell-cushion) {
-  /* 필요 시 left arrow 제거 */
-  display: none !important;
-}
-/* 주별(timeGridWeek)에서 all-day 왼쪽 label/화살표 제거 */
+/* 주별 뷰 all-day 제거 */
 :deep(.fc-timegrid-all-day) {
-  display: none !important; /* all-day 영역 자체 제거 */
+  display: none !important;
 }
 
 :deep(.fc-timegrid-axis) {
-  display: none !important; /* 좌측 시간축 (선택적으로 제거 가능) */
+  border-right: 1px solid #e5e7eb;
 }
 
-/* slot label 화살표 제거 (sat 1, sat 2 옆) */
-:deep(.fc-col-header-cell-cushion::before) {
-  content: none !important;
-}
-/* 주별(timeGridWeek)에서 day header 옆 화살표 제거 */
-:deep(.fc-col-header-cell-cushion::before) {
-  content: none !important;  /* 화살표 제거 */
-}
+/* 반응형 */
+@media (max-width: 768px) {
+  .calendar-container {
+    padding: 16px;
+  }
 
-/* all-day 영역 아예 제거 */
-:deep(.fc-timegrid-all-day) {
-  display: none !important;
-}
-/* 주별(timeGridWeek)에서 헤더 옆 화살표 제거 */
-:deep(.fc-col-header-cell-cushion::before),
-:deep(.fc-col-header-cell-cushion::after) {
-  content: "" !important;
-  display: none !important;
-}
+  .calendar-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-/* all-day 영역 제거 */
-:deep(.fc-timegrid-all-day) {
-  display: none !important;
+  .calendar-toggle {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .calendar-toggle :deep(.p-button) {
+    flex: 1;
+  }
+
+  .calendar-wrapper {
+    padding: 8px;
+    min-height: 400px;
+  }
+
+  :deep(.fc-toolbar-title) {
+    font-size: 18px;
+  }
 }
-
-
-</style> 
+</style>
