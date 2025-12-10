@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { hasRole } from '@/utils/role'
 
 // Vue 3 + Vite 표준: asset import
 import reserveIcon from '@/assets/icons/reserve.svg'
@@ -15,10 +16,11 @@ const props = defineProps({
 
 const route = useRoute()
 
-const role = localStorage.getItem('role')
-const isAdmin = computed(() =>
-  ['MASTER', 'ADMIN', 'MANAGER'].includes(role)
-)
+// MANAGER 이상 (자원 관리, 정산 관리용)
+const isAdminOrManager = computed(() => hasRole('MANAGER'))
+
+// ADMIN 이상 (유저 관리, 가이드용)
+const isAdminOnly = computed(() => hasRole('ADMIN'))
 
 function isActiveExact(path) {
   return route.path === path
@@ -60,7 +62,7 @@ function isActiveStartsWith(basePath) {
 
       <!-- 자원 관리 -->
       <router-link
-        v-if="isAdmin"
+        v-if="isAdminOrManager"
         to="/admin/assets"
         class="item"
         :class="{ active: isActiveStartsWith('/admin/assets') }"
@@ -72,7 +74,7 @@ function isActiveStartsWith(basePath) {
 
       <!-- 정산 관리 -->
       <router-link
-        v-if="isAdmin"
+        v-if="isAdminOrManager"
         to="/admin/accounting/usage-history"
         class="item"
         :class="{ active: isActiveStartsWith('/admin/accounting') }"
@@ -82,9 +84,9 @@ function isActiveStartsWith(basePath) {
         <span v-if="props.open">정산 관리</span>
       </router-link>
 
-      <!-- 유저 관리 -->
+      <!-- 유저 관리 (ADMIN 이상만) -->
       <router-link
-        v-if="isAdmin"
+        v-if="isAdminOnly"
         to="/admin/users"
         class="item"
         :class="{ active: isActiveStartsWith('/admin/users') }"
@@ -92,6 +94,18 @@ function isActiveStartsWith(basePath) {
       >
         <img :src="userIcon" class="icon" />
         <span v-if="props.open">유저 관리</span>
+      </router-link>
+
+      <!-- 사용법 가이드 (ADMIN 이상만) -->
+      <router-link
+        v-if="isAdminOnly"
+        to="/admin/guide"
+        class="item"
+        :class="{ active: isActiveStartsWith('/admin/guide') }"
+        @click="$emit('close-sidebar')"
+      >
+        <i class="pi pi-book icon-text"></i>
+        <span v-if="props.open">사용법 가이드</span>
       </router-link>
 
     </nav>
@@ -153,6 +167,17 @@ function isActiveStartsWith(basePath) {
 .icon {
   width: 40px;
   height: 40px;
+}
+
+/* PrimeIcons 텍스트 아이콘 (가이드용) */
+.icon-text {
+  font-size: 32px;
+  color: #333;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 텍스트 */
