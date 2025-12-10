@@ -1,7 +1,17 @@
 <template>
   <div class="bg-white p-4 rounded shadow">
-    <FullCalendar :options="calendarOptions" />
+    <FullCalendar ref="calendarRef" :options="calendarOptions" />
   </div>
+
+  <!-- 예약 상세 모달 -->
+  <ReservationDetailModal
+    :visible="modalOpen"
+    :asset="reservationDetail"
+    @close="closeModal"
+    @start="handleStart"
+    @end="handleEnd"
+    @cancel="handleCancel"
+  />
 </template>
 
 <script setup>
@@ -11,16 +21,20 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { reservationApi } from '@/api/reservationApi'
+import ReservationDetailModal from '@/components/reservation/ReservationDetailModal.vue'
 
+const calendarRef = ref(null)
 const events = ref([])
 
 const currentDate = ref('2025-10-20')
 
+// 모달 관련
+const modalOpen = ref(false)
+const reservationDetail = ref(null)
+
 async function fetchWeekReservations(start, end) {
-  const res = await reservationApi.getWeeklyReservations({
-    startDate: start,
-    endDate: end
-  })
+  // 백엔드 API는 date 파라미터만 받음 (시작 날짜)
+  const res = await reservationApi.getWeeklyReservations(start)
 
   return res.data  // { reservations: [...] }
 }
@@ -65,15 +79,116 @@ const calendarOptions = ref({
   },
 
   datesSet: async (info) => {
-    const start = info.startStr
-    const end = info.endStr.slice(0, 10)
+    const start = info.startStr.slice(0, 10) // YYYY-MM-DD 형식
 
-    const json = await fetchWeekReservations(start, end)
+    const json = await fetchWeekReservations(start, start)
     events.value = convertWeeklyToEvents(json)
+  },
+
+  eventClick: (info) => {
+    const reservationId = info.event.id
+    if (reservationId) {
+      openDetailModal(reservationId)
+    }
   },
 
   headerToolbar: false,
 })
+
+/* ------------------------------------
+   상세 조회 API 호출
+------------------------------------ */
+const openDetailModal = async (reservationId) => {
+  try {
+    const res = await reservationApi.getReservationDetail(reservationId)
+    const d = res.data
+
+    reservationDetail.value = {
+      id: d.reservationId,
+      name: d.assetName,
+      status: d.reservationStatus,
+      usage: d.reservationStatus,
+      isApproved: d.isApproved,
+      reserver: d.applicantName,
+      approver: d.respondentName,
+      assetStatus: d.assetStatus,
+      date: d.date,
+
+      startAt: d.startAt,
+      endAt: d.endAt,
+      actualStartAt: d.actualStartAt,
+      actualEndAt: d.actualEndAt,
+
+      participants: d.attendants,
+
+      reason: d.reason,
+      note: d.description,
+    }
+
+    modalOpen.value = true
+  } catch (err) {
+    console.error('상세 조회 실패:', err)
+  }
+}
+
+/* ------------------------------------
+   모달 액션 처리
+------------------------------------ */
+const handleStart = async (id) => {
+  try {
+    await reservationApi.startUsing(id)
+    modalOpen.value = false
+    // 캘린더 새로고침
+    const api = calendarRef.value?.getApi()
+    if (api) {
+      const view = api.view
+      const start = view.activeStart.toISOString().slice(0, 10)
+      const json = await fetchWeekReservations(start, start)
+      events.value = convertWeeklyToEvents(json)
+    }
+  } catch (err) {
+    console.error('사용 시작 실패:', err)
+  }
+}
+
+const handleEnd = async (id) => {
+  try {
+    await reservationApi.endUsing(id)
+    modalOpen.value = false
+    // 캘린더 새로고침
+    const api = calendarRef.value?.getApi()
+    if (api) {
+      const view = api.view
+      const start = view.activeStart.toISOString().slice(0, 10)
+      const json = await fetchWeekReservations(start, start)
+      events.value = convertWeeklyToEvents(json)
+    }
+  } catch (err) {
+    console.error('사용 종료 실패:', err)
+  }
+}
+
+const handleCancel = async (id) => {
+  try {
+    await reservationApi.cancel(id)
+    modalOpen.value = false
+    // 캘린더 새로고침
+    const api = calendarRef.value?.getApi()
+    if (api) {
+      const view = api.view
+      const start = view.activeStart.toISOString().slice(0, 10)
+      const json = await fetchWeekReservations(start, start)
+      events.value = convertWeeklyToEvents(json)
+    }
+  } catch (err) {
+    console.error('예약 취소 실패:', err)
+  }
+}
+
+/* 모달 닫기 */
+const closeModal = () => {
+  modalOpen.value = false
+}
 
 </script>
 
@@ -104,6 +219,13 @@ const calendarOptions = ref({
   font-size: 12px;
   font-weight: 600;
   display: inline-block;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-event-chip:hover {
+  background: #b3d9ff !important;
+  transform: scale(1.05);
 }
 
 /* 이벤트가 들어가는 전체 column 자체 배경 제거 */

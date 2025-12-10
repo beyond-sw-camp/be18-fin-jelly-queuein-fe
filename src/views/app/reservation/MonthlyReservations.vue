@@ -27,6 +27,16 @@
   <div class="calendar-wrapper">
     <FullCalendar ref="calendarRef" :options="calendarOptions" />
   </div>
+
+  <!-- 예약 상세 모달 -->
+  <ReservationDetailModal
+    :visible="modalOpen"
+    :asset="reservationDetail"
+    @close="closeModal"
+    @start="handleStart"
+    @end="handleEnd"
+    @cancel="handleCancel"
+  />
 </template>
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -34,11 +44,16 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { reservationApi } from '@/api/reservationApi'
+import ReservationDetailModal from '@/components/reservation/ReservationDetailModal.vue'
 
 const calendarRef = ref(null)
 const today = new Date().toISOString().slice(0, 10)
 const selectedDate = ref(today)
 const currentView = ref('dayGridMonth')
+
+// 모달 관련
+const modalOpen = ref(false)
+const reservationDetail = ref(null)
 
 
 /* ---------------------------
@@ -66,6 +81,12 @@ const calendarOptions = {
           ${count > 1 ? `<span class="event-badge">+${count - 1}</span>` : ""}
         </div>
       `
+    }
+  },
+  eventClick: (info) => {
+    const reservationId = info.event.id
+    if (reservationId) {
+      openDetailModal(reservationId)
     }
   },
   events: [],
@@ -159,6 +180,80 @@ const changeView = async (view) => {
 onMounted(() => {
   loadCalendarEvents()
 })
+
+/* ------------------------------------
+   상세 조회 API 호출
+------------------------------------ */
+const openDetailModal = async (reservationId) => {
+  try {
+    const res = await reservationApi.getReservationDetail(reservationId)
+    const d = res.data
+
+    reservationDetail.value = {
+      id: d.reservationId,
+      name: d.assetName,
+      status: d.reservationStatus,
+      usage: d.reservationStatus,
+      isApproved: d.isApproved,
+      reserver: d.applicantName,
+      approver: d.respondentName,
+      assetStatus: d.assetStatus,
+      date: d.date,
+
+      startAt: d.startAt,
+      endAt: d.endAt,
+      actualStartAt: d.actualStartAt,
+      actualEndAt: d.actualEndAt,
+
+      participants: d.attendants,
+
+      reason: d.reason,
+      note: d.description,
+    }
+
+    modalOpen.value = true
+  } catch (err) {
+    console.error('상세 조회 실패:', err)
+  }
+}
+
+/* ------------------------------------
+   모달 액션 처리
+------------------------------------ */
+const handleStart = async (id) => {
+  try {
+    await reservationApi.startUsing(id)
+    modalOpen.value = false
+    loadCalendarEvents()
+  } catch (err) {
+    console.error('사용 시작 실패:', err)
+  }
+}
+
+const handleEnd = async (id) => {
+  try {
+    await reservationApi.endUsing(id)
+    modalOpen.value = false
+    loadCalendarEvents()
+  } catch (err) {
+    console.error('사용 종료 실패:', err)
+  }
+}
+
+const handleCancel = async (id) => {
+  try {
+    await reservationApi.cancel(id)
+    modalOpen.value = false
+    loadCalendarEvents()
+  } catch (err) {
+    console.error('예약 취소 실패:', err)
+  }
+}
+
+/* 모달 닫기 */
+const closeModal = () => {
+  modalOpen.value = false
+}
 </script>
 
 
@@ -286,6 +381,13 @@ onMounted(() => {
   align-items: center;
   font-weight: 600;
   color: #1677ff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-event-chip:hover {
+  background: #b3d9ff;
+  transform: scale(1.02);
 }
 
 .event-title {
