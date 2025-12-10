@@ -94,6 +94,7 @@ const breadcrumbMap = {
   list: '권한 관리',
   schedule: '일정 관리',
   reservation: '예약 관리',
+  guide: '설명서',
 }
 
 // ===============================

@@ -16,6 +16,12 @@ export function setupGuards(router) {
 
     // 로그인 후 "/" 접근 → 자동 redirect
     if (to.path === '/' && token) {
+      // 첫 로그인 체크 (가이드 미방문 여부)
+      const hasVisitedGuide = localStorage.getItem('hasVisitedGuide')
+      if (!hasVisitedGuide) {
+        if (hasRole('ADMIN')) return next('/admin/guide')
+        return next('/app/guide')
+      }
       if (hasRole('ADMIN')) return next('/admin')
       return next('/app')
     }
