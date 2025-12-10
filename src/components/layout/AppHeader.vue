@@ -91,6 +91,7 @@ const breadcrumbMap = {
   users: '유저 관리',
   roles: '역할 관리',
   permissions: '권한 관리',
+  list: '권한 관리',
   schedule: '일정 관리',
   reservation: '예약 관리',
 }
@@ -108,7 +109,22 @@ function getBreadcrumbHtml() {
 
   if (segments.length === 0) return ''
 
-  const mapped = segments.map((seg) => breadcrumbMap[seg] || seg)
+  // 중복 제거: permissions와 list가 연속으로 오면 permissions만 표시
+  const filtered = []
+  for (let i = 0; i < segments.length; i++) {
+    const current = segments[i]
+    const next = segments[i + 1]
+    
+    // permissions 다음에 list가 오면 list는 건너뛰기
+    if (current === 'permissions' && next === 'list') {
+      filtered.push(current)
+      i++ // list도 건너뛰기
+    } else {
+      filtered.push(current)
+    }
+  }
+
+  const mapped = filtered.map((seg) => breadcrumbMap[seg] || seg)
 
   return mapped
     .map((seg) => `<span class="breadcrumb-item">${seg}</span>`)

@@ -22,7 +22,7 @@ const route = useRoute()
 const tabs = [
   { label: '사용자', to: '/admin/users', icon: 'pi pi-user' },
   { label: '역할', to: '/admin/roles', icon: 'pi pi-shield' },
-  { label: '권한', to: '/admin/permissions/matrix', icon: 'pi pi-key' },
+  { label: '권한', to: '/admin/permissions/list', icon: 'pi pi-key' },
 ]
 
 function go(path) {
@@ -40,13 +40,18 @@ function isActive(path) {
   gap: 12px;
   margin-bottom: 24px;
   position: relative;
+  justify-content: center;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 .tab {
   position: relative;
   background: #f5f5f5;
   border: 1px solid #e0e0e0;
-  padding: 14px 32px;
+  padding: 14px 40px;
   border-radius: 10px;
   font-weight: 600;
   font-size: 15px;
@@ -55,7 +60,8 @@ function isActive(path) {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 140px;
+  min-width: 160px;
+  flex: 1;
   justify-content: center;
   color: #666;
   overflow: hidden;

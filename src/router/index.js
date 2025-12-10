@@ -137,7 +137,7 @@ const router = createRouter({
             {
               path: 'list',
               component: () => import('@/views/admin/iam/permission/PermissionList.vue'),
-              meta: { title: '권한 목록', minRole: 'ADMIN' },
+              meta: { title: '권한 관리', minRole: 'ADMIN' },
             },
 
             {
@@ -150,12 +150,6 @@ const router = createRouter({
               path: ':permissionId/edit',
               component: () => import('@/views/admin/iam/permission/PermissionEdit.vue'),
               meta: { title: '권한 수정', minRole: 'MASTER' },
-            },
-
-            {
-              path: 'matrix',
-              component: () => import('@/views/admin/iam/permission/PermissionMatrix.vue'),
-              meta: { title: '역할-권한 매핑', minRole: 'ADMIN' },
             },
           ],
         },

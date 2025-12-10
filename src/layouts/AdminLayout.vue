@@ -66,7 +66,7 @@ function closeHover() {
 const iamRouteOrder = {
   '/admin/users': 1,
   '/admin/roles': 2,
-  '/admin/permissions/matrix': 3,
+  '/admin/permissions/list': 3,
 }
 
 // 이전 경로 추적

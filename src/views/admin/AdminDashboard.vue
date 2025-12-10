@@ -251,7 +251,7 @@ watch(
                 icon="pi pi-arrow-right"
                 outlined
                 severity="help"
-                @click="router.push('/admin/permissions/matrix')"
+                @click="router.push('/admin/permissions/list')"
               />
             </div>
           </div>
