@@ -3,7 +3,9 @@ import { ElMessage } from 'element-plus'
 
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api/v1`,
+  withCredentials: true, // 쿠키 자동 전수
 })
+axios.defaults.withCredentials = true
 
 // 요청 인터셉터 — Authorization 자동 추가
 api.interceptors.request.use((config) => {
@@ -11,7 +13,10 @@ api.interceptors.request.use((config) => {
     return config
   }
   const token = localStorage.getItem('accessToken')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
   return config
 })
 
@@ -46,7 +51,6 @@ api.interceptors.response.use(
     // Access Token 만료
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
-      const refreshToken = localStorage.getItem('refreshToken')
 
       if (originalRequest.url.includes('/auth/logout')) {
         return Promise.reject(error)
@@ -65,13 +69,11 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const res = await api.post('/auth/refresh', { refreshToken })
+        const res = await api.post('/auth/refresh')
 
         const newAccess = res.data.accessToken
-        const newRefresh = res.data.refreshToken
 
         localStorage.setItem('accessToken', newAccess)
-        localStorage.setItem('refreshToken', newRefresh)
 
         isRefreshing = false
         onTokenRefreshed(newAccess)
@@ -80,8 +82,8 @@ api.interceptors.response.use(
         return api(originalRequest)
       } catch (err) {
         isRefreshing = false
-        // localStorage.clear()
-        //window.location.href = '/'
+        localStorage.clear()
+        window.location.href = '/'
         return Promise.reject(err)
       }
     }
