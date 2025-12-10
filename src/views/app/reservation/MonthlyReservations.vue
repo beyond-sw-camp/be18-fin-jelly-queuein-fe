@@ -50,19 +50,15 @@ const calendarOptions = {
   headerToolbar: false,
   contentHeight: 490,
   displayEventTime: false,
-  events: [],
-
   eventOverlap: false,
   slotEventOverlap: false,
   eventMaxStack: 1,
-
-  events: [],
+  allDaySlot: false,  // ← 추가: 주별 뷰 all-day 숨김
+  
   eventContent: (arg) => {
     const d = arg.event.start
     const time = d ? d.toTimeString().slice(0, 5) : ''
-
-    const count = arg.event.extendedProps.count ?? 1 // 다중 이벤트면 count 전달한다고 가정
-
+    const count = arg.event.extendedProps.count ?? 1
     return {
       html: `
         <div class="custom-event-chip">
@@ -71,9 +67,10 @@ const calendarOptions = {
         </div>
       `
     }
-  }
-
+  },
+  events: [],
 }
+
 
 /* ---------------------------
    API 데이터 → FullCalendar event 변환
@@ -367,5 +364,52 @@ onMounted(() => {
   max-height: 22px !important; /* 필요에 따라 조정 */
   overflow: hidden !important;
 }
+/* 주별 뷰 all-day 영역 관련 화살표 제거 */
+:deep(.fc-timegrid-all-day) {
+  display: none !important;
+}
+
+:deep(.fc-timegrid-all-day-shared) {
+  display: none !important;
+}
+
+:deep(.fc-col-header-cell-cushion) {
+  /* 필요 시 left arrow 제거 */
+  display: none !important;
+}
+/* 주별(timeGridWeek)에서 all-day 왼쪽 label/화살표 제거 */
+:deep(.fc-timegrid-all-day) {
+  display: none !important; /* all-day 영역 자체 제거 */
+}
+
+:deep(.fc-timegrid-axis) {
+  display: none !important; /* 좌측 시간축 (선택적으로 제거 가능) */
+}
+
+/* slot label 화살표 제거 (sat 1, sat 2 옆) */
+:deep(.fc-col-header-cell-cushion::before) {
+  content: none !important;
+}
+/* 주별(timeGridWeek)에서 day header 옆 화살표 제거 */
+:deep(.fc-col-header-cell-cushion::before) {
+  content: none !important;  /* 화살표 제거 */
+}
+
+/* all-day 영역 아예 제거 */
+:deep(.fc-timegrid-all-day) {
+  display: none !important;
+}
+/* 주별(timeGridWeek)에서 헤더 옆 화살표 제거 */
+:deep(.fc-col-header-cell-cushion::before),
+:deep(.fc-col-header-cell-cushion::after) {
+  content: "" !important;
+  display: none !important;
+}
+
+/* all-day 영역 제거 */
+:deep(.fc-timegrid-all-day) {
+  display: none !important;
+}
+
 
 </style> 
