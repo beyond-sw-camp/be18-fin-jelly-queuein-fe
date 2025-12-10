@@ -130,11 +130,15 @@ function isActiveStartsWith(basePath) {
   padding-top: 70px;
   transition: width 0.25s ease;
   z-index: 30;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 열림 */
 .sidebar.open {
   width: 150px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* 메뉴 전체 정렬 */
@@ -142,6 +146,9 @@ function isActiveStartsWith(basePath) {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 20px;
 }
 
 /* 아이템 기본 스타일 */
