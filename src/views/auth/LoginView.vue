@@ -85,7 +85,7 @@ async function login() {
       router.push('/app')
     }
   } catch (e) {
-    console.error(e)
+    console.error('로그인 실패:', e)
     // 로그인 실패 시 구체적인 안내 메시지 표시
     if (e.response?.status === 401 || e.response?.status === 400) {
       errorMessage.value =
@@ -94,10 +94,8 @@ async function login() {
       errorMessage.value = e.response?.data?.message || '로그인에 실패했습니다.'
     }
     showError.value = true
-  } finally {
-    setTimeout(() => {
-      isLoading.value = false
-    }, 500)
+    // 에러 발생 시 즉시 로딩 상태 해제
+    isLoading.value = false
   }
 }
 </script>

@@ -79,6 +79,11 @@ const router = createRouter({
           meta: { title: '예약 신청', minRole: 'GENERAL' },
           // meta: { requiresAuth: true }
         },
+        {
+          path: 'guide',
+          component: () => import('@/views/app/GuideView.vue'),
+          meta: { title: '사용법 가이드' },
+        },
       ],
     },
 
@@ -238,6 +243,11 @@ const router = createRouter({
           component: () => import('@/views/admin/reservation/AppliedReservations.vue'),
           meta: { title: '신청 예약 관리', requiresAuth: true, minRole: 'MANAGER' },
           // meta: { requiresAuth: true }
+        },
+        {
+          path: 'guide',
+          component: () => import('@/views/admin/GuideView.vue'),
+          meta: { title: '관리자 가이드', minRole: 'ADMIN' },
         },
       ],
     },
