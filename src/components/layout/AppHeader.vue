@@ -2,6 +2,10 @@
 import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
 import { authApi } from '@/api/authApi'
+import { hasRole } from '@/utils/role'
+
+// Vue 3 + Vite 표준: 로고 이미지 import
+import logoUrl from '@/assets/icons/logo.svg'
 
 const route = useRoute()
 const router = useRouter()
@@ -38,6 +42,15 @@ const avatarText = computed(() => {
 // 마이페이지로 이동
 function goMyPage() {
   router.push({ name: 'MyPage' })
+}
+
+// 로고 클릭 시 역할에 맞는 대시보드로 이동
+function goToDashboard() {
+  if (hasRole('ADMIN')) {
+    router.push('/admin')
+  } else {
+    router.push('/app')
+  }
 }
 
 // ===============================
@@ -110,7 +123,9 @@ function getBreadcrumbHtml() {
         <i class="ri-menu-line"></i>
       </button>
 
-      <div class="logo">Queue In</div>
+      <div class="logo" @click="goToDashboard" style="cursor: pointer">
+        <img :src="logoUrl" alt="QueueIn Logo" class="logo-img" />
+      </div>
 
       <div class="breadcrumb" v-html="getBreadcrumbHtml()"></div>
     </div>
@@ -160,9 +175,20 @@ function getBreadcrumbHtml() {
 }
 
 .logo {
-  font-size: 22px;
-  font-weight: 700;
-  color: #222;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.logo:hover {
+  opacity: 0.8;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
 }
 
 .menu-btn {
