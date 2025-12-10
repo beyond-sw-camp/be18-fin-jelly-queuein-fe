@@ -80,7 +80,7 @@ const navigateToPath = (path) => {
 // 가이드 방문 플래그 저장
 onMounted(() => {
   localStorage.setItem('hasVisitedGuide', 'true')
-  
+
   // 안내 팝업 표시 여부 확인
   if (shouldShowWelcome()) {
     showWelcomeDialog.value = true
@@ -117,7 +117,7 @@ onMounted(() => {
           <span>QueueIn 관리자 가이드 안내</span>
         </div>
       </template>
-      
+
       <div class="dialog-body-content">
         <p>QueueIn 관리자 시스템 사용법을 안내하는 가이드입니다.</p>
         <p>좌측 목차를 클릭하면 해당 섹션으로 이동하거나, 관련 페이지로 바로 이동할 수 있습니다.</p>
@@ -207,24 +207,24 @@ onMounted(() => {
                       @click="navigateToPath('/admin/users')"
                     />
                   </div>
-                  
+
                   <h3>1. 사용자 목록 조회</h3>
                   <p>좌측 사이드바의 <strong>"유저 관리"</strong> 메뉴를 클릭하면 전체 사용자 목록을 확인할 수 있습니다.</p>
-                  
+
                   <h3>2. 사용자 생성</h3>
                   <ul>
                     <li>사용자 목록 페이지에서 <strong>"사용자 등록"</strong> 버튼을 클릭합니다.</li>
                     <li>필수 정보를 입력합니다: 이름, 이메일, 전화번호, 역할 등</li>
                     <li>생성된 사용자는 임시 비밀번호로 로그인할 수 있습니다.</li>
                   </ul>
-                  
+
                   <h3>3. 사용자 수정</h3>
                   <ul>
                     <li>사용자 목록에서 수정하고 싶은 사용자를 선택합니다.</li>
                     <li><strong>"수정"</strong> 버튼을 클릭하여 정보를 변경합니다.</li>
                     <li>사용자의 역할을 변경할 수 있습니다.</li>
                   </ul>
-                  
+
                   <h3>4. 사용자 삭제</h3>
                   <p>사용자 목록에서 삭제하고 싶은 사용자를 선택하고 <strong>"삭제"</strong> 버튼을 클릭합니다. (주의: 삭제된 사용자는 복구할 수 없습니다.)</p>
                 </div>
@@ -255,21 +255,21 @@ onMounted(() => {
                       @click="navigateToPath('/admin/permissions/list')"
                     />
                   </div>
-                  
+
                   <h3>1. 역할 관리</h3>
                   <ul>
                     <li><strong>역할 목록 조회</strong>: 좌측 사이드바의 <strong>"유저 관리"</strong> → 상단 탭에서 <strong>"역할"</strong>을 클릭합니다.</li>
                     <li><strong>역할 생성</strong>: <strong>"역할 추가"</strong> 버튼을 클릭하여 새로운 역할을 생성합니다.</li>
                     <li><strong>역할 수정</strong>: 역할 카드의 <strong>"⋯"</strong> 메뉴에서 수정/삭제를 선택합니다.</li>
                   </ul>
-                  
+
                   <h3>2. 권한 관리</h3>
                   <ul>
                     <li>상단 탭에서 <strong>"권한"</strong> → <strong>"역할-권한 매핑"</strong> 메뉴를 클릭합니다.</li>
                     <li>각 역할에 대해 권한을 토글 스위치로 할당/해제할 수 있습니다.</li>
                     <li>변경사항은 <strong>"저장"</strong> 버튼을 클릭하여 적용합니다.</li>
                   </ul>
-                  
+
                   <h3>3. 권한 종류</h3>
                   <ul>
                     <li><strong>IAM_USER_*</strong>: 사용자 관리 권한 (생성, 조회, 수정, 삭제)</li>
@@ -277,7 +277,7 @@ onMounted(() => {
                     <li><strong>IAM_PERMISSION_*</strong>: 권한 관리 권한</li>
                     <li>기타 도메인별 권한들</li>
                   </ul>
-                  
+
                   <div class="tip-box">
                     <i class="pi pi-info-circle"></i>
                     <strong>팁:</strong> 권한은 역할 단위로 관리되며, 사용자는 역할을 통해 권한을 상속받습니다.
@@ -303,23 +303,23 @@ onMounted(() => {
                       @click="navigateToPath('/admin/assets')"
                     />
                   </div>
-                  
+
                   <h3>1. 자원 목록 조회</h3>
                   <p>좌측 사이드바의 <strong>"자원 관리"</strong> 메뉴를 클릭하면 계층 구조로 자원 목록을 확인할 수 있습니다.</p>
-                  
+
                   <h3>2. 자원 생성</h3>
                   <ul>
                     <li><strong>"자원 등록"</strong> 버튼을 클릭합니다.</li>
                     <li>자원 정보를 입력합니다: 이름, 타입, 카테고리, 위치 등</li>
                     <li>부모 자원을 선택하여 계층 구조를 설정할 수 있습니다.</li>
                   </ul>
-                  
+
                   <h3>3. 자원 수정/삭제</h3>
                   <ul>
                     <li>자원 목록에서 수정/삭제하고 싶은 자원을 선택합니다.</li>
                     <li>자원 상세 페이지에서 <strong>"수정"</strong> 또는 <strong>"삭제"</strong> 버튼을 클릭합니다.</li>
                   </ul>
-                  
+
                   <h3>4. 카테고리 관리</h3>
                   <p>자원 관리 페이지에서 <strong>"카테고리 관리"</strong> 메뉴를 통해 자원 카테고리를 관리할 수 있습니다.</p>
                 </div>
@@ -343,20 +343,20 @@ onMounted(() => {
                       @click="navigateToPath('/admin/reservations/applied')"
                     />
                   </div>
-                  
+
                   <h3>1. 신청 예약 조회</h3>
                   <p>좌측 사이드바의 <strong>"신청 예약 관리"</strong> 메뉴를 클릭하면 승인 대기 중인 예약 목록을 확인할 수 있습니다.</p>
-                  
+
                   <h3>2. 예약 승인/거부</h3>
                   <ul>
                     <li>예약 목록에서 승인/거부하고 싶은 예약을 선택합니다.</li>
                     <li><strong>"승인"</strong> 또는 <strong>"거부"</strong> 버튼을 클릭합니다.</li>
                     <li>거부 시 사유를 입력할 수 있습니다.</li>
                   </ul>
-                  
+
                   <h3>3. 예약 필터링</h3>
                   <p>날짜, 자원명, 상태 등으로 예약을 필터링하여 조회할 수 있습니다.</p>
-                  
+
                   <div class="warning-box">
                     <i class="pi pi-exclamation-triangle"></i>
                     <strong>주의:</strong> 예약을 거부할 경우 사용자에게 알림이 전송됩니다. 신중하게 결정하세요.
@@ -382,19 +382,19 @@ onMounted(() => {
                       @click="navigateToPath('/admin/accounting/usage-history')"
                     />
                   </div>
-                  
+
                   <h3>1. 자원 사용 기록</h3>
                   <p>정산 메뉴의 <strong>"자원 사용 기록"</strong>에서 모든 자원 사용 내역을 조회할 수 있습니다.</p>
-                  
+
                   <h3>2. 사용 추이 분석</h3>
                   <p><strong>"사용 추이"</strong> 메뉴에서 시간대별, 기간별 자원 사용 추이를 그래프로 확인할 수 있습니다.</p>
-                  
+
                   <h3>3. 운영 성과 분석</h3>
                   <ul>
                     <li><strong>"운영 성과 분석"</strong> 메뉴에서 연도별, 자원별 성과를 비교 분석할 수 있습니다.</li>
                     <li>절감액, 사용률 등 다양한 지표를 확인할 수 있습니다.</li>
                   </ul>
-                  
+
                   <h3>4. 분기 정산</h3>
                   <p><strong>"분기 정산"</strong> 메뉴에서 분기별 정산 내역을 조회하고 엑셀로 다운로드할 수 있습니다.</p>
                 </div>
@@ -411,16 +411,16 @@ onMounted(() => {
                 <div class="tab-content">
                   <h3>Q1. 사용자에게 권한을 부여하려면 어떻게 하나요?</h3>
                   <p>A: 사용자의 역할을 변경하면 됩니다. 역할은 권한 관리에서 관리되며, 역할에 할당된 권한이 사용자에게 자동으로 적용됩니다.</p>
-                  
+
                   <h3>Q2. 예약 승인 기준은 무엇인가요?</h3>
                   <p>A: 예약 승인은 관리자의 판단에 따라 결정됩니다. 자원의 가용성, 사용 목적 등을 고려하여 승인하세요.</p>
-                  
+
                   <h3>Q3. 자원을 삭제하면 예약도 함께 삭제되나요?</h3>
                   <p>A: 자원을 삭제하면 해당 자원과 관련된 예약도 함께 삭제됩니다. 신중하게 삭제하세요.</p>
-                  
+
                   <h3>Q4. 통계 데이터는 언제 업데이트되나요?</h3>
                   <p>A: 통계 데이터는 실시간으로 업데이트됩니다. 예약이 생성/완료되면 즉시 반영됩니다.</p>
-                  
+
                   <h3>Q5. 사용자가 비밀번호를 잊어버렸을 때는?</h3>
                   <p>A: 사용자 관리 페이지에서 해당 사용자의 비밀번호를 재설정할 수 있습니다. 또는 사용자에게 임시 비밀번호를 발급할 수 있습니다.</p>
                 </div>
