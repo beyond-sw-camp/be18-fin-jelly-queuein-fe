@@ -84,40 +84,16 @@ function isActiveStartsWith(basePath) {
         <span v-if="props.open">정산 관리</span>
       </router-link>
 
-      <!-- 유저 관리 (ADMIN 이상만) -->
+      <!-- 유저 관리 (ADMIN 이상만) - 사용자, 역할, 권한 모두 포함 -->
       <router-link
         v-if="isAdminOnly"
         to="/admin/users"
         class="item"
-        :class="{ active: isActiveStartsWith('/admin/users') }"
+        :class="{ active: isActiveStartsWith('/admin/users') || isActiveStartsWith('/admin/roles') || isActiveStartsWith('/admin/permissions') }"
         @click="$emit('close-sidebar')"
       >
         <img :src="userIcon" class="icon" />
         <span v-if="props.open">유저 관리</span>
-      </router-link>
-
-      <!-- 역할 관리 (ADMIN 이상만) -->
-      <router-link
-        v-if="isAdminOnly"
-        to="/admin/roles"
-        class="item"
-        :class="{ active: isActiveStartsWith('/admin/roles') }"
-        @click="$emit('close-sidebar')"
-      >
-        <i class="pi pi-shield icon-text"></i>
-        <span v-if="props.open">역할 관리</span>
-      </router-link>
-
-      <!-- 권한 관리 (ADMIN 이상만) -->
-      <router-link
-        v-if="isAdminOnly"
-        to="/admin/permissions/list"
-        class="item"
-        :class="{ active: isActiveStartsWith('/admin/permissions') }"
-        @click="$emit('close-sidebar')"
-      >
-        <i class="pi pi-key icon-text"></i>
-        <span v-if="props.open">권한 관리</span>
       </router-link>
 
       <!-- 사용법 가이드 (ADMIN 이상만) -->

@@ -22,6 +22,58 @@ const isMaster = auth.role === "MASTER"
 // 권한 목록 관련
 const permissions = ref([])
 
+// 권한 카테고리 분류 함수 (prefix 기반)
+function getPermissionCategory(permissionName) {
+  const name = permissionName.toUpperCase()
+  
+  // IAM 관련 (사용자, 역할, 권한)
+  if (name.startsWith('IAM_USER_') || name.startsWith('IAM_ROLE_') || name.startsWith('IAM_PERMISSION_')) {
+    return '사용자'
+  }
+  // 예약 관련
+  else if (name.startsWith('RESERVATION_') || name.startsWith('BOOKING_')) {
+    return '예약'
+  }
+  // 자원 관련 (ASSET, RESOURCE, INVENTORY, CATEGORY)
+  else if (name.startsWith('ASSET_') || name.startsWith('RESOURCE_') || name.startsWith('INVENTORY_')) {
+    return '자원'
+  }
+  // 정산 관련
+  else if (name.startsWith('ACCOUNTING_') || name.startsWith('SETTLEMENT_') || name.startsWith('USAGE_')) {
+    return '정산'
+  }
+  // 기타
+  return '기타'
+}
+
+// 카테고리별로 그룹화된 권한
+const groupedPermissions = computed(() => {
+  const groups = {
+    '사용자': [],
+    '예약': [],
+    '자원': [],
+    '정산': [],
+    '기타': []
+  }
+  
+  if (!permissions.value || !Array.isArray(permissions.value)) {
+    return groups
+  }
+  
+  permissions.value.forEach(perm => {
+    if (perm && perm.permissionName) {
+      const category = getPermissionCategory(perm.permissionName)
+      if (groups[category]) {
+        groups[category].push(perm)
+      } else {
+        groups['기타'].push(perm)
+      }
+    }
+  })
+  
+  return groups
+})
+
 // Matrix 관련
 const roles = ref([])
 const matrix = ref([])
@@ -80,6 +132,34 @@ const filteredMatrix = computed(() => {
   return matrix.value.filter(
     (p) => p.name.toLowerCase().includes(q) || (p.desc || '').toLowerCase().includes(q),
   )
+})
+
+// Matrix를 카테고리별로 그룹화
+const groupedMatrix = computed(() => {
+  const groups = {
+    '사용자': [],
+    '예약': [],
+    '자원': [],
+    '정산': [],
+    '기타': []
+  }
+  
+  if (!filteredMatrix.value || !Array.isArray(filteredMatrix.value)) {
+    return groups
+  }
+  
+  filteredMatrix.value.forEach(perm => {
+    if (perm && perm.name) {
+      const category = getPermissionCategory(perm.name)
+      if (groups[category]) {
+        groups[category].push(perm)
+      } else {
+        groups['기타'].push(perm)
+      }
+    }
+  })
+  
+  return groups
 })
 
 // 토글 변경
@@ -204,32 +284,54 @@ onMounted(() => {
         />
       </div>
 
-      <DataTable :value="permissions" stripedRows>
-        <Column header="ID" field="permissionId" style="width:100px" />
-        <Column header="권한명" field="permissionName" />
-        <Column header="설명" field="permissionDescription" />
-
-        <Column header="관리" style="width:160px">
-          <template #body="{ data }">
-            <Button
-              label="수정"
-              size="small"
-              icon="pi pi-pencil"
-              class="mr-2"
-              @click="router.push(`/admin/permissions/${data.permissionId}/edit`)"
-            />
-
-            <Button
-              v-if="isMaster"
-              label="삭제"
-              size="small"
-              icon="pi pi-trash"
-              severity="danger"
-              @click="onDelete(data)"
-            />
-          </template>
-        </Column>
-      </DataTable>
+      <!-- 카테고리별 권한 그룹 -->
+      <div class="permission-categories">
+        <template
+          v-for="(category, categoryName) in groupedPermissions"
+          :key="categoryName"
+        >
+          <div
+            v-if="category && category.length > 0"
+            class="category-section"
+          >
+          <div class="category-header">
+            <h3 class="category-title">{{ categoryName }}</h3>
+            <span class="category-count">{{ category.length }}개 권한</span>
+          </div>
+          
+          <div class="permission-cards">
+            <div
+              v-for="perm in category"
+              :key="perm.permissionId"
+              class="permission-card"
+            >
+              <div class="permission-header">
+                <div class="permission-name">{{ perm.permissionName }}</div>
+                <div class="permission-actions">
+                  <Button
+                    label="수정"
+                    size="small"
+                    icon="pi pi-pencil"
+                    text
+                    @click="router.push(`/admin/permissions/${perm.permissionId}/edit`)"
+                  />
+                  <Button
+                    v-if="isMaster"
+                    label="삭제"
+                    size="small"
+                    icon="pi pi-trash"
+                    severity="danger"
+                    text
+                    @click="onDelete(perm)"
+                  />
+                </div>
+              </div>
+              <div class="permission-description">{{ perm.permissionDescription || '-' }}</div>
+            </div>
+          </div>
+        </div>
+        </template>
+      </div>
     </div>
 
     <!-- 역할-권한 매핑 탭 -->
@@ -276,31 +378,50 @@ onMounted(() => {
         <Button label="권한 추가" icon="pi pi-plus" class="add-btn" @click="showCreate = true" />
       </div>
 
-      <!-- Matrix Table -->
-      <DataTable :value="filteredMatrix" :rowKey="'key'" stripedRows class="perm-table">
-        <Column header="Permission" field="name">
-          <template #body="{ data }">
-            <div class="p-name">{{ data.name }}</div>
-            <div class="p-desc">{{ data.desc }}</div>
-          </template>
-        </Column>
-
-        <Column
-          v-for="role in roles"
-          :key="role.roleId"
-          :header="role.roleName"
-          style="width: 120px; text-align: center"
+      <!-- 카테고리별 Matrix 그룹 -->
+      <div class="matrix-categories">
+        <template
+          v-for="(category, categoryName) in groupedMatrix"
+          :key="categoryName"
         >
-          <template #body="{ data }">
-            <div class="toggle-center">
-              <ToggleSwitch
-                :modelValue="data.roles[role.roleId]"
-                @change="manualToggle(data, role.roleId)"
-              />
+          <div
+            v-if="category && category.length > 0"
+            class="matrix-category-section"
+          >
+            <div class="matrix-category-header">
+              <h3 class="matrix-category-title">{{ categoryName }}</h3>
+              <span class="matrix-category-count">{{ category.length }}개 권한</span>
             </div>
-          </template>
-        </Column>
-      </DataTable>
+            
+            <div class="matrix-table-wrapper">
+              <DataTable :value="category" :rowKey="'key'" stripedRows class="perm-table">
+                <Column header="Permission" field="name">
+                  <template #body="{ data }">
+                    <div class="p-name">{{ data.name }}</div>
+                    <div class="p-desc">{{ data.desc }}</div>
+                  </template>
+                </Column>
+
+                <Column
+                  v-for="role in roles"
+                  :key="role.roleId"
+                  :header="role.roleName"
+                  style="width: 120px; text-align: center"
+                >
+                  <template #body="{ data }">
+                    <div class="toggle-center">
+                      <ToggleSwitch
+                        :modelValue="data.roles[role.roleId]"
+                        @change="manualToggle(data, role.roleId)"
+                      />
+                    </div>
+                  </template>
+                </Column>
+              </DataTable>
+            </div>
+          </div>
+        </template>
+      </div>
     </div>
 
     <!-- 권한 생성 다이얼로그 -->
@@ -516,5 +637,155 @@ onMounted(() => {
   font-size: 12px;
   color: #666;
   margin-top: 4px;
+}
+
+/* 권한 카테고리 섹션 */
+.permission-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.category-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.category-section:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.category-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.category-count {
+  font-size: 14px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.permission-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+}
+
+.permission-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.permission-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.permission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.permission-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1f2937;
+  flex: 1;
+  word-break: break-word;
+}
+
+.permission-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.permission-description {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .permission-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Matrix 카테고리 섹션 */
+.matrix-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.matrix-category-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.matrix-category-section:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.matrix-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.matrix-category-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.matrix-category-count {
+  font-size: 14px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.matrix-table-wrapper {
+  overflow-x: auto;
+}
+
+.matrix-table-wrapper :deep(.p-datatable) {
+  border-radius: 8px;
+  overflow: hidden;
 }
 </style>

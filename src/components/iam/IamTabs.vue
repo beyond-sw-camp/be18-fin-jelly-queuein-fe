@@ -36,23 +36,27 @@ function isActive(path) {
 
 <style scoped>
 .iam-tabs {
-  display: flex;
-  gap: 12px;
+  display: inline-flex;
+  gap: 0;
   margin-bottom: 24px;
   position: relative;
-  justify-content: center;
-  max-width: 800px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 4px;
+  width: fit-content;
+  min-width: 600px;
+  max-width: 90%;
   margin-left: auto;
   margin-right: auto;
-  width: 100%;
 }
 
 .tab {
   position: relative;
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  padding: 14px 40px;
-  border-radius: 10px;
+  background: transparent;
+  border: none;
+  padding: 14px 50px;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
@@ -60,31 +64,34 @@ function isActive(path) {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 160px;
   flex: 1;
   justify-content: center;
   color: #666;
   overflow: hidden;
 }
 
-.tab:hover {
+.tab:hover:not(.active) {
   background: #eeeeee;
-  border-color: #d0d0d0;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .tab.active {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 .tab.active:hover {
   background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.tab:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.tab:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .tab i {
