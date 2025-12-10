@@ -1,6 +1,6 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
-import { computed } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { authApi } from '@/api/authApi'
 import { hasRole } from '@/utils/role'
 
@@ -9,6 +9,133 @@ import logoUrl from '@/assets/icons/logo.svg'
 
 const route = useRoute()
 const router = useRouter()
+
+// 검색 관련
+const searchQuery = ref('')
+const showSearchResults = ref(false)
+const selectedIndex = ref(-1)
+
+// 검색 가능한 메뉴 목록 (권한별)
+const searchableMenus = computed(() => {
+  const menus = []
+  const role = localStorage.getItem('role') || ''
+  const isAdminOrManager = hasRole('MANAGER')
+  const isAdminOnly = hasRole('ADMIN')
+
+  // 공통 메뉴
+  menus.push(
+    { label: '대시보드', path: hasRole('ADMIN') ? '/admin' : '/app', keywords: ['대시보드', 'dashboard', '홈', '메인'] },
+    { label: '예약 관리', path: '/app/reservations/me', keywords: ['예약', 'reservation', '예약관리', '내예약', '예약목록'] },
+    { label: '일정 관리', path: '/app/reservations/monthly', keywords: ['일정', 'schedule', '일정관리', '스케줄', '캘린더', '월별', '주별'] },
+    { label: '예약 가능 자원', path: '/app/reservations/available-assets', keywords: ['예약가능', '자원', 'available', 'asset', '예약가능자원'] },
+    { label: '예약 신청', path: '/app/reservations/apply', keywords: ['예약신청', '신청', 'apply', '예약하기'] },
+    { label: '마이페이지', path: '/app/users/me', keywords: ['마이페이지', 'mypage', '내정보', '프로필', '정보수정'] }
+  )
+
+  // MANAGER 이상
+  if (isAdminOrManager) {
+    menus.push(
+      { label: '자원 관리', path: '/admin/assets', keywords: ['자원', 'asset', '자원관리', '리소스', '자원목록'] },
+      { label: '카테고리 관리', path: '/admin/assets/categories', keywords: ['카테고리', 'category', '카테고리관리'] },
+      { label: '신청 예약 관리', path: '/admin/reservations/applied', keywords: ['신청예약', 'applied', '예약승인', '승인대기'] },
+      { label: '자원 사용 기록', path: '/admin/accounting/usage-history', keywords: ['사용기록', 'usage', 'history', '기록'] },
+      { label: '사용 추이', path: '/admin/accounting/usage-trend', keywords: ['사용추이', 'trend', '추이', '통계'] },
+      { label: '운영 성과 분석', path: '/admin/accounting/performance', keywords: ['성과', 'performance', '분석', '성과분석'] },
+      { label: '분기 정산', path: '/admin/accounting/quarter', keywords: ['분기', 'quarter', '정산', '분기정산'] }
+    )
+  }
+
+  // ADMIN 이상
+  if (isAdminOnly) {
+    menus.push(
+      { label: '유저 관리', path: '/admin/users', keywords: ['유저', 'user', '사용자', '유저관리', '사용자관리', '사용자목록'] },
+      { label: '역할 관리', path: '/admin/roles', keywords: ['역할', 'role', '역할관리', '역할목록'] },
+      { label: '권한 관리', path: '/admin/permissions/list', keywords: ['권한', 'permission', '권한관리', '권한목록', '매핑'] },
+      { label: '사용법 가이드', path: '/admin/guide', keywords: ['가이드', 'guide', '사용법', '설명서', '위키', '안내'] }
+    )
+  }
+
+  // 일반 사용자용 가이드
+  if (!isAdminOnly) {
+    menus.push(
+      { label: '사용법 가이드', path: '/app/guide', keywords: ['가이드', 'guide', '사용법', '설명서', '위키'] }
+    )
+  }
+
+  return menus
+})
+
+// 필터링된 검색 결과
+const filteredMenus = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return []
+  }
+
+  const query = searchQuery.value.toLowerCase().trim()
+  return searchableMenus.value.filter(menu => {
+    const labelMatch = menu.label.toLowerCase().includes(query)
+    const keywordMatch = menu.keywords.some(keyword => keyword.toLowerCase().includes(query))
+    return labelMatch || keywordMatch
+  })
+})
+
+// 검색어 입력 핸들러
+function handleSearchInput(event) {
+  searchQuery.value = event.target.value
+  showSearchResults.value = searchQuery.value.trim().length > 0
+  selectedIndex.value = -1
+}
+
+// 검색 결과 클릭 또는 엔터
+function navigateToMenu(menu) {
+  if (menu) {
+    router.push(menu.path)
+    searchQuery.value = ''
+    showSearchResults.value = false
+    selectedIndex.value = -1
+  }
+}
+
+// 엔터 키 핸들러
+function handleKeyDown(event) {
+  if (event.key === 'Enter') {
+    if (selectedIndex.value >= 0 && filteredMenus.value[selectedIndex.value]) {
+      navigateToMenu(filteredMenus.value[selectedIndex.value])
+    } else if (filteredMenus.value.length > 0) {
+      navigateToMenu(filteredMenus.value[0])
+    }
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    if (selectedIndex.value < filteredMenus.value.length - 1) {
+      selectedIndex.value++
+    }
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    if (selectedIndex.value > 0) {
+      selectedIndex.value--
+    }
+  } else if (event.key === 'Escape') {
+    searchQuery.value = ''
+    showSearchResults.value = false
+    selectedIndex.value = -1
+  }
+}
+
+// 외부 클릭 시 검색 결과 닫기
+function handleClickOutside(event) {
+  const searchBox = event.target.closest('.search-box-wrapper')
+  if (!searchBox) {
+    showSearchResults.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
 //const emit = defineEmits(['toggle-sidebar'])
 
@@ -148,9 +275,40 @@ function getBreadcrumbHtml() {
     </div>
 
     <div class="right">
-      <div class="search-box">
-        <i class="ri-search-line"></i>
-        <input type="text" placeholder="검색" />
+      <div class="search-box-wrapper">
+        <div class="search-box" :class="{ 'has-results': showSearchResults && filteredMenus.length > 0 }">
+          <i class="ri-search-line"></i>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="메뉴 검색..."
+            @input="handleSearchInput"
+            @keydown="handleKeyDown"
+            @focus="showSearchResults = searchQuery.trim().length > 0"
+          />
+        </div>
+        
+        <!-- 검색 결과 드롭다운 -->
+        <div v-if="showSearchResults && filteredMenus.length > 0" class="search-results">
+          <div
+            v-for="(menu, index) in filteredMenus"
+            :key="menu.path"
+            class="search-result-item"
+            :class="{ 'selected': selectedIndex === index }"
+            @click="navigateToMenu(menu)"
+            @mouseenter="selectedIndex = index"
+          >
+            <i class="ri-arrow-right-s-line"></i>
+            <span>{{ menu.label }}</span>
+          </div>
+        </div>
+        
+        <!-- 검색 결과 없음 -->
+        <div v-if="showSearchResults && searchQuery.trim() && filteredMenus.length === 0" class="search-results">
+          <div class="search-no-results">
+            <span>검색 결과가 없습니다</span>
+          </div>
+        </div>
       </div>
 
       <i class="ri-notification-3-line icon"></i>
@@ -258,6 +416,10 @@ function getBreadcrumbHtml() {
   gap: 18px;
 }
 
+.search-box-wrapper {
+  position: relative;
+}
+
 .search-box {
   display: flex;
   align-items: center;
@@ -266,6 +428,12 @@ function getBreadcrumbHtml() {
   border-radius: 8px;
   width: 220px;
   gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.search-box.has-results {
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .search-box input {
@@ -273,6 +441,60 @@ function getBreadcrumbHtml() {
   outline: none;
   width: 100%;
   background: transparent;
+  font-size: 14px;
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  margin-top: -1px;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover,
+.search-result-item.selected {
+  background: #f3f4f6;
+}
+
+.search-result-item i {
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.search-result-item span {
+  color: #1f2937;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.search-no-results {
+  padding: 16px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
 }
 
 .icon {
