@@ -20,12 +20,7 @@
     <!-- 메인 컨텐츠 -->
     <main class="content">
       <RouterView v-slot="{ Component }">
-        <Transition
-          :name="transitionName"
-          mode="out-in"
-          @after-enter="onTransitionEnter"
-          @enter="onTransitionEnterStart"
-        >
+        <Transition :name="transitionName" mode="out-in" @after-enter="onTransitionEnter">
           <component :is="Component" :key="route.path" />
         </Transition>
       </RouterView>
@@ -95,7 +90,7 @@ watch(
     }
 
     previousPath.value = oldPath
-    
+
     // 경로 변경 정보를 sessionStorage에 저장 (컴포넌트 재생성 시 사용)
     if (oldPath) {
       sessionStorage.setItem('previousRoutePath', oldPath)
@@ -104,30 +99,19 @@ watch(
   { immediate: false },
 )
 
-// Transition 시작 시 컴포넌트 마운트 보장
-function onTransitionEnterStart() {
-  // Transition이 시작되면 즉시 이벤트 발생 (컴포넌트가 마운트되기 전)
-  // 이렇게 하면 컴포넌트가 마운트된 후 리스너가 등록되어도 이벤트를 받을 수 있음
-}
-
 // Transition 완료 후 이벤트 발생 (약간의 지연을 두어 컴포넌트 마운트 완료 보장)
 function onTransitionEnter() {
-  // 더 긴 지연을 두어 컴포넌트가 완전히 마운트된 후 이벤트 발생
+  // nextTick과 약간의 지연을 두어 컴포넌트가 완전히 마운트된 후 이벤트 발생
   setTimeout(() => {
-    const prevPath = previousPath.value || sessionStorage.getItem('previousRoutePath')
     window.dispatchEvent(
-      new CustomEvent('route-transition-complete', { 
-        detail: { 
+      new CustomEvent('route-transition-complete', {
+        detail: {
           path: route.path,
-          previousPath: prevPath
-        } 
+          previousPath: previousPath.value || sessionStorage.getItem('previousRoutePath'),
+        },
       }),
     )
-    // 이벤트 발생 후 sessionStorage 정리
-    if (prevPath) {
-      sessionStorage.removeItem('previousRoutePath')
-    }
-  }, 100)
+  }, 50)
 }
 </script>
 

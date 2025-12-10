@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { userApi } from '@/api/iam/userApi.js'
 import UserCreateDialog from '@/components/iam/UserCreateDialog.vue'
@@ -71,33 +71,36 @@ async function loadUsers() {
   }
 }
 
-let transitionHandler = null
-
 // 마운트 시 데이터 로드
 onMounted(() => {
-  // 즉시 로드
-  loadUsers()
+  // 이전 경로 확인 (permission에서 온 경우 재로드)
+  const prevPath = sessionStorage.getItem('previousRoutePath')
+  if (prevPath && prevPath !== '/admin/users' && prevPath.startsWith('/admin/permissions')) {
+    // permission에서 온 경우 Transition 완료 후 로드
+    setTimeout(() => {
+      loadUsers()
+    }, 350)
+  } else {
+    // 일반적인 경우 즉시 로드
+    loadUsers()
+  }
+})
 
-  // Transition 완료 이벤트 리스너 등록
-  transitionHandler = (event) => {
-    const { path, previousPath } = event.detail
-    if (path === '/admin/users' && route.path === '/admin/users') {
-      // permission에서 온 경우에만 재로드
-      if (previousPath && previousPath.startsWith('/admin/permissions')) {
-        console.log('[UserManagement] Transition 완료 - permission에서 옴, 데이터 재로드')
-        loadUsers()
-      }
+// 라우트 변경 감지 - Transition 완료 후 데이터 로드
+watch(
+  () => route.path,
+  async (newPath, oldPath) => {
+    // 사용자 페이지로 이동할 때 (다른 페이지에서 온 경우)
+    if (newPath === '/admin/users' && oldPath && oldPath !== '/admin/users') {
+      console.log('[UserManagement] 경로 변경 감지:', { from: oldPath, to: newPath })
+      // Transition 완료를 기다림 (300ms + 약간의 여유)
+      await new Promise((resolve) => setTimeout(resolve, 350))
+      await nextTick()
+      loadUsers()
     }
-  }
-
-  window.addEventListener('route-transition-complete', transitionHandler)
-})
-
-onBeforeUnmount(() => {
-  if (transitionHandler) {
-    window.removeEventListener('route-transition-complete', transitionHandler)
-  }
-})
+  },
+  { immediate: false },
+)
 
 // --------------------------------------------------
 // 사용자 삭제
