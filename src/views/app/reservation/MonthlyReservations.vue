@@ -113,15 +113,16 @@ const calendarOptions = computed(() => ({
       slotMinTime: '04:00:00',
       slotMaxTime: '24:00:00',
       slotDuration: '00:30:00',
+      contentHeight: 'auto',
     },
     timeGridWeek: {
       slotMinTime: '04:00:00',
       slotMaxTime: '24:00:00',
       slotDuration: '00:30:00',
+      contentHeight: 'auto',
     }
   },
   contentHeight: 'auto',
-  height: '100%',
   displayEventTime: false,
   eventOverlap: false,
   slotEventOverlap: false,
@@ -160,14 +161,36 @@ const calendarOptions = computed(() => ({
   },
   events: [],
   
-  // 주간/일간 뷰일 때 타임슬롯 배경색 적용
+  // 날짜 변경 시 이벤트 로드
   datesSet: async (info) => {
-    // 주간/일간 뷰일 때만 배경색 적용
+    const api = calendarRef.value?.getApi()
+    if (!api) return
+    
+    // 주간/일간 뷰일 때는 주별 API 호출
     if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
-      await nextTick()
-      setTimeout(() => {
-        applySlotBackgrounds()
-      }, 600)
+      const startDate = info.startStr.slice(0, 10)
+      try {
+        const res = await reservationApi.getWeeklyReservations(startDate)
+        const json = res.data.reservations ? res.data : res.data.data?.reservations ? res.data.data : res.data.result?.reservations ? res.data.result : null
+        
+        if (json && json.reservations) {
+          const events = convertReservationsToEvents(json)
+          calendarEvents.value = events
+          
+          api.removeAllEvents()
+          events.forEach(ev => api.addEvent(ev))
+          
+          await nextTick()
+          setTimeout(() => {
+            applySlotBackgrounds()
+          }, 600)
+        }
+      } catch (err) {
+        console.error('주별 예약 조회 실패:', err)
+      }
+    } else {
+      // 월별 뷰일 때는 월별 API 호출
+      await loadCalendarEvents()
     }
   },
   
@@ -177,12 +200,13 @@ const calendarOptions = computed(() => ({
     if (!event.start || !event.end) return
     
     const bgColor = event.backgroundColor || '#fce7f3'
-    const rgba = hexToRgbaFromString(bgColor, 0.3)
+    const textColor = event.textColor || '#9f1239'
     
-    // fc-event-main에 배경색 적용
+    // fc-event-main에 custom-event-chip과 동일한 색상 적용 (solid color)
     const eventMain = arg.el.querySelector('.fc-event-main')
     if (eventMain) {
-      eventMain.style.backgroundColor = rgba
+      eventMain.style.backgroundColor = bgColor
+      eventMain.style.color = textColor
     }
     
     // 주간/일간 뷰일 때 타임슬롯 배경색도 적용
@@ -471,19 +495,39 @@ const changeView = async (view) => {
   api.changeView(view)
   // 뷰 변경 후 날짜 유지
   api.gotoDate(currentDate)
-  await loadCalendarEvents()
-  // 주간/일간 뷰로 전환했을 때 타임슬롯 배경색 적용
-  if (view === 'timeGridWeek' || view === 'timeGridDay') {
-    await nextTick()
-    setTimeout(() => {
-      applySlotBackgrounds()
-    }, 600)
-  }
+  // datesSet 콜백에서 자동으로 이벤트를 로드하므로 여기서는 뷰만 변경
 }
 
 /* 최초 로딩 */
-onMounted(() => {
-  loadCalendarEvents()
+onMounted(async () => {
+  // 초기 로딩 시 현재 뷰에 맞는 데이터 로드
+  if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
+    const api = calendarRef.value?.getApi()
+    if (api) {
+      const startDate = api.getDate().toISOString().slice(0, 10)
+      try {
+        const res = await reservationApi.getWeeklyReservations(startDate)
+        const json = res.data.reservations ? res.data : res.data.data?.reservations ? res.data.data : res.data.result?.reservations ? res.data.result : null
+        
+        if (json && json.reservations) {
+          const events = convertReservationsToEvents(json)
+          calendarEvents.value = events
+          
+          api.removeAllEvents()
+          events.forEach(ev => api.addEvent(ev))
+          
+          await nextTick()
+          setTimeout(() => {
+            applySlotBackgrounds()
+          }, 600)
+        }
+      } catch (err) {
+        console.error('주별 예약 조회 실패:', err)
+      }
+    }
+  } else {
+    await loadCalendarEvents()
+  }
 })
 
 /* ------------------------------------
@@ -661,6 +705,7 @@ const onMiniCalendarEventClick = (event) => {
   flex-direction: column;
   position: relative;
   height: 100%;
+  max-height: calc(100vh - 300px);
 }
 
 .calendar-wrapper :deep(.fc) {
@@ -671,23 +716,28 @@ const onMiniCalendarEventClick = (event) => {
 
 .calendar-wrapper :deep(.fc-view-harness) {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
   min-height: 0;
+  overflow: hidden;
+  position: relative;
+  max-height: 100%;
 }
 
 .calendar-wrapper :deep(.fc-scroller) {
   overflow-y: auto !important;
-  overflow-x: hidden;
-  height: 100% !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(100vh - 300px);
 }
 
 .calendar-wrapper :deep(.fc-timegrid-body) {
-  overflow-y: visible;
+  overflow: visible;
 }
 
 .calendar-wrapper :deep(.fc-timegrid-body .fc-scroller) {
   overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(100vh - 300px);
 }
 
 /* FullCalendar 한국어 스타일 개선 */
@@ -826,6 +876,7 @@ const onMiniCalendarEventClick = (event) => {
 :deep(.fc-event-main) {
   border: none !important;
   box-shadow: none !important;
+  padding: 0 !important;
 }
 
 .custom-event-chip {

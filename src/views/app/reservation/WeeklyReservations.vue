@@ -187,76 +187,23 @@ const calendarOptions = computed(() => ({
 
   // 이벤트가 마운트될 때 타임슬롯 배경색 적용
   eventDidMount: (arg) => {
+    const event = arg.event
+    if (!event.start || !event.end) return
+    
+    const bgColor = event.backgroundColor || '#fce7f3'
+    const textColor = event.textColor || '#9f1239'
+    
+    // fc-event-main에 custom-event-chip과 동일한 색상 적용 (solid color)
+    const eventMain = arg.el.querySelector('.fc-event-main')
+    if (eventMain) {
+      eventMain.style.backgroundColor = bgColor
+      eventMain.style.color = textColor
+    }
+    
+    // 타임슬롯 배경색 적용
     setTimeout(() => {
-      const event = arg.event
-      if (!event.start || !event.end) return
-      
-      const bgColor = event.backgroundColor || '#fce7f3'
-      const rgba = hexToRgba(bgColor, 0.3)
-      
-      // 이벤트 엘리먼트에서 타임슬롯 찾기
-      const eventEl = arg.el
-      const timeGridEvent = eventEl.closest('.fc-timegrid-event')
-      if (!timeGridEvent) {
-        console.warn('timeGridEvent not found')
-        return
-      }
-      
-      // 타임슬롯 컨테이너 찾기
-      const timeGridCol = timeGridEvent.closest('.fc-timegrid-col')
-      if (!timeGridCol) {
-        console.warn('timeGridCol not found')
-        return
-      }
-      
-      const colFrame = timeGridCol.querySelector('.fc-timegrid-col-frame')
-      if (!colFrame) {
-        console.warn('colFrame not found')
-        return
-      }
-      
-      // 이벤트의 실제 위치 계산
-      const eventRect = timeGridEvent.getBoundingClientRect()
-      const colRect = colFrame.getBoundingClientRect()
-      const eventTop = eventRect.top - colRect.top
-      const eventBottom = eventRect.bottom - colRect.top
-      
-      // 실제 타임슬롯 높이 계산 (첫 번째 슬롯의 높이 사용)
-      const firstSlot = colFrame.querySelector('.fc-timegrid-slot')
-      if (!firstSlot) {
-        console.warn('firstSlot not found')
-        return
-      }
-      const slotHeight = firstSlot.getBoundingClientRect().height || 60
-      
-      // 시작/종료 인덱스 계산
-      const startSlotIndex = Math.max(0, Math.floor(eventTop / slotHeight))
-      const slots = colFrame.querySelectorAll('.fc-timegrid-slot')
-      const endSlotIndex = Math.min(
-        slots.length,
-        Math.ceil(eventBottom / slotHeight)
-      )
-      
-      console.log('Applying background:', {
-        eventTop,
-        eventBottom,
-        slotHeight,
-        startSlotIndex,
-        endSlotIndex,
-        slotsCount: slots.length,
-        rgba
-      })
-      
-      // 해당 범위의 모든 타임슬롯에 배경색 적용
-      for (let i = startSlotIndex; i < endSlotIndex && i < slots.length; i++) {
-        const slot = slots[i]
-        if (slot) {
-          slot.style.backgroundColor = rgba
-          slot.classList.add('has-event-slot')
-          console.log('Applied to slot', i)
-        }
-      }
-    }, 100)
+      applySlotBackgrounds()
+    }, 200)
   },
 
 }))
@@ -522,9 +469,38 @@ const closeModal = () => {
 
 .calendar-wrapper {
   min-height: 700px;
+  max-height: calc(100vh - 200px);
   padding: 16px;
   background: #fafafa;
   border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-wrapper :deep(.fc) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-wrapper :deep(.fc-view-harness) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.calendar-wrapper :deep(.fc-scroller) {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: 100%;
+}
+
+.calendar-wrapper :deep(.fc-timegrid-body .fc-scroller) {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: auto !important;
+  max-height: 100%;
 }
 
 /* FullCalendar 한국어 스타일 개선 */
@@ -642,9 +618,15 @@ const closeModal = () => {
 
 /* 이벤트 스타일 */
 :deep(.fc-event-bg),
-:deep(.fc-event-main),
 :deep(.fc-timegrid-event) {
   background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* fc-event-main은 JavaScript로 배경색이 동적으로 적용됨 */
+:deep(.fc-event-main) {
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
