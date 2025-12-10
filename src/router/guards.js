@@ -20,6 +20,13 @@ export function setupGuards(router) {
       return next('/app')
     }
 
+    // /admin 경로 접근 시 ADMIN 권한 체크
+    if (to.path.startsWith('/admin')) {
+      if (!hasRole('ADMIN')) {
+        return next('/403')
+      }
+    }
+
     // 권한 체크
     if (to.meta.minRole) {
       if (!hasRole(to.meta.minRole)) {
