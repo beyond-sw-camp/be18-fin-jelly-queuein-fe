@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -164,9 +164,18 @@ const calendarOptions = computed(() => ({
   },
 
   datesSet: async (info) => {
+    console.log('[WeeklyReservations] datesSet called', info.startStr)
     const start = info.startStr.slice(0, 10)
     const json = await fetchWeekReservations(start)
     events.value = convertWeeklyToEvents(json)
+    console.log('[WeeklyReservations] Events loaded:', events.value.length)
+    // 이벤트 렌더링 후 타임슬롯 배경색 적용
+    await nextTick()
+    console.log('[WeeklyReservations] Calling applySlotBackgrounds in 500ms...')
+    setTimeout(() => {
+      console.log('[WeeklyReservations] Now calling applySlotBackgrounds')
+      applySlotBackgrounds()
+    }, 500)
   },
 
   eventClick: (info) => {
@@ -175,7 +184,236 @@ const calendarOptions = computed(() => ({
       openDetailModal(reservationId)
     }
   },
+
+  // 이벤트가 마운트될 때 타임슬롯 배경색 적용
+  eventDidMount: (arg) => {
+    setTimeout(() => {
+      const event = arg.event
+      if (!event.start || !event.end) return
+      
+      const bgColor = event.backgroundColor || '#fce7f3'
+      const rgba = hexToRgba(bgColor, 0.3)
+      
+      // 이벤트 엘리먼트에서 타임슬롯 찾기
+      const eventEl = arg.el
+      const timeGridEvent = eventEl.closest('.fc-timegrid-event')
+      if (!timeGridEvent) {
+        console.warn('timeGridEvent not found')
+        return
+      }
+      
+      // 타임슬롯 컨테이너 찾기
+      const timeGridCol = timeGridEvent.closest('.fc-timegrid-col')
+      if (!timeGridCol) {
+        console.warn('timeGridCol not found')
+        return
+      }
+      
+      const colFrame = timeGridCol.querySelector('.fc-timegrid-col-frame')
+      if (!colFrame) {
+        console.warn('colFrame not found')
+        return
+      }
+      
+      // 이벤트의 실제 위치 계산
+      const eventRect = timeGridEvent.getBoundingClientRect()
+      const colRect = colFrame.getBoundingClientRect()
+      const eventTop = eventRect.top - colRect.top
+      const eventBottom = eventRect.bottom - colRect.top
+      
+      // 실제 타임슬롯 높이 계산 (첫 번째 슬롯의 높이 사용)
+      const firstSlot = colFrame.querySelector('.fc-timegrid-slot')
+      if (!firstSlot) {
+        console.warn('firstSlot not found')
+        return
+      }
+      const slotHeight = firstSlot.getBoundingClientRect().height || 60
+      
+      // 시작/종료 인덱스 계산
+      const startSlotIndex = Math.max(0, Math.floor(eventTop / slotHeight))
+      const slots = colFrame.querySelectorAll('.fc-timegrid-slot')
+      const endSlotIndex = Math.min(
+        slots.length,
+        Math.ceil(eventBottom / slotHeight)
+      )
+      
+      console.log('Applying background:', {
+        eventTop,
+        eventBottom,
+        slotHeight,
+        startSlotIndex,
+        endSlotIndex,
+        slotsCount: slots.length,
+        rgba
+      })
+      
+      // 해당 범위의 모든 타임슬롯에 배경색 적용
+      for (let i = startSlotIndex; i < endSlotIndex && i < slots.length; i++) {
+        const slot = slots[i]
+        if (slot) {
+          slot.style.backgroundColor = rgba
+          slot.classList.add('has-event-slot')
+          console.log('Applied to slot', i)
+        }
+      }
+    }, 100)
+  },
+
 }))
+
+// 타임슬롯 배경색 적용 함수
+function applySlotBackgrounds() {
+  console.log('[applySlotBackgrounds] ===== FUNCTION CALLED =====')
+  console.log('[applySlotBackgrounds] calendarRef.value:', calendarRef.value)
+  const calendarEl = calendarRef.value?.getApi()?.el
+  if (!calendarEl) {
+    console.warn('[applySlotBackgrounds] Calendar element not found')
+    console.warn('[applySlotBackgrounds] calendarRef.value?.getApi():', calendarRef.value?.getApi())
+    return
+  }
+  
+  console.log('[applySlotBackgrounds] Calendar element found:', calendarEl)
+  console.log('[applySlotBackgrounds] Starting...')
+  
+  // 모든 타임슬롯 배경색 초기화
+  const allSlots = calendarEl.querySelectorAll('.fc-timegrid-slot')
+  console.log('[applySlotBackgrounds] Found slots:', allSlots.length)
+  allSlots.forEach(slot => {
+    slot.style.backgroundColor = ''
+    slot.classList.remove('has-event-slot')
+  })
+  
+  // 모든 이벤트 엘리먼트 찾기
+  const allEvents = calendarEl.querySelectorAll('.fc-timegrid-event')
+  console.log('[applySlotBackgrounds] Found events:', allEvents.length)
+  
+  if (allEvents.length === 0) {
+    console.warn('[applySlotBackgrounds] No events found')
+    return
+  }
+  
+  allEvents.forEach((eventEl, eventIndex) => {
+    console.log(`[applySlotBackgrounds] Processing event ${eventIndex + 1}...`)
+    // 이벤트의 배경색 가져오기 (인라인 스타일에서)
+    const eventChip = eventEl.querySelector('.custom-event-chip')
+    if (!eventChip) {
+      console.warn(`[applySlotBackgrounds] Event ${eventIndex + 1}: custom-event-chip not found`)
+      return
+    }
+    
+    // 인라인 스타일에서 배경색 가져오기
+    const bgColorStyle = eventChip.getAttribute('style')
+    if (!bgColorStyle || !bgColorStyle.includes('background-color')) {
+      console.warn(`[applySlotBackgrounds] Event ${eventIndex + 1}: no background-color in style`)
+      return
+    }
+    
+    const bgColorMatch = bgColorStyle.match(/background-color:\s*([^;]+)/)
+    if (!bgColorMatch) {
+      console.warn(`[applySlotBackgrounds] Event ${eventIndex + 1}: could not parse background-color`)
+      return
+    }
+    
+    const bgColor = bgColorMatch[1].trim()
+    const rgba = hexToRgbaFromString(bgColor, 0.3)
+    console.log(`[applySlotBackgrounds] Event ${eventIndex + 1}: bgColor=${bgColor}, rgba=${rgba}`)
+    
+    // 이벤트가 속한 타임슬롯 찾기
+    const timeGridCol = eventEl.closest('.fc-timegrid-col')
+    if (!timeGridCol) {
+      console.warn(`[applySlotBackgrounds] Event ${eventIndex + 1}: timeGridCol not found`)
+      return
+    }
+    
+    const colFrame = timeGridCol.querySelector('.fc-timegrid-col-frame')
+    if (!colFrame) {
+      console.warn(`[applySlotBackgrounds] Event ${eventIndex + 1}: colFrame not found`)
+      return
+    }
+    
+    // 이벤트의 실제 위치 계산
+    const eventRect = eventEl.getBoundingClientRect()
+    const colRect = colFrame.getBoundingClientRect()
+    const eventTop = eventRect.top - colRect.top
+    const eventBottom = eventRect.bottom - colRect.top
+    
+    console.log(`[applySlotBackgrounds] Event ${eventIndex + 1}: eventTop=${eventTop}, eventBottom=${eventBottom}`)
+    
+    // 실제 타임슬롯 높이 계산 (첫 번째 슬롯의 높이 사용)
+    const firstSlot = colFrame.querySelector('.fc-timegrid-slot')
+    if (!firstSlot) {
+      console.warn(`[applySlotBackgrounds] Event ${eventIndex + 1}: firstSlot not found`)
+      return
+    }
+    const slotHeight = firstSlot.getBoundingClientRect().height || 60
+    console.log(`[applySlotBackgrounds] Event ${eventIndex + 1}: slotHeight=${slotHeight}`)
+    
+    // 시작/종료 인덱스 계산
+    const slots = colFrame.querySelectorAll('.fc-timegrid-slot')
+    const startSlotIndex = Math.max(0, Math.floor(eventTop / slotHeight))
+    const endSlotIndex = Math.min(
+      slots.length,
+      Math.ceil(eventBottom / slotHeight)
+    )
+    
+    console.log(`[applySlotBackgrounds] Event ${eventIndex + 1}: startSlotIndex=${startSlotIndex}, endSlotIndex=${endSlotIndex}, slots.length=${slots.length}`)
+    
+    // 해당 범위의 모든 타임슬롯에 배경색 적용
+    let appliedCount = 0
+    for (let i = startSlotIndex; i < endSlotIndex && i < slots.length; i++) {
+      const slot = slots[i]
+      if (slot) {
+        slot.style.backgroundColor = rgba
+        slot.classList.add('has-event-slot')
+        appliedCount++
+      }
+    }
+    console.log(`[applySlotBackgrounds] Event ${eventIndex + 1}: Applied to ${appliedCount} slots`)
+  })
+  
+  console.log('[applySlotBackgrounds] Finished')
+}
+
+// 문자열에서 hex 색상을 rgba로 변환
+function hexToRgbaFromString(colorStr, alpha) {
+  // 이미 rgba 형식인 경우
+  if (colorStr.includes('rgba')) {
+    return colorStr.replace(/rgba?\([^)]+\)/, (match) => {
+      return match.replace(/,\s*[\d.]+\)$/, `, ${alpha})`)
+    })
+  }
+  
+  // hex 색상인 경우
+  if (colorStr.startsWith('#')) {
+    return hexToRgba(colorStr, alpha)
+  }
+  
+  // rgb 형식인 경우
+  if (colorStr.includes('rgb')) {
+    return rgbToRgba(colorStr, alpha)
+  }
+  
+  return colorStr
+}
+
+// RGB를 rgba로 변환
+function rgbToRgba(rgb, alpha) {
+  const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
+  if (match) {
+    return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${alpha})`
+  }
+  return rgb
+}
+
+// Hex 색상을 rgba로 변환
+function hexToRgba(hex, alpha) {
+  // # 제거
+  const cleanHex = hex.replace('#', '')
+  const r = parseInt(cleanHex.slice(0, 2), 16)
+  const g = parseInt(cleanHex.slice(2, 4), 16)
+  const b = parseInt(cleanHex.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 
 /* ------------------------------------
    상세 조회 API 호출
@@ -362,6 +600,23 @@ const closeModal = () => {
 :deep(.fc-timegrid-slot) {
   height: 60px;
   border-top: 1px solid #f3f4f6;
+  position: relative;
+}
+
+/* 이벤트가 있는 타임슬롯 배경색 적용 */
+:deep(.fc-timegrid-event) {
+  position: relative;
+  z-index: 1;
+}
+
+/* 이벤트가 있는 타임슬롯에 배경색 적용 - CSS로 직접 처리 */
+:deep(.fc-timegrid-col-frame) {
+  position: relative;
+}
+
+/* 이벤트가 있는 타임슬롯 배경색 (동적으로 적용됨) */
+:deep(.fc-timegrid-slot.has-event-slot) {
+  /* 배경색은 JavaScript로 동적 적용 */
 }
 
 :deep(.fc-timegrid-slot-label) {

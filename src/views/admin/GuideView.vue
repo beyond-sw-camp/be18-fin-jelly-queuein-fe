@@ -9,15 +9,15 @@ import Dialog from 'primevue/dialog'
 
 const router = useRouter()
 
-// multiple이 true일 때는 배열이어야 함
-const activeIndex = ref([0])
+// 단일 탭만 활성화 (첫 번째 탭을 기본으로 열기)
+const activeIndex = ref(0)
 
 // 목차 항목
 const tocItems = [
   { id: 'user-management', label: '사용자 관리', icon: 'pi pi-users', path: '/admin/users' },
   { id: 'role-permission', label: '역할 & 권한 관리', icon: 'pi pi-shield', path: '/admin/roles' },
   { id: 'asset-management', label: '자원 관리', icon: 'pi pi-box', path: '/admin/assets' },
-  { id: 'reservation-management', label: '예약 관리', icon: 'pi pi-calendar-check', path: '/admin/reservations/applied' },
+  { id: 'reservation-management', label: '예약 관리', icon: 'pi pi-calendar', path: '/admin/reservations/applied' },
   { id: 'accounting-management', label: '정산 관리', icon: 'pi pi-chart-line', path: '/admin/accounting/usage-history' },
   { id: 'faq', label: '자주 묻는 질문', icon: 'pi pi-question-circle' },
 ]
@@ -56,14 +56,17 @@ const enableWelcomeDialog = () => {
 
 // 목차 클릭 시 해당 섹션으로 스크롤
 const scrollToSection = (sectionId) => {
-  const element = document.getElementById(sectionId)
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    // Accordion 열기
-    const index = tocItems.findIndex(item => item.id === sectionId)
-    if (index !== -1 && !activeIndex.value.includes(index)) {
-      activeIndex.value = [...activeIndex.value, index]
-    }
+  // Accordion 열기 (단일 탭만 활성화)
+  const index = tocItems.findIndex(item => item.id === sectionId)
+  if (index !== -1) {
+    activeIndex.value = index
+    // DOM 업데이트 후 스크롤
+    setTimeout(() => {
+      const element = document.getElementById(sectionId)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 100)
   }
 }
 
@@ -156,7 +159,7 @@ onMounted(() => {
             v-for="(item, index) in tocItems"
             :key="item.id"
             class="toc-item"
-            :class="{ active: activeIndex.includes(index) }"
+            :class="{ active: activeIndex === index }"
             @click="scrollToSection(item.id)"
           >
             <i :class="item.icon"></i>
@@ -185,7 +188,7 @@ onMounted(() => {
 
         <Card class="guide-card">
           <template #content>
-            <Accordion v-model:activeIndex="activeIndex" multiple>
+            <Accordion v-model:activeIndex="activeIndex">
               <!-- 사용자 관리 -->
               <AccordionTab>
                 <template #header>
@@ -326,7 +329,7 @@ onMounted(() => {
               <AccordionTab>
                 <template #header>
                   <div class="tab-header" id="reservation-management">
-                    <i class="pi pi-calendar-check"></i>
+                    <i class="pi pi-calendar"></i>
                     <span>예약 관리</span>
                   </div>
                 </template>
@@ -565,6 +568,12 @@ onMounted(() => {
 .toc-item i {
   font-size: 18px;
   flex-shrink: 0;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.toc-item.active i {
+  color: #3b82f6;
 }
 
 .toc-item span {

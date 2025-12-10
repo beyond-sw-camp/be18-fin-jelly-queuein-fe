@@ -174,9 +174,24 @@ function goMyPage() {
 // 로고 클릭 시 역할에 맞는 대시보드로 이동
 function goToDashboard() {
   if (hasRole('ADMIN')) {
-    router.push('/admin')
+    // 이미 /admin 경로에 있으면 리로드, 아니면 이동
+    if (route.path === '/admin' || route.path.startsWith('/admin/')) {
+      router.push('/admin').then(() => {
+        // 페이지 리로드를 위해 window.location 사용 (선택적)
+        // 또는 그냥 push만 해도 redirect로 /admin/users로 이동
+      })
+    } else {
+      router.push('/admin')
+    }
   } else {
-    router.push('/app')
+    // 이미 /app 경로에 있으면 리로드, 아니면 이동
+    if (route.path === '/app' || route.path.startsWith('/app/')) {
+      router.push('/app').then(() => {
+        // 페이지 리로드 (선택적)
+      })
+    } else {
+      router.push('/app')
+    }
   }
 }
 
@@ -225,17 +240,55 @@ const breadcrumbMap = {
 }
 
 // ===============================
-// 📌 Breadcrumb 생성
+// 📌 Breadcrumb 경로 매핑 함수
 // ===============================
-function getBreadcrumbHtml() {
+function getBreadcrumbPath(label, currentPath) {
+  const pathMap = {
+    '유저 관리': '/admin/users',
+    '역할 관리': '/admin/roles',
+    '권한 관리': '/admin/permissions/list',
+    '자원': '/admin/assets',
+    '자원 목록 조회': '/admin/assets',
+    '자원 등록': '/admin/assets/create',
+    '자원 사용 기록 조회': '/admin/accounting/usage-history',
+    '사용 추이': '/admin/accounting/usage-trend',
+    '운영 성과 분석': '/admin/accounting/performance',
+    '분기 정산': '/admin/accounting/quarter',
+    '예약': '/app/reservations/me',
+    '가능 자원': '/app/reservations/available-assets',
+    '사용자 예약': '/app/reservations/me',
+    '신청 예약': '/admin/reservations/applied',
+    '스케쥴 확인': '/app/reservations/monthly',
+    '신청하기': '/app/reservations/apply',
+    '예약하기': '/app/reservations/create-reservation',
+    '카테고리 관리': '/admin/assets/categories',
+    '정산 관리': '/admin/accounting/usage-history',
+    '일정 관리': '/app/reservations/monthly',
+    '예약 관리': '/app/reservations/me',
+    '설명서': hasRole('ADMIN') ? '/admin/guide' : '/app/guide',
+  }
+  
+  // 자원 수정은 동적 경로이므로 현재 경로 사용
+  if (label === '자원 수정') {
+    return currentPath
+  }
+  
+  return pathMap[label] || currentPath
+}
+
+// ===============================
+// 📌 Breadcrumb 항목 생성
+// ===============================
+const breadcrumbItems = computed(() => {
   let segments = route.path.split('/').filter(Boolean)
 
   // 기술 경로 제거 (admin/app)
+  const basePath = segments[0] === 'admin' ? '/admin' : segments[0] === 'app' ? '/app' : ''
   if (segments[0] === 'admin' || segments[0] === 'app') {
     segments = segments.slice(1)
   }
 
-  if (segments.length === 0) return ''
+  if (segments.length === 0) return []
 
   // 중복 제거: permissions와 list가 연속으로 오면 permissions만 표시
   const filtered = []
@@ -252,12 +305,48 @@ function getBreadcrumbHtml() {
     }
   }
 
-  const mapped = filtered.map((seg) => breadcrumbMap[seg] || seg)
+  // IAM 관련 페이지 처리: users, roles, permissions를 "유저 관리"로 통합
+  const items = []
+  let currentPath = basePath
+  
+  for (let i = 0; i < filtered.length; i++) {
+    const current = filtered[i]
+    currentPath += '/' + current
+    
+    // IAM 관련 페이지인 경우
+    if (current === 'users' || current === 'roles' || current === 'permissions') {
+      // 첫 번째 IAM 페이지면 "유저 관리" 추가
+      if (items.length === 0 || items[items.length - 1].label !== '유저 관리') {
+        items.push({
+          label: '유저 관리',
+          path: '/admin/users'
+        })
+      }
+      
+      // 현재 페이지에 맞는 하위 항목 추가
+      if (current === 'users') {
+        // users는 이미 "유저 관리"로 표시되므로 추가하지 않음
+      } else if (current === 'roles') {
+        items.push({
+          label: '역할 관리',
+          path: '/admin/roles'
+        })
+      } else if (current === 'permissions') {
+        items.push({
+          label: '권한 관리',
+          path: '/admin/permissions/list'
+        })
+      }
+    } else {
+      // IAM 관련이 아니면 기존 로직대로 매핑
+      const label = breadcrumbMap[current] || current
+      const path = getBreadcrumbPath(label, currentPath)
+      items.push({ label, path })
+    }
+  }
 
-  return mapped
-    .map((seg) => `<span class="breadcrumb-item">${seg}</span>`)
-    .join(`<span class="breadcrumb-divider"> / </span>`)
-}
+  return items
+})
 </script>
 
 <template>
@@ -271,7 +360,30 @@ function getBreadcrumbHtml() {
         <img :src="logoUrl" alt="QueueIn Logo" class="logo-img" />
       </div>
 
-      <div class="breadcrumb" v-html="getBreadcrumbHtml()"></div>
+      <div class="breadcrumb">
+        <template v-for="(item, index) in breadcrumbItems" :key="index">
+          <router-link
+            v-if="item.path && index < breadcrumbItems.length - 1"
+            :to="item.path"
+            class="breadcrumb-item"
+          >
+            {{ item.label }}
+          </router-link>
+          <span
+            v-else
+            class="breadcrumb-item"
+            :class="{ 'current': index === breadcrumbItems.length - 1 }"
+          >
+            {{ item.label }}
+          </span>
+          <span
+            v-if="index < breadcrumbItems.length - 1"
+            class="breadcrumb-divider"
+          >
+            / 
+          </span>
+        </template>
+      </div>
     </div>
 
     <div class="right">
@@ -383,7 +495,7 @@ function getBreadcrumbHtml() {
   gap: 8px;
 }
 
-::v-deep .breadcrumb-item {
+.breadcrumb-item {
   color: #4b5563;
   background: #f3f4f6;
   padding: 6px 14px;
@@ -391,15 +503,29 @@ function getBreadcrumbHtml() {
   font-weight: 500;
   display: inline-block;
   transition: all 0.2s ease;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-::v-deep .breadcrumb-item:first-child {
+.breadcrumb-item:first-child {
   color: #1f2937;
   background: #e5e7eb;
   font-weight: 600;
 }
 
-::v-deep .breadcrumb-item:hover {
+.breadcrumb-item:hover {
+  background: #e5e7eb;
+}
+
+.breadcrumb-item.current {
+  color: #1f2937;
+  background: #e5e7eb;
+  font-weight: 600;
+  cursor: default;
+}
+
+.breadcrumb-item.router-link-active {
+  color: #1f2937;
   background: #e5e7eb;
 }
 
@@ -528,3 +654,4 @@ function getBreadcrumbHtml() {
   font-size: 20px;
 }
 </style>
+

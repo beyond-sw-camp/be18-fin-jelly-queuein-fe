@@ -9,8 +9,8 @@ import Dialog from 'primevue/dialog'
 
 const router = useRouter()
 
-// multiple이 true일 때는 배열이어야 함
-const activeIndex = ref([0])
+// 단일 탭만 활성화 (첫 번째 탭을 기본으로 열기)
+const activeIndex = ref(0)
 
 // 목차 항목
 const tocItems = [
@@ -56,14 +56,17 @@ const enableWelcomeDialog = () => {
 
 // 목차 클릭 시 해당 섹션으로 스크롤
 const scrollToSection = (sectionId) => {
-  const element = document.getElementById(sectionId)
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    // Accordion 열기
-    const index = tocItems.findIndex(item => item.id === sectionId)
-    if (index !== -1 && !activeIndex.value.includes(index)) {
-      activeIndex.value = [...activeIndex.value, index]
-    }
+  // Accordion 열기 (단일 탭만 활성화)
+  const index = tocItems.findIndex(item => item.id === sectionId)
+  if (index !== -1) {
+    activeIndex.value = index
+    // DOM 업데이트 후 스크롤
+    setTimeout(() => {
+      const element = document.getElementById(sectionId)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 100)
   }
 }
 
@@ -156,7 +159,7 @@ onMounted(() => {
             v-for="(item, index) in tocItems"
             :key="item.id"
             class="toc-item"
-            :class="{ active: activeIndex.includes(index) }"
+            :class="{ active: activeIndex === index }"
             @click="scrollToSection(item.id)"
           >
             <i :class="item.icon"></i>
@@ -185,7 +188,7 @@ onMounted(() => {
 
         <Card class="guide-card">
           <template #content>
-            <Accordion v-model:activeIndex="activeIndex" multiple>
+            <Accordion v-model:activeIndex="activeIndex">
               <!-- 예약 신청 -->
               <AccordionTab>
                 <template #header>
@@ -545,6 +548,12 @@ onMounted(() => {
 .toc-item i {
   font-size: 18px;
   flex-shrink: 0;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.toc-item.active i {
+  color: #3b82f6;
 }
 
 .toc-item span {

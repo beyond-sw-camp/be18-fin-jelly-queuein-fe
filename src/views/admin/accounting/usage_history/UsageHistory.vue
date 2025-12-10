@@ -1,9 +1,6 @@
 <template>
   <div class="page-container">
 
-    <!-- 탭 메뉴 -->
-    <AccountingTabMenu />
-
     <h2 class="page-title">자원 사용 기록</h2>
 
     <!-- 검색 필터 -->
@@ -24,7 +21,6 @@
 import { ref } from "vue"
 import UsageHistoryFilter from "./UsageHistoryFilter.vue"
 import UsageHistoryTable from "./UsageHistoryTable.vue"
-import AccountingTabMenu from "@/components/accounting/AccountingTabMenu.vue"
 import api from "@/api/axios.js"
 
 const rows = ref([])

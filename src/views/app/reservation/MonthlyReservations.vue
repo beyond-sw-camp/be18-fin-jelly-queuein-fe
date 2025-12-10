@@ -1,20 +1,21 @@
 <template>
-  <div class="calendar-container">
-    <Card class="calendar-card">
-      <template #content>
-        <div class="calendar-top">
-          <!-- 날짜 선택 -->
-          <Calendar
-            v-model="selectedDate"
-            dateFormat="yy.mm.dd"
-            showIcon
-            iconDisplay="input"
-            inputId="calendar-date"
-            class="date-picker"
-            @date-select="onDateChange"
-          />
+  <div class="calendar-page">
+    <!-- 왼쪽 미니 캘린더 -->
+    <MiniCalendar
+      :selected-date="selectedDate"
+      :events="calendarEvents"
+      :current-view="currentView"
+      @date-select="onMiniCalendarDateSelect"
+      @event-click="onMiniCalendarEventClick"
+    />
 
-          <!-- 월별/주별 버튼 -->
+    <!-- 오른쪽 메인 캘린더 -->
+    <div class="main-calendar-container">
+      <Card class="calendar-card">
+        <template #content>
+          <div class="calendar-content-wrapper">
+            <div class="calendar-top">
+          <!-- 월별/주별/일별 버튼 -->
           <div class="calendar-toggle">
             <Button
               label="월별"
@@ -28,14 +29,21 @@
               :class="{ 'active-view': currentView === 'timeGridWeek' }"
               @click="changeView('timeGridWeek')"
             />
+            <Button
+              label="일별"
+              :outlined="currentView !== 'timeGridDay'"
+              :class="{ 'active-view': currentView === 'timeGridDay' }"
+              @click="changeView('timeGridDay')"
+            />
           </div>
         </div>
 
-        <div class="calendar-wrapper">
-          <FullCalendar ref="calendarRef" :options="calendarOptions" />
-        </div>
-      </template>
-    </Card>
+            <div class="calendar-wrapper">
+              <FullCalendar ref="calendarRef" :options="calendarOptions" />
+            </div>
+          </div>
+        </template>
+      </Card>
 
     <!-- 예약 상세 모달 -->
     <ReservationDetailModal
@@ -44,27 +52,29 @@
       @close="closeModal"
       @start="handleStart"
       @end="handleEnd"
-      @cancel="handleCancel"
-    />
+        @cancel="handleCancel"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import koLocale from '@fullcalendar/core/locales/ko.js'
 import { reservationApi } from '@/api/reservationApi'
 import ReservationDetailModal from '@/components/reservation/ReservationDetailModal.vue'
+import MiniCalendar from '@/components/reservation/MiniCalendar.vue'
 import Card from 'primevue/card'
-import Calendar from 'primevue/calendar'
 import Button from 'primevue/button'
 
 const calendarRef = ref(null)
 const today = new Date()
 const selectedDate = ref(today)
 const currentView = ref('dayGridMonth')
+const calendarEvents = ref([]) // 미니 캘린더용 이벤트 목록
 
 // 모달 관련
 const modalOpen = ref(false)
@@ -98,8 +108,18 @@ const calendarOptions = computed(() => ({
     week: '주',
     day: '일'
   },
+  views: {
+    timeGridDay: {
+      slotMinTime: '04:00:00',
+      slotMaxTime: '24:00:00',
+    },
+    timeGridWeek: {
+      slotMinTime: '04:00:00',
+      slotMaxTime: '24:00:00',
+    }
+  },
   contentHeight: 'auto',
-  height: 'auto',
+  height: '100%',
   displayEventTime: false,
   eventOverlap: false,
   slotEventOverlap: false,
@@ -129,6 +149,28 @@ const calendarOptions = computed(() => ({
       `
     }
   },
+  
+  // 이벤트가 마운트될 때 배경색을 fc-event-main에도 적용
+  eventDidMount: (arg) => {
+    const event = arg.event
+    if (!event.start || !event.end) return
+    
+    const bgColor = event.backgroundColor || '#fce7f3'
+    const rgba = hexToRgbaFromString(bgColor, 0.3)
+    
+    // fc-event-main에 배경색 적용
+    const eventMain = arg.el.querySelector('.fc-event-main')
+    if (eventMain) {
+      eventMain.style.backgroundColor = rgba
+    }
+    
+    // 주간/일간 뷰일 때 타임슬롯 배경색도 적용
+    if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
+      setTimeout(() => {
+        applySlotBackgrounds()
+      }, 100)
+    }
+  },
   eventClick: (info) => {
     const reservationId = info.event.id
     if (reservationId) {
@@ -136,6 +178,28 @@ const calendarOptions = computed(() => ({
     }
   },
   events: [],
+  
+  // 주간/일간 뷰일 때 타임슬롯 배경색 적용
+  datesSet: async (info) => {
+    // 주간/일간 뷰일 때만 배경색 적용
+    if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
+      console.log(`[MonthlyReservations] datesSet - ${currentView.value} view`)
+      await nextTick()
+      setTimeout(() => {
+        console.log('[MonthlyReservations] Calling applySlotBackgrounds from datesSet')
+        applySlotBackgrounds()
+      }, 500)
+    }
+  },
+  
+  // 이벤트가 마운트될 때 타임슬롯 배경색 적용 (주간/일간 뷰일 때만)
+  eventDidMount: (arg) => {
+    if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
+      setTimeout(() => {
+        applySlotBackgrounds()
+      }, 100)
+    }
+  },
 }))
 
 /* ---------------------------
@@ -257,9 +321,169 @@ const loadCalendarEvents = async () => {
 
   const events = convertReservationsToEvents(json)
   console.log("EVENTS:", events)
+  
+  // 캘린더 이벤트 저장 (미니 캘린더용)
+  calendarEvents.value = events
 
   api.removeAllEvents()
   events.forEach(ev => api.addEvent(ev))
+  
+  // 주간/일간 뷰일 때 타임슬롯 배경색 적용
+  if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
+    await nextTick()
+    setTimeout(() => {
+      applySlotBackgrounds()
+    }, 500)
+  }
+}
+
+// 타임슬롯 배경색 적용 함수
+function applySlotBackgrounds() {
+  console.log('[MonthlyReservations] applySlotBackgrounds called')
+  const calendarEl = calendarRef.value?.getApi()?.el
+  if (!calendarEl) {
+    console.warn('[MonthlyReservations] Calendar element not found')
+    return
+  }
+  console.log('[MonthlyReservations] Calendar element found')
+  
+  // 모든 타임슬롯 배경색 초기화
+  const allSlots = calendarEl.querySelectorAll('.fc-timegrid-slot')
+  console.log('[MonthlyReservations] Found slots:', allSlots.length)
+  allSlots.forEach(slot => {
+    slot.style.backgroundColor = ''
+    slot.classList.remove('has-event-slot')
+  })
+  
+  // 모든 이벤트 엘리먼트 찾기
+  const allEvents = calendarEl.querySelectorAll('.fc-timegrid-event')
+  console.log('[MonthlyReservations] Found events:', allEvents.length)
+  
+  if (allEvents.length === 0) {
+    console.warn('[MonthlyReservations] No events found')
+    return
+  }
+  
+  allEvents.forEach((eventEl, eventIndex) => {
+    console.log(`[MonthlyReservations] Processing event ${eventIndex + 1}...`)
+    // 이벤트의 배경색 가져오기 (인라인 스타일에서)
+    const eventChip = eventEl.querySelector('.custom-event-chip')
+    if (!eventChip) {
+      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: custom-event-chip not found`)
+      return
+    }
+    
+    // 인라인 스타일에서 배경색 가져오기
+    const bgColorStyle = eventChip.getAttribute('style')
+    if (!bgColorStyle || !bgColorStyle.includes('background-color')) {
+      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: no background-color in style`)
+      return
+    }
+    
+    const bgColorMatch = bgColorStyle.match(/background-color:\s*([^;]+)/)
+    if (!bgColorMatch) {
+      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: could not parse background-color`)
+      return
+    }
+    
+    const bgColor = bgColorMatch[1].trim()
+    const rgba = hexToRgbaFromString(bgColor, 0.3)
+    console.log(`[MonthlyReservations] Event ${eventIndex + 1}: bgColor=${bgColor}, rgba=${rgba}`)
+    
+    // 이벤트가 속한 타임슬롯 찾기
+    const timeGridCol = eventEl.closest('.fc-timegrid-col')
+    if (!timeGridCol) {
+      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: timeGridCol not found`)
+      return
+    }
+    
+    const colFrame = timeGridCol.querySelector('.fc-timegrid-col-frame')
+    if (!colFrame) {
+      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: colFrame not found`)
+      return
+    }
+    
+    // 이벤트의 실제 위치 계산
+    const eventRect = eventEl.getBoundingClientRect()
+    const colRect = colFrame.getBoundingClientRect()
+    const eventTop = eventRect.top - colRect.top
+    const eventBottom = eventRect.bottom - colRect.top
+    
+    console.log(`[MonthlyReservations] Event ${eventIndex + 1}: eventTop=${eventTop}, eventBottom=${eventBottom}`)
+    
+    // 실제 타임슬롯 높이 계산 (첫 번째 슬롯의 높이 사용)
+    const firstSlot = colFrame.querySelector('.fc-timegrid-slot')
+    if (!firstSlot) {
+      console.warn(`[MonthlyReservations] Event ${eventIndex + 1}: firstSlot not found`)
+      return
+    }
+    const slotHeight = firstSlot.getBoundingClientRect().height || 60
+    console.log(`[MonthlyReservations] Event ${eventIndex + 1}: slotHeight=${slotHeight}`)
+    
+    // 시작/종료 인덱스 계산
+    const slots = colFrame.querySelectorAll('.fc-timegrid-slot')
+    const startSlotIndex = Math.max(0, Math.floor(eventTop / slotHeight))
+    const endSlotIndex = Math.min(
+      slots.length,
+      Math.ceil(eventBottom / slotHeight)
+    )
+    
+    console.log(`[MonthlyReservations] Event ${eventIndex + 1}: startSlotIndex=${startSlotIndex}, endSlotIndex=${endSlotIndex}, slots.length=${slots.length}`)
+    
+    // 해당 범위의 모든 타임슬롯에 배경색 적용
+    let appliedCount = 0
+    for (let i = startSlotIndex; i < endSlotIndex && i < slots.length; i++) {
+      const slot = slots[i]
+      if (slot) {
+        slot.style.backgroundColor = rgba
+        slot.classList.add('has-event-slot')
+        appliedCount++
+      }
+    }
+    console.log(`[MonthlyReservations] Event ${eventIndex + 1}: Applied to ${appliedCount} slots`)
+  })
+  
+  console.log('[MonthlyReservations] applySlotBackgrounds finished')
+}
+
+// 문자열에서 hex 색상을 rgba로 변환
+function hexToRgbaFromString(colorStr, alpha) {
+  // 이미 rgba 형식인 경우
+  if (colorStr.includes('rgba')) {
+    return colorStr.replace(/rgba?\([^)]+\)/, (match) => {
+      return match.replace(/,\s*[\d.]+\)$/, `, ${alpha})`)
+    })
+  }
+  
+  // hex 색상인 경우
+  if (colorStr.startsWith('#')) {
+    return hexToRgba(colorStr, alpha)
+  }
+  
+  // rgb 형식인 경우
+  if (colorStr.includes('rgb')) {
+    return rgbToRgba(colorStr, alpha)
+  }
+  
+  return colorStr
+}
+
+// RGB를 rgba로 변환
+function rgbToRgba(rgb, alpha) {
+  const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
+  if (match) {
+    return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${alpha})`
+  }
+  return rgb
+}
+
+// Hex 색상을 rgba로 변환
+function hexToRgba(hex, alpha) {
+  const cleanHex = hex.replace('#', '')
+  const r = parseInt(cleanHex.slice(0, 2), 16)
+  const g = parseInt(cleanHex.slice(2, 4), 16)
+  const b = parseInt(cleanHex.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 /* 날짜 변경 */
@@ -279,6 +503,13 @@ const changeView = async (view) => {
   // 뷰 변경 후 날짜 유지
   api.gotoDate(currentDate)
   await loadCalendarEvents()
+  // 주간/일간 뷰로 전환했을 때 타임슬롯 배경색 적용
+  if (view === 'timeGridWeek' || view === 'timeGridDay') {
+    await nextTick()
+    setTimeout(() => {
+      applySlotBackgrounds()
+    }, 500)
+  }
 }
 
 /* 최초 로딩 */
@@ -359,9 +590,41 @@ const handleCancel = async (id) => {
 const closeModal = () => {
   modalOpen.value = false
 }
+
+/* 미니 캘린더 이벤트 핸들러 */
+const onMiniCalendarDateSelect = (date) => {
+  selectedDate.value = date
+  const api = calendarRef.value.getApi()
+  api.gotoDate(date)
+  loadCalendarEvents()
+}
+
+const onMiniCalendarEventClick = (event) => {
+  openDetailModal(event.id)
+}
 </script>
 
 <style scoped>
+.calendar-page {
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  max-width: 1920px;
+  margin: 0 auto;
+  height: calc(100vh - 100px);
+  overflow: hidden;
+  align-items: stretch;
+}
+
+.main-calendar-container {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: calc(100vh - 148px);
+}
+
 .calendar-container {
   padding: 24px;
   max-width: 100%;
@@ -371,14 +634,27 @@ const closeModal = () => {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.calendar-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 16px;
 }
 
 .calendar-top {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .date-picker {
@@ -406,10 +682,38 @@ const closeModal = () => {
 }
 
 .calendar-wrapper {
-  min-height: 600px;
-  padding: 16px;
+  flex: 1;
+  padding: 0;
   background: #fafafa;
   border-radius: 8px;
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;
+}
+
+.calendar-wrapper :deep(.fc) {
+  height: 100% !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-wrapper :deep(.fc-view-harness) {
+  flex: 1;
+  overflow: visible;
+  min-height: 0;
+}
+
+.calendar-wrapper :deep(.fc-scroller) {
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  height: 100% !important;
+}
+
+.calendar-wrapper :deep(.fc-timegrid-body) {
+  overflow-y: visible;
 }
 
 /* FullCalendar 한국어 스타일 개선 */
@@ -538,9 +842,14 @@ const closeModal = () => {
 
 /* 이벤트 스타일 */
 :deep(.fc-event-bg),
-:deep(.fc-event-main),
 :deep(.fc-timegrid-event) {
   background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* fc-event-main은 JavaScript로 배경색이 동적으로 적용됨 */
+:deep(.fc-event-main) {
   border: none !important;
   box-shadow: none !important;
 }

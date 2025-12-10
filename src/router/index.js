@@ -96,9 +96,13 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         // -------------------------
-        // 기본 이동: /admin → /admin/users
+        // 기본 대시보드: /admin → AdminDashboard
         // -------------------------
-        { path: '', redirect: '/admin/users' },
+        {
+          path: '',
+          component: AdminDashboard,
+          meta: { title: '관리자 대시보드', requiresAuth: true },
+        },
 
         // -------------------------
         // 사용자 관리
