@@ -8,6 +8,7 @@ import AppFooter from '@/components/layout/AppFooter.vue'
 
 import ReservationTabs from '@/components/reservation/ReservationTab.vue'
 import AccountingTabs from '@/components/accounting/AccountingTabMenu.vue'
+import ChatWidget from '@/components/chat/ChatWidget.vue'
 
 /* ---------------------------
    🔥 경로 기반 탭 자동 표시
@@ -113,6 +114,7 @@ function onTransitionEnter() {
     </main>
 
     <AppFooter />
+    <ChatWidget />
   </div>
 </template>
 

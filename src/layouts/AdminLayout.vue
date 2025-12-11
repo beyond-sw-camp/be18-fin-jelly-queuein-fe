@@ -28,6 +28,7 @@
 
     <!-- 푸터 -->
     <!-- <AppFooter /> -->
+    <ChatWidget />
   </div>
 </template>
 
@@ -39,6 +40,7 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 // import AppFooter from '@/components/layout/AppFooter.vue'
 import AccountingTabMenu from '@/components/accounting/AccountingTabMenu.vue'
+import ChatWidget from '@/components/chat/ChatWidget.vue'
 
 const route = useRoute()
 
