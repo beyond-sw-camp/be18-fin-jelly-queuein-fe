@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { userApi } from '@/api/iam/userApi.js'
 import { reservationApi } from '@/api/reservationApi.js'
@@ -7,6 +7,28 @@ import { assetApi } from '@/api/assetApi.js'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
+
+// 3D 효과를 위한 ref
+const statCards = ref([])
+
+// 3D 카드 효과 핸들러
+function handleCard3D(event, card) {
+  const rect = card.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+
+  const centerX = rect.width / 2
+  const centerY = rect.height / 2
+
+  const rotateX = (y - centerY) / 10
+  const rotateY = (centerX - x) / 10
+
+  card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`
+}
+
+function resetCard3D(card) {
+  card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)'
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -121,12 +143,28 @@ onMounted(() => {
   }
 
   window.addEventListener('route-transition-complete', transitionHandler)
+
+  // 3D 효과를 위한 이벤트 리스너 등록
+  nextTick(() => {
+    const cards = document.querySelectorAll('.stat-card')
+    cards.forEach((card) => {
+      card.addEventListener('mousemove', (e) => handleCard3D(e, card))
+      card.addEventListener('mouseleave', () => resetCard3D(card))
+    })
+    statCards.value = Array.from(cards)
+  })
 })
 
 onBeforeUnmount(() => {
   if (transitionHandler) {
     window.removeEventListener('route-transition-complete', transitionHandler)
   }
+
+  // 3D 효과 이벤트 리스너 제거
+  statCards.value.forEach((card) => {
+    card.removeEventListener('mousemove', handleCard3D)
+    card.removeEventListener('mouseleave', resetCard3D)
+  })
 })
 
 // 경로 변경 감지 (추가 보완)
@@ -396,14 +434,16 @@ watch(
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+    transform 0.1s ease-out,
+    box-shadow 0.3s ease;
   cursor: pointer;
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .stat-content {
