@@ -62,6 +62,9 @@ import ParticipantModal from '@/components/reservation/ParticipantModal.vue'
 import ApplyButton from '@/components/reservation/ApplyButton.vue'
 import ReservationTabs from '@/components/reservation/ReservationTab.vue'
 import { reservationApi } from '@/api/reservationApi'
+import { useNotificationStore } from "@/stores/notificationStore";
+import { connectSSE, disconnectSSE } from "@/services/sseService";
+
 
 const route = useRoute()
 
@@ -237,6 +240,15 @@ const onSelectParticipants = (users) => {
 // -------------------------------
 // 페이지 로딩 시 API 호출
 // -------------------------------
+
+//sse
+const store = useNotificationStore();
+
+onMounted(() => {
+  connectSSE((data) => {
+    store.push(data);
+  });
+});
 
 </script>
 

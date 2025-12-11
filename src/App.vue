@@ -1,5 +1,9 @@
 <script setup>
 import { RouterView } from 'vue-router'
+import { useSSE } from "@/composables/useSSE";
+
+const token = localStorage.getItem("accessToken");
+useSSE(token);
 </script>
 
 <template>
