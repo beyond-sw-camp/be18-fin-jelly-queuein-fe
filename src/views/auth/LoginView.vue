@@ -174,16 +174,19 @@ async function login() {
   display: flex;
   background: white;
   position: relative;
+  box-sizing: border-box;
 }
 
 /* Left */
 .left {
-  flex: 1;
+  flex: 7 1 0%;
+  flex-basis: 70%;
   padding: 40px 400px;
   display: flex;
   flex-direction: column;
   justify-content: center; /* 세로 가운데 정렬 유지 */
   align-items: center; /* 가로 가운데 정렬 유지 */
+  box-sizing: border-box;
 }
 
 .center-wrapper {
@@ -263,11 +266,13 @@ async function login() {
 
 /* Right */
 .right {
-  flex: 1;
+  flex: 3 1 0%;
+  flex-basis: 30%;
   background: #c8e0c3; /* 공용 색상 */
   display: flex;
   justify-content: center;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .hero-img {
