@@ -166,7 +166,7 @@ watch(
             <div class="stat-icon">
               <i class="pi pi-users"></i>
             </div>
-            <div class="stat-info">
+            <div class="stat-info" @click="router.push('/admin/users')">
               <div class="stat-value">{{ stats.totalUsers }}</div>
               <div class="stat-label">전체 사용자</div>
             </div>
@@ -181,7 +181,7 @@ watch(
             <div class="stat-icon">
               <i class="pi pi-calendar"></i>
             </div>
-            <div class="stat-info">
+            <div class="stat-info" @click="router.push('/admin/reservations/applied')">
               <div class="stat-value">{{ stats.totalReservations }}</div>
               <div class="stat-label">전체 예약</div>
             </div>
@@ -201,7 +201,7 @@ watch(
             <div class="stat-icon">
               <i class="pi pi-clock"></i>
             </div>
-            <div class="stat-info">
+            <div class="stat-info" @click="router.push('/admin/reservations/applied')">
               <div class="stat-value">{{ stats.pendingReservations }}</div>
               <div class="stat-label">대기중인 예약</div>
             </div>
@@ -221,7 +221,7 @@ watch(
             <div class="stat-icon">
               <i class="pi pi-box"></i>
             </div>
-            <div class="stat-info">
+            <div class="stat-info" @click="router.push('/admin/assets')">
               <div class="stat-value">{{ stats.totalAssets }}</div>
               <div class="stat-label">전체 자원</div>
             </div>
@@ -442,6 +442,7 @@ watch(
 
 .stat-info {
   flex: 1;
+  cursor: pointer;
 }
 
 .stat-value {
