@@ -326,7 +326,17 @@ const breadcrumbItems = computed(() => {
   
   for (let i = 0; i < filtered.length; i++) {
     const current = filtered[i]
+    const prev = i > 0 ? filtered[i - 1] : null
     currentPath += '/' + current
+    
+    // users 다음에 숫자(userId)가 오는 경우 "사용자 상세 조회"로 표시
+    if (prev === 'users' && /^\d+$/.test(current)) {
+      items.push({
+        label: '사용자 상세 조회',
+        path: currentPath
+      })
+      continue
+    }
     
     // IAM 관련 페이지인 경우
     if (current === 'users' || current === 'roles' || current === 'permissions') {
