@@ -3,6 +3,7 @@ import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { userApi } from '@/api/iam/userApi.js'
 import { reservationApi } from '@/api/reservationApi.js'
+import { assetApi } from '@/api/assetApi.js'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
@@ -38,13 +39,35 @@ async function loadData() {
     const userRes = await userApi.getMe()
     userInfo.value = userRes.data
 
-    // 통계 데이터 (실제 API가 있다면 연결)
-    // 현재는 예시 데이터
+    // 통계 데이터 초기화
     stats.value = {
       totalUsers: 0,
       totalReservations: 0,
       pendingReservations: 0,
       totalAssets: 0,
+    }
+
+    // 전체 사용자 수 조회
+    try {
+      const usersRes = await userApi.searchUsers({
+        page: 0,
+        size: 1,
+      })
+      stats.value.totalUsers = usersRes.data.totalElements || 0
+    } catch (e) {
+      console.error('전체 사용자 수 조회 실패:', e)
+    }
+
+    // 전체 예약 수 조회
+    // TODO: 백엔드에 전체 예약 수를 반환하는 전용 엔드포인트가 필요합니다.
+    // 현재는 사용자별 예약 엔드포인트만 있어서 전체 예약 수를 정확히 가져올 수 없습니다.
+    // 백엔드에 `/api/v1/reservations/stats` 또는 `/api/v1/admin/stats` 같은 통계 엔드포인트를 추가해야 합니다.
+    try {
+      // 임시로 대기중인 예약 수를 사용 (실제로는 전체 예약 수가 필요)
+      // 전체 예약 수를 가져오려면 백엔드에 새 엔드포인트가 필요합니다.
+      stats.value.totalReservations = 0
+    } catch (e) {
+      console.error('전체 예약 수 조회 실패:', e)
     }
 
     // 오늘 대기중인 예약 조회
@@ -58,7 +81,18 @@ async function loadData() {
       })
       stats.value.pendingReservations = res.data.totalElements || 0
     } catch (e) {
-      console.log('대기 예약 조회 실패:', e)
+      console.error('대기 예약 조회 실패:', e)
+    }
+
+    // 전체 자원 수 조회
+    try {
+      const assetsRes = await assetApi.getDescendants({
+        page: 0,
+        size: 1,
+      })
+      stats.value.totalAssets = assetsRes.data.totalElements || 0
+    } catch (e) {
+      console.error('전체 자원 수 조회 실패:', e)
     }
   } catch (e) {
     console.error('대시보드 데이터 로드 실패:', e)
