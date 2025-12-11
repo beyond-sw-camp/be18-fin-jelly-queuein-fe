@@ -112,6 +112,13 @@ const router = createRouter({
           component: () => import('@/views/admin/iam/user/UserManagement.vue'),
           meta: { title: '사용자 관리', minRole: 'ADMIN' },
         },
+        // 사용자 상세 조회
+        {
+          path: 'users/:userId',
+          name: 'UserDetail',
+          component: () => import('@/views/admin/iam/user/UserDetailView.vue'),
+          meta: { title: '사용자 상세 조회', minRole: 'ADMIN' },
+        },
         // 관리자용 사용자 수정
         {
           path: 'users/:userId/edit',

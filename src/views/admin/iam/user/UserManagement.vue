@@ -118,6 +118,33 @@ async function confirmDelete(userId) {
 }
 
 // --------------------------------------------------
+// 행 클릭 이벤트
+// --------------------------------------------------
+function onRowClick(event) {
+  // 편집 버튼이나 삭제 버튼 클릭 시에는 행 클릭 이벤트 무시
+  const target = event.originalEvent.target
+  if (
+    target.closest('button') ||
+    target.closest('.p-button') ||
+    target.closest('a')
+  ) {
+    return
+  }
+  
+  const user = event.data
+  if (user) {
+    viewUserDetail(user)
+  }
+}
+
+// --------------------------------------------------
+// 상세 조회 기능
+// --------------------------------------------------
+function viewUserDetail(user) {
+  router.push(`/admin/users/${user.userId}`)
+}
+
+// --------------------------------------------------
 // 수정 기능
 // --------------------------------------------------
 function editUser(user) {
@@ -207,6 +234,7 @@ const roleTagStyle = {
       :rows="10"
       :totalRecords="total"
       class="datatable"
+      @row-click="onRowClick"
     >
       <!-- 프로필 -->
       <Column header="프로필">
@@ -251,7 +279,7 @@ const roleTagStyle = {
             text
             rounded
             :disabled="data.roleName === 'MASTER'"
-            @click="editUser(data)"
+            @click.stop="editUser(data)"
           />
           <Button
             icon="pi pi-trash"
@@ -259,7 +287,7 @@ const roleTagStyle = {
             rounded
             :disabled="data.roleName === 'MASTER'"
             severity="danger"
-            @click="confirmDelete(data.userId)"
+            @click.stop="confirmDelete(data.userId)"
           />
         </template>
       </Column>
@@ -328,5 +356,15 @@ const roleTagStyle = {
 
 .status-text.inactive {
   color: #999;
+}
+
+/* 행 클릭 가능 스타일 */
+.datatable :deep(.p-datatable-tbody > tr) {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.datatable :deep(.p-datatable-tbody > tr:hover) {
+  background-color: #f5f5f5;
 }
 </style>
