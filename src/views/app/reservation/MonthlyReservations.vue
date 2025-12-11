@@ -75,6 +75,7 @@ const today = new Date()
 const selectedDate = ref(today)
 const currentView = ref('dayGridMonth')
 const calendarEvents = ref([]) // 미니 캘린더용 이벤트 목록
+const isChangingView = ref(false) // 뷰 변경 중 플래그
 
 // 모달 관련
 const modalOpen = ref(false)
@@ -110,13 +111,13 @@ const calendarOptions = computed(() => ({
   },
   views: {
     timeGridDay: {
-      slotMinTime: '04:00:00',
+      slotMinTime: '00:00:00',
       slotMaxTime: '24:00:00',
       slotDuration: '00:30:00',
       contentHeight: 'auto',
     },
     timeGridWeek: {
-      slotMinTime: '04:00:00',
+      slotMinTime: '00:00:00',
       slotMaxTime: '24:00:00',
       slotDuration: '00:30:00',
       contentHeight: 'auto',
@@ -137,8 +138,9 @@ const calendarOptions = computed(() => ({
   },
   
   eventContent: (arg) => {
-    const startTime = arg.event.start ? arg.event.start.toTimeString().slice(0, 5) : ''
-    const endTime = arg.event.end ? arg.event.end.toTimeString().slice(0, 5) : ''
+    // 로컬 시간으로 변환하여 표시
+    const startTime = arg.event.start ? new Date(arg.event.start).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : ''
+    const endTime = arg.event.end ? new Date(arg.event.end).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : ''
     const timeText = endTime ? `${startTime} - ${endTime}` : startTime
     const count = arg.event.extendedProps.count ?? 1
     const bgColor = arg.event.backgroundColor || '#fce7f3'
@@ -166,6 +168,15 @@ const calendarOptions = computed(() => ({
     const api = calendarRef.value?.getApi()
     if (!api) return
     
+    // 뷰 변경 중이면 잠시 대기 후 플래그 해제 (changeView에서 이미 로드함)
+    if (isChangingView.value) {
+      // 플래그가 너무 오래 true로 남아있지 않도록 안전장치
+      setTimeout(() => {
+        isChangingView.value = false
+      }, 1000)
+      return
+    }
+    
     // 주간/일간 뷰일 때는 주별 API 호출
     if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
       const startDate = info.startStr.slice(0, 10)
@@ -184,9 +195,14 @@ const calendarOptions = computed(() => ({
           setTimeout(() => {
             applySlotBackgrounds()
           }, 600)
+        } else {
+          // 예약이 없는 경우에도 기존 이벤트 제거
+          api.removeAllEvents()
+          calendarEvents.value = []
         }
       } catch (err) {
         console.error('주별 예약 조회 실패:', err)
+        // 에러 발생 시에도 기존 이벤트 제거하지 않음 (재시도 가능하도록)
       }
     } else {
       // 월별 뷰일 때는 월별 API 호출
@@ -202,12 +218,19 @@ const calendarOptions = computed(() => ({
     const bgColor = event.backgroundColor || '#fce7f3'
     const textColor = event.textColor || '#9f1239'
     
-    // fc-event-main에 custom-event-chip과 동일한 색상 적용 (solid color)
+    // fc-event-main 전체에 배경색 적용
     const eventMain = arg.el.querySelector('.fc-event-main')
     if (eventMain) {
       eventMain.style.backgroundColor = bgColor
       eventMain.style.color = textColor
+      // padding과 border-radius 제거하여 전체 영역에 색상 적용
+      eventMain.style.padding = '0'
+      eventMain.style.borderRadius = '0'
     }
+    
+    // fc-event 전체에도 배경색 적용
+    arg.el.style.backgroundColor = bgColor
+    arg.el.style.borderColor = bgColor
     
     // 주간/일간 뷰일 때 타임슬롯 배경색도 적용
     if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
@@ -267,18 +290,26 @@ const getEventTextColor = (status) => {
 ---------------------------- */
 const convertReservationsToEvents = (data) => {
   const events = []
+  const eventRanges = [] // 모든 이벤트의 시간 범위 저장 (겹침 감지용)
 
+  // 먼저 모든 이벤트를 생성
   data.reservations.forEach(day => {
     day.reservations.forEach(r => {
+      // UTC 시간을 Date 객체로 변환 (FullCalendar가 자동으로 로컬 시간으로 표시)
       const start = new Date(r.startAt)
-      const localStart = new Date(start.getTime() + 9 * 60 * 60 * 1000)
       const end = new Date(r.endAt)
-      const localEnd = new Date(end.getTime() + 9 * 60 * 60 * 1000)
+      
+      eventRanges.push({
+        id: r.reservationId,
+        start: start.getTime(),
+        end: end.getTime()
+      })
+      
       events.push({
         id: r.reservationId,
         title: r.assetName,
-        start: localStart,
-        end: localEnd, // 끝나는 시간까지 표시
+        start: start,
+        end: end,
         allDay: false,
         backgroundColor: getEventColor(r.reservationStatus),
         borderColor: getEventColor(r.reservationStatus),
@@ -292,7 +323,61 @@ const convertReservationsToEvents = (data) => {
     })
   })
 
+  // 겹침 감지 및 색상 변경
+  events.forEach(event => {
+    const eventStart = event.start.getTime()
+    const eventEnd = event.end.getTime()
+    
+    // 다른 이벤트와 겹치는지 확인
+    const overlappingCount = eventRanges.filter(range => {
+      if (range.id === event.id) return false
+      // 시간 범위가 겹치는지 확인
+      return (eventStart < range.end && eventEnd > range.start)
+    }).length
+    
+    // 겹치는 이벤트가 있으면 색상을 변경
+    if (overlappingCount > 0) {
+      const baseColor = event.backgroundColor
+      const baseTextColor = event.textColor
+      event.backgroundColor = darkenColor(baseColor)
+      event.borderColor = darkenColor(baseColor)
+      event.textColor = darkenColor(baseTextColor)
+      event.extendedProps.hasOverlap = true
+    }
+  })
+
   return events
+}
+
+// 색상을 더 진하게 만드는 함수
+function darkenColor(color) {
+  // hex 색상인 경우
+  if (color.startsWith('#')) {
+    const hex = color.replace('#', '')
+    const r = parseInt(hex.substr(0, 2), 16)
+    const g = parseInt(hex.substr(2, 2), 16)
+    const b = parseInt(hex.substr(4, 2), 16)
+    
+    // 20% 어둡게
+    const newR = Math.max(0, Math.floor(r * 0.8))
+    const newG = Math.max(0, Math.floor(g * 0.8))
+    const newB = Math.max(0, Math.floor(b * 0.8))
+    
+    return `rgb(${newR}, ${newG}, ${newB})`
+  }
+  
+  // rgb 색상인 경우
+  if (color.startsWith('rgb')) {
+    const matches = color.match(/\d+/g)
+    if (matches && matches.length >= 3) {
+      const r = Math.max(0, Math.floor(parseInt(matches[0]) * 0.8))
+      const g = Math.max(0, Math.floor(parseInt(matches[1]) * 0.8))
+      const b = Math.max(0, Math.floor(parseInt(matches[2]) * 0.8))
+      return `rgb(${r}, ${g}, ${b})`
+    }
+  }
+  
+  return color
 }
 
 /* ---------------------------
@@ -491,11 +576,53 @@ const onDateChange = async () => {
 const changeView = async (view) => {
   const api = calendarRef.value.getApi()
   const currentDate = api.getDate() // 현재 캘린더의 날짜 저장
+  
+  // 뷰 변경 중 플래그 설정
+  isChangingView.value = true
+  
   currentView.value = view
   api.changeView(view)
   // 뷰 변경 후 날짜 유지
   api.gotoDate(currentDate)
-  // datesSet 콜백에서 자동으로 이벤트를 로드하므로 여기서는 뷰만 변경
+  
+  // 주간/일간 뷰로 변경될 때 명시적으로 예약 데이터 로드
+  if (view === 'timeGridWeek' || view === 'timeGridDay') {
+    await nextTick()
+    const startDate = api.getDate().toISOString().slice(0, 10)
+    try {
+      const res = await reservationApi.getWeeklyReservations(startDate)
+      const json = res.data.reservations ? res.data : res.data.data?.reservations ? res.data.data : res.data.result?.reservations ? res.data.result : null
+      
+      if (json && json.reservations) {
+        const events = convertReservationsToEvents(json)
+        calendarEvents.value = events
+        
+        api.removeAllEvents()
+        events.forEach(ev => api.addEvent(ev))
+        
+        await nextTick()
+        setTimeout(() => {
+          applySlotBackgrounds()
+        }, 600)
+      } else {
+        api.removeAllEvents()
+        calendarEvents.value = []
+      }
+    } catch (err) {
+      console.error('주별 예약 조회 실패:', err)
+    } finally {
+      // 뷰 변경 완료 후 플래그 해제 (항상 해제)
+      setTimeout(() => {
+        isChangingView.value = false
+      }, 800)
+    }
+  } else {
+    // 월별 뷰로 변경될 때는 월별 데이터 로드
+    await loadCalendarEvents()
+    setTimeout(() => {
+      isChangingView.value = false
+    }, 300)
+  }
 }
 
 /* 최초 로딩 */
@@ -688,10 +815,9 @@ const onMiniCalendarEventClick = (event) => {
 }
 
 .calendar-toggle .active-view {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
+  background: #3b82f6;
+  border-color: #3b82f6;
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .calendar-wrapper {

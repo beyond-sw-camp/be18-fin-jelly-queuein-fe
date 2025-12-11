@@ -160,6 +160,20 @@ const roleText = computed(() => {
 })
 
 // ===============================
+// 🏷️ 역할 텍스트 (역할만 표시)
+// ===============================
+const currentRoleText = computed(() => {
+  return (
+    {
+      MASTER: '마스터',
+      ADMIN: '관리자',
+      MANAGER: '매니저',
+      GENERAL: '일반 사용자',
+    }[role] || '사용자'
+  )
+})
+
+// ===============================
 // 👤 아바타 글자 (이름 첫글자 · 김민준 → 김)
 // ===============================
 const avatarText = computed(() => {
@@ -427,7 +441,10 @@ const breadcrumbItems = computed(() => {
 
       <div class="profile" @click="goMyPage" style="cursor: pointer">
         <div class="avatar">{{ avatarText }}</div>
-        <span>{{ roleText }}</span>
+        <div class="profile-info">
+          <span class="profile-name">{{ roleText }}</span>
+          <span class="profile-role">{{ currentRoleText }}</span>
+        </div>
       </div>
 
       <i class="ri-question-line icon"></i>
@@ -633,6 +650,25 @@ const breadcrumbItems = computed(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.profile-role {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.2;
 }
 
 .avatar {

@@ -36,7 +36,7 @@ function isActive(path) {
 
 <style scoped>
 .iam-tabs {
-  display: inline-flex;
+  display: flex;
   gap: 0;
   margin-bottom: 24px;
   position: relative;
@@ -44,11 +44,7 @@ function isActive(path) {
   border: 1px solid #e0e0e0;
   border-radius: 10px;
   padding: 4px;
-  width: fit-content;
-  min-width: 600px;
-  max-width: 90%;
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%;
 }
 
 .tab {
@@ -75,13 +71,12 @@ function isActive(path) {
 }
 
 .tab.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #667eea;
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 .tab.active:hover {
-  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+  background: #5568d3;
 }
 
 .tab:first-child {

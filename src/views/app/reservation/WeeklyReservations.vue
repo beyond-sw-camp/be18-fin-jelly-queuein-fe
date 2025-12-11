@@ -141,7 +141,7 @@ const calendarOptions = computed(() => ({
     minute: '2-digit',
     hour12: false
   },
-  slotMinTime: '06:00:00',
+  slotMinTime: '00:00:00',
   slotMaxTime: '24:00:00',
   contentHeight: 'auto',
   height: 'auto',

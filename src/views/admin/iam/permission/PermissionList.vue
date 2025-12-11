@@ -453,26 +453,29 @@ onMounted(() => {
 
 <style scoped>
 .page {
-  padding: 0 30px;
+  padding: 30px;
   transition: all 0.3s ease;
 }
 
 /* 내부 탭 */
 .internal-tabs {
-  display: flex;
+  display: inline-flex;
   gap: 12px;
   margin-bottom: 24px;
   transition: all 0.3s ease;
+  width: fit-content;
 }
 
 .tab-btn {
-  padding: 10px 24px;
+  padding: 7px 24px;
   border: 1px solid #e0e0e0;
   background: #f5f5f5;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  white-space: nowrap;
 }
 
 .tab-btn:hover {
