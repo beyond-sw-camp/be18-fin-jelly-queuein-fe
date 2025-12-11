@@ -16,7 +16,7 @@ const stats = ref({
   totalUsers: 0,
   totalReservations: 0,
   pendingReservations: 0,
-  totalAssets: 0
+  totalAssets: 0,
 })
 const loading = ref(false)
 
@@ -25,7 +25,7 @@ const roleText = computed(() => {
   const map = {
     MASTER: '마스터',
     ADMIN: '관리자',
-    MANAGER: '매니저'
+    MANAGER: '매니저',
   }
   return map[role.value] || '사용자'
 })
@@ -44,7 +44,7 @@ async function loadData() {
       totalUsers: 0,
       totalReservations: 0,
       pendingReservations: 0,
-      totalAssets: 0
+      totalAssets: 0,
     }
 
     // 오늘 대기중인 예약 조회
@@ -54,7 +54,7 @@ async function loadData() {
       const res = await reservationApi.getAppliedReservations({
         page: 0,
         size: 1,
-        date: todayStr
+        date: todayStr,
       })
       stats.value.pendingReservations = res.data.totalElements || 0
     } catch (e) {
@@ -107,7 +107,7 @@ watch(
       }, 100)
     }
   },
-  { immediate: false }
+  { immediate: false },
 )
 </script>
 
@@ -119,7 +119,8 @@ watch(
         관리자 대시보드 <Tag :value="roleText" severity="info" class="role-tag" />
       </h1>
       <p class="welcome-subtitle">
-        안녕하세요, <span class="user-name">{{ userInfo?.userName || '관리자' }}</span>님! 시스템을 관리하고 모니터링하세요.
+        안녕하세요, <span class="user-name">{{ userInfo?.userName || '관리자' }}</span
+        >님! 시스템을 관리하고 모니터링하세요.
       </p>
     </div>
 
@@ -135,12 +136,7 @@ watch(
               <div class="stat-value">{{ stats.totalUsers }}</div>
               <div class="stat-label">전체 사용자</div>
             </div>
-            <Button
-              icon="pi pi-arrow-right"
-              text
-              rounded
-              @click="router.push('/admin/users')"
-            />
+            <Button icon="pi pi-arrow-right" text rounded @click="router.push('/admin/users')" />
           </div>
         </template>
       </Card>
@@ -195,12 +191,7 @@ watch(
               <div class="stat-value">{{ stats.totalAssets }}</div>
               <div class="stat-label">전체 자원</div>
             </div>
-            <Button
-              icon="pi pi-arrow-right"
-              text
-              rounded
-              @click="router.push('/admin/assets')"
-            />
+            <Button icon="pi pi-arrow-right" text rounded @click="router.push('/admin/assets')" />
           </div>
         </template>
       </Card>
@@ -370,7 +361,9 @@ watch(
 .stat-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   cursor: pointer;
 }
 
@@ -441,7 +434,9 @@ watch(
 .action-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .action-card:hover {
@@ -482,6 +477,7 @@ watch(
 
 /* 가이드 카드 */
 .guide-card {
+  margin-top: 200px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
