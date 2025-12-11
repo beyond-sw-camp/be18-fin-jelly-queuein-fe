@@ -3,6 +3,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { authApi } from '@/api/authApi'
 import { hasRole } from '@/utils/role'
+import NotificationDropdown from '@/components/notification/NotificationDropdown.vue'
 
 // Vue 3 + Vite 표준: 로고 이미지 import
 import logoUrl from '@/assets/icons/logo.svg'
@@ -437,7 +438,7 @@ const breadcrumbItems = computed(() => {
         </div>
       </div>
 
-      <i class="ri-notification-3-line icon"></i>
+      <NotificationDropdown />
 
       <div class="profile" @click="goMyPage" style="cursor: pointer">
         <div class="avatar">{{ avatarText }}</div>
