@@ -8,29 +8,33 @@
   >
     <el-table-column type="selection" width="48" />
 
-    <el-table-column prop="assetName" label="자원명" width="230" align="center" />
+    <el-table-column prop="assetName" label="자원명" min-width="350" align="center" />
 
     <!-- assetType -->
-    <el-table-column prop="assetType" label="자원 유형" width="210" align="center" />
+    <el-table-column prop="assetType" label="자원 유형" width="120" align="center">
+      <template #default="scope">
+        {{ scope.row.assetType === 'STATIC' || scope.row.assetType === 'static' ? '정적' : '동적' }}
+      </template>
+    </el-table-column>
 
     <!-- categoryName -->
-    <el-table-column prop="categoryName" label="카테고리" width="210" align="center" />
+    <el-table-column prop="categoryName" label="카테고리" width="180" align="center" />
 
     <!-- reservable (문구로 표시) -->
-    <el-table-column prop="reservable" label="예약 가능 여부" width="150" align="center">
+    <el-table-column prop="reservable" label="예약 가능 여부" width="140" align="center">
       <template #default="scope">
         <StatusTag :status="scope.row.reservable ? 'AVAILABLE' : 'UNAVAILABLE'" />
       </template>
     </el-table-column>
 
     <!-- needsApproval -->
-    <el-table-column prop="needsApproval" label="승인 필요" width="120" align="center">
+    <el-table-column prop="needsApproval" label="승인 필요" width="110" align="center">
       <template #default="scope">
         {{ scope.row.needsApproval ? '예' : '아니오' }}
       </template>
     </el-table-column>
 
-    <el-table-column label="예약하기" min-width="150" align="center">
+    <el-table-column label="예약하기" width="100" align="center">
       <template #default="scope">
         <el-button
           type="primary"
