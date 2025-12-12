@@ -9,9 +9,11 @@ axios.defaults.withCredentials = true
 
 // 요청 인터셉터 — Authorization 자동 추가
 api.interceptors.request.use((config) => {
+  // refresh 요청은 토큰 추가하지 않음 (쿠키로 처리)
   if (config.url.includes('/auth/refresh')) {
     return config
   }
+  // logout 요청은 토큰이 필요하므로 추가
   const token = localStorage.getItem('accessToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -53,7 +55,10 @@ api.interceptors.response.use(
       originalRequest._retry = true
 
       // 로그인/로그아웃 API는 토큰 리프레시하지 않음
-      if (originalRequest.url.includes('/auth/logout') || originalRequest.url.includes('/auth/login')) {
+      if (
+        originalRequest.url.includes('/auth/logout') ||
+        originalRequest.url.includes('/auth/login')
+      ) {
         return Promise.reject(error)
       }
 

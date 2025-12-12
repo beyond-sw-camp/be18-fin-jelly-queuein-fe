@@ -47,12 +47,25 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async logout() {
+      // SSE 연결 먼저 종료 (ERR_SOCKET_NOT_CONNECTED 방지)
       try {
-        await authApi.logout()
-      } catch {
-        //
+        const { sseService } = await import('@/services/sseService')
+        if (sseService && sseService.isConnected) {
+          sseService.disconnect()
+        }
+      } catch (err) {
+        console.warn('SSE disconnect failed:', err)
       }
 
+      // 로그아웃 API 호출
+      try {
+        await authApi.logout()
+      } catch (err) {
+        // 로그아웃 실패해도 로컬 정리는 진행
+        console.warn('Logout API failed:', err)
+      }
+
+      // 로컬 스토리지 정리
       localStorage.removeItem('accessToken')
       localStorage.removeItem('role')
       localStorage.removeItem('userName')
