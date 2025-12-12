@@ -83,7 +83,7 @@ import AssetTreeView from './components/AssetTreeView.vue'
 
 const route = useRoute()
 const router = useRouter()
-const assetId = ref(route.params.assetId)
+const assetId = ref(Number(route.params.assetId) || null)
 
 const asset = ref({})
 
@@ -159,7 +159,7 @@ onMounted(loadDetail)
 watch(
   () => route.params.assetId,
   (newId) => {
-    assetId.value = newId
+    assetId.value = Number(newId) || null
     loadDetail()
   },
 )

@@ -1,6 +1,6 @@
 <template>
   <div class="tab-full-wrapper">
-    <el-tabs v-model="active" class="reservation-tabs" @tab-click="onTabClick" type="line">
+    <el-tabs v-model="active" class="reservation-tabs" @tab-click="onTabClick">
       <el-tab-pane label="예약 현황" name="status" />
       <el-tab-pane label="예약 가능 자원 목록" name="available" />
       <el-tab-pane label="예약 신청" name="createReservation" />

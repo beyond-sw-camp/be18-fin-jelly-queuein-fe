@@ -1,34 +1,29 @@
 <template>
-  
-  <div class="tabs-full-row">
-    <ReservationTabs />
-  </div>
-  <div>
-    <!-- 헤더 -->
-    <div class="header-row">
-      <h2>예약 관리</h2>
-
-      <!-- <el-input
-      v-model="selectedFilters.assetName"
-      placeholder="검색어를 입력해주세요"
-      class="search-input"
-      @keyup.enter="refreshTable"
-    >
-      <template #append>
-        <el-button :icon="Search" @click="refreshTable" />
-      </template>
-    </el-input> -->
+  <div class="applied-reservations-wrapper">
+    <div class="tabs-full-row">
+      <ReservationTabs />
     </div>
+    <div>
+      <!-- 헤더 -->
+      <div class="header-row">
+        <h2>예약 관리</h2>
 
-    <ReservationFilters @change="handleFilterChange" />
+        <!-- <el-input
+        v-model="selectedFilters.assetName"
+        placeholder="검색어를 입력해주세요"
+        class="search-input"
+        @keyup.enter="refreshTable"
+      >
+        <template #append>
+          <el-button :icon="Search" @click="refreshTable" />
+        </template>
+      </el-input> -->
+      </div>
+
+      <ReservationFilters @change="handleFilterChange" />
 
       <!-- 예약 목록 -->
-      <ReservationTable
-        :rows="tableData"
-        :filters="selectedFilters"
-        :key="tableKey"
-        @open-detail="openDetailModal"
-      />
+      <ReservationTable :filters="selectedFilters" :key="tableKey" @open-detail="openDetailModal" />
 
       <ReservationDetailModal
         v-model:visible="modalOpen"
@@ -36,14 +31,15 @@
         @close="closeModal"
         @save-reason="updateReason"
         @approve="onApprove"
-        @reject="onReject" 
+        @reject="onReject"
       /><!-- 부모에서 emit reason 처리-->
     </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue"
-import api from "@/api/axios"
+import { ref, onMounted, watch } from 'vue'
+import api from '@/api/axios'
 
 import ReservationTabs from '@/components/reservation/ReservationTab.vue'
 import ReservationFilters from '@/components/reservation/ReservationFilter.vue'
@@ -65,12 +61,12 @@ const refreshTable = () => {
 
 const selectedFilters = ref({
   date: selectedDate.value,
-  assetName: "",       // 검색바 입력값 포함
-  assetType: "",
-  assetStatus: "",
-  categoryId: "",
-  layerZero: "",
-  layerOne: ""
+  assetName: '', // 검색바 입력값 포함
+  assetType: '',
+  assetStatus: '',
+  categoryId: '',
+  layerZero: '',
+  layerOne: '',
 })
 
 const tableData = ref([])
@@ -80,14 +76,12 @@ const modalOpen = ref(false)
 const reservationDetail = ref(null)
 const currentUserName = ref('')
 
-
-
-
-
 async function fetchAppliedReservations() {
   try {
     if (!selectedFilters.value.date) {
       console.warn('날짜가 없습니다.')
+      tableData.value = []
+      total.value = 0
       return
     }
 
@@ -178,15 +172,10 @@ function closeModal() {
   reservationDetail.value = null
 }
 
-
-
 const updateReason = ({ reservationId, reason }) => {
-  console.log("부모에서 받은 reason:", reason, "reservationId:", reservationId)
-  tableData.value = tableData.value.map(r =>
-    r.id === reservationId ? { ...r, reason } : r
-  )
+  console.log('부모에서 받은 reason:', reason, 'reservationId:', reservationId)
+  tableData.value = tableData.value.map((r) => (r.id === reservationId ? { ...r, reason } : r))
 }
-
 
 // 부모 컴포넌트
 async function onApprove(payload) {
@@ -303,7 +292,6 @@ async function onReject(payload) {
     ElMessage.error(errorMessage)
   }
 }
-
 
 function getKSTDateString() {
   const offset = 9 * 60 * 60 * 1000

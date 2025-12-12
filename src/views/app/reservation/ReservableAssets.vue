@@ -1,37 +1,40 @@
 <template>
-  <div class="tabs-full-row">
-    <ReservationTabs
-      @change="
-        (type) => {
-          selectedFilters.assetType = type
+  <div class="reservable-assets-wrapper">
+    <div class="tabs-full-row">
+      <ReservationTabs
+        @change="
+          (type) => {
+            selectedFilters.assetType = type
+            refreshTable()
+          }
+        "
+      />
+    </div>
+
+    <div class="header-row">
+      <h2>예약 가능 자원 조회</h2>
+    </div>
+
+    <!-- 🔹 ReservationFilters 사용 + @change 핸들러 연결 -->
+    <ReservationFilters @change="handleFilterChange" />
+
+    <ReservationTable
+      @select="openCreatePage"
+      :rows="tableData"
+      :total="total"
+      :date="selectedFilters.date"
+      @page-change="
+        (p) => {
+          selectedFilters.page = p
           refreshTable()
         }
       "
     />
   </div>
-
-  <div class="header-row">
-    <h2>예약 가능 자원 조회</h2>
-  </div>
-
-  <!-- 🔹 ReservationFilters 사용 + @change 핸들러 연결 -->
-  <ReservationFilters @change="handleFilterChange" />
-
-  <ReservationTable
-    @select="openCreatePage"
-    :rows="tableData"
-    :total="total"
-    :date="selectedFilters.date"
-    @page-change="
-      (p) => {
-        selectedFilters.page = p
-        refreshTable()
-      }
-    "
-  />
 </template>
 
 <script setup>
+import ReservationTabs from '@/components/reservation/ReservationTab.vue'
 import ReservationFilters from '@/components/reservation/ReservationFilter.vue'
 import ReservationTable from '@/components/reservation/ReservableAssetsTable.vue'
 import { ref, onMounted } from 'vue'
