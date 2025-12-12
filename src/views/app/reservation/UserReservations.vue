@@ -156,6 +156,8 @@ const convertAssetStatus = (status) => {
 const fetchReservations = async () => {
   try {
     console.log('🔄 fetchReservations 호출됨', route.path)
+    console.log('📋 현재 필터 상태:', selectedFilters.value)
+
     const params = {
       page: page.value - 1,
       size: pageSize.value,
@@ -178,13 +180,22 @@ const fetchReservations = async () => {
     console.log('📤 API 요청 파라미터:', params)
     const res = await reservationApi.getUserReservations(params)
     console.log('📥 API 응답:', res?.data)
+    console.log('📊 응답 데이터 상세:', {
+      content: res?.data?.content,
+      totalElements: res?.data?.totalElements,
+      totalPages: res?.data?.totalPages,
+    })
 
     rows.value = res?.data?.content ?? []
     total.value = res?.data?.totalElements ?? 0
 
     console.log('✅ 데이터 설정 완료 - rows:', rows.value.length, 'total:', total.value)
+    if (rows.value.length === 0) {
+      console.warn('⚠️ 데이터가 비어있습니다. 필터 조건을 확인해주세요.')
+    }
   } catch (err) {
     console.error('❌ 예약 조회 실패:', err)
+    console.error('❌ 에러 상세:', err.response?.data || err.message)
     rows.value = []
     total.value = 0
   }
@@ -309,13 +320,18 @@ const closeModal = () => {
 // ----------------------------
 // 라우트 경로 변경 감지 (같은 경로로 이동해도 감지)
 watch(
-  () => route.fullPath,
+  () => route.path,
   (newPath, oldPath) => {
     console.log('🔄 라우트 변경 감지:', oldPath, '->', newPath)
     if (newPath === '/app/reservations/me' || newPath.startsWith('/app/reservations/me')) {
       console.log('✅ 예약 현황 페이지로 이동 감지, 데이터 로드 시작')
-      page.value = 1
-      fetchReservations()
+      // 컴포넌트가 마운트된 후 실행되도록 지연
+      nextTick(() => {
+        setTimeout(() => {
+          page.value = 1
+          fetchReservations()
+        }, 100)
+      })
     }
   },
   { immediate: false },
@@ -327,7 +343,9 @@ onBeforeRouteUpdate((to, from) => {
   if (to.path === '/app/reservations/me') {
     page.value = 1
     nextTick(() => {
-      fetchReservations()
+      setTimeout(() => {
+        fetchReservations()
+      }, 100)
     })
   }
 })
@@ -338,8 +356,11 @@ const handleRouteTransitionComplete = (event) => {
   const targetPath = event?.detail?.path || route.path
   if (targetPath === '/app/reservations/me') {
     console.log('✅ 예약 현황 페이지로 이동 감지 (이벤트), 데이터 로드 시작')
-    page.value = 1
-    fetchReservations()
+    // Transition 완료 후 컴포넌트가 마운트된 후 실행
+    setTimeout(() => {
+      page.value = 1
+      fetchReservations()
+    }, 100)
   }
 }
 
@@ -347,49 +368,69 @@ const handleRouteTransitionComplete = (event) => {
 const handleTabChanged = (event) => {
   console.log('🎯 reservation-tab-changed 이벤트 수신', event?.detail)
   const targetPath = event?.detail?.path
-  if (targetPath === '/app/reservations/me') {
+  if (targetPath === '/app/reservations/me' || event?.detail?.tab === 'status') {
     console.log('✅ 예약 현황 탭 클릭 감지, 데이터 로드 시작')
-    // 약간의 지연을 두어 컴포넌트가 완전히 마운트된 후 실행
+    // 컴포넌트가 마운트된 후 실행되도록 충분한 지연
     setTimeout(() => {
       page.value = 1
       fetchReservations()
-    }, 150)
+    }, 200)
   }
 }
 
-// 필터 변경 감지
+// 필터 변경 감지 (초기 로드 시에는 실행하지 않음)
 watch(
   () => selectedFilters.value,
-  () => {
+  (newFilters, oldFilters) => {
+    // 초기 로드 시에는 실행하지 않음 (onMounted에서 처리)
+    if (!oldFilters || Object.keys(oldFilters).length === 0) return
+    console.log('🔄 필터 변경 감지:', newFilters)
     page.value = 1
     fetchReservations()
   },
   { deep: true },
 )
 
-// 이벤트 리스너를 setup 단계에서 바로 등록 (컴포넌트 마운트 전에도 작동)
-// 전역 이벤트 리스너로 등록하여 언마운트되어도 작동하도록
-if (typeof window !== 'undefined') {
-  console.log('📡 UserReservations setup - 이벤트 리스너 등록')
-  // 기존 리스너가 있으면 제거 후 재등록 (중복 방지)
+// 이벤트 리스너를 onMounted에서 등록하여 컴포넌트가 마운트된 후에만 작동하도록
+// 이렇게 하면 Transition 완료 후 컴포넌트가 마운트된 후에 리스너가 등록됨
+
+// 컴포넌트 마운트 시 초기 데이터 로드 (무조건 실행)
+onMounted(async () => {
+  console.log('🚀 UserReservations onMounted', route.path)
+  await nextTick()
+
+  // 이벤트 리스너 등록 (마운트 후에만 등록하여 안정성 확보)
+  console.log('📡 UserReservations onMounted - 이벤트 리스너 등록')
+  // 중복 등록 방지를 위해 먼저 제거 후 등록
   window.removeEventListener('reservation-tab-changed', handleTabChanged)
   window.removeEventListener('route-transition-complete', handleRouteTransitionComplete)
   window.addEventListener('reservation-tab-changed', handleTabChanged)
   window.addEventListener('route-transition-complete', handleRouteTransitionComplete)
-}
 
-// 컴포넌트 마운트 시 초기 데이터 로드 (무조건 실행)
-onMounted(() => {
-  console.log('🚀 UserReservations onMounted', route.path)
-  page.value = 1
-  fetchReservations()
+  // 약간의 지연을 두어 DOM이 완전히 렌더링된 후 실행
+  setTimeout(() => {
+    page.value = 1
+    fetchReservations()
+  }, 100)
 })
 
 // keep-alive로 인한 재활성화 시에도 데이터 갱신 (무조건 실행)
-onActivated(() => {
+onActivated(async () => {
   console.log('🔄 UserReservations onActivated', route.path)
-  page.value = 1
-  fetchReservations()
+  await nextTick()
+
+  // 이벤트 리스너 재등록 (재활성화 시에도)
+  // 중복 등록 방지를 위해 먼저 제거 후 등록
+  window.removeEventListener('reservation-tab-changed', handleTabChanged)
+  window.removeEventListener('route-transition-complete', handleRouteTransitionComplete)
+  window.addEventListener('reservation-tab-changed', handleTabChanged)
+  window.addEventListener('route-transition-complete', handleRouteTransitionComplete)
+
+  // 약간의 지연을 두어 DOM이 완전히 렌더링된 후 실행
+  setTimeout(() => {
+    page.value = 1
+    fetchReservations()
+  }, 100)
 })
 
 // 컴포넌트 언마운트 시 이벤트 리스너 제거
@@ -404,13 +445,57 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.header-row h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* 테이블 스타일 개선 */
+:deep(.el-table) {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.el-table__header) {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+:deep(.el-table th) {
+  background: transparent;
+  color: #374151;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 16px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+:deep(.el-table td) {
+  padding: 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+:deep(.el-table__row:hover) {
+  background: #f9fafb;
+}
+
+:deep(.el-table__row) {
+  transition: background 0.2s ease;
 }
 
 /* 테이블 가로 스크롤(유령 scrollbar) 제거 */

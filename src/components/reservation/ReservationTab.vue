@@ -36,17 +36,35 @@ function onTabClick(tab) {
   switch (tab.props.name) {
     case 'status':
       targetPath = '/app/reservations/me'
-      router.push('/app/reservations/me').then(() => {
-        // 라우터 이동 완료 후 이벤트 발생 (컴포넌트가 마운트된 후)
+      // 같은 경로에 있어도 이벤트를 발생시켜 데이터 새로고침
+      if (route.path === targetPath) {
+        console.log('📍 같은 경로 - 강제 새로고침')
         setTimeout(() => {
-          console.log('📢 reservation-tab-changed 이벤트 발생:', tab.props.name, targetPath)
+          console.log(
+            '📢 reservation-tab-changed 이벤트 발생 (같은 경로):',
+            tab.props.name,
+            targetPath,
+          )
           window.dispatchEvent(
             new CustomEvent('reservation-tab-changed', {
               detail: { tab: tab.props.name, path: targetPath },
             }),
           )
-        }, 100)
-      })
+        }, 50)
+      } else {
+        router.push('/app/reservations/me').then(() => {
+          // 라우터 이동 완료 후 이벤트 발생 (Transition 완료 후 컴포넌트가 마운트된 후)
+          // Transition 애니메이션이 400ms이므로, 충분한 시간을 두고 이벤트 발생
+          setTimeout(() => {
+            console.log('📢 reservation-tab-changed 이벤트 발생:', tab.props.name, targetPath)
+            window.dispatchEvent(
+              new CustomEvent('reservation-tab-changed', {
+                detail: { tab: tab.props.name, path: targetPath },
+              }),
+            )
+          }, 500)
+        })
+      }
       break
     case 'available':
       targetPath = '/app/reservations/available-assets'
@@ -101,6 +119,11 @@ watch(
   height: 40px !important;
   line-height: 40px !important;
   color: #6b7280;
+
+  /* 부드러운 색상 전환 */
+  transition:
+    color 0.3s ease,
+    font-weight 0.3s ease !important;
 }
 
 /* hover — 초록색 */
@@ -118,5 +141,6 @@ watch(
 .reservation-tabs :deep(.el-tabs__active-bar) {
   background-color: #00a950 !important;
   height: 3px !important;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
 </style>

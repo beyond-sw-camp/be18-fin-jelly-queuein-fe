@@ -377,6 +377,7 @@ const breadcrumbItems = computed(() => {
   if (segments.length === 0) return []
 
   // 중복 제거: permissions와 list가 연속으로 오면 permissions만 표시
+  // 숫자 세그먼트(PK)는 breadcrumb에서 제외
   const filtered = []
   for (let i = 0; i < segments.length; i++) {
     const current = segments[i]
@@ -386,6 +387,11 @@ const breadcrumbItems = computed(() => {
     if (current === 'permissions' && next === 'list') {
       filtered.push(current)
       i++ // list도 건너뛰기
+    }
+    // 숫자 세그먼트(PK)는 breadcrumb에서 제외
+    else if (/^\d+$/.test(current)) {
+      // 숫자 세그먼트는 건너뛰기 (PK이므로 표시하지 않음)
+      continue
     } else {
       filtered.push(current)
     }
