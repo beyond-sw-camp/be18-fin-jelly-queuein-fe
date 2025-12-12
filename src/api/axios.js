@@ -75,7 +75,8 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const res = await api.post('/auth/refresh')
+        const { authApi } = await import('./authApi')
+        const res = await authApi.refresh()
 
         const newAccess = res.data.accessToken
 

@@ -1,5 +1,5 @@
 import { notificationApi } from '@/api/notificationApi'
-import api from '@/api/axios'
+import { authApi } from '@/api/authApi'
 
 class SseService {
   constructor() {
@@ -16,7 +16,7 @@ class SseService {
   // 토큰 갱신 (최초 연결 시에만 사용)
   async refreshToken() {
     try {
-      const res = await api.post('/auth/refresh')
+      const res = await authApi.refresh()
       const newAccessToken = res.data.accessToken
       if (newAccessToken) {
         localStorage.setItem('accessToken', newAccessToken)
@@ -45,7 +45,7 @@ class SseService {
         await this.refreshToken()
         this.isInitialConnect = false
       }
-      
+
       this.eventSource = await notificationApi.subscribe()
 
       this.eventSource.onopen = () => {
@@ -76,16 +76,16 @@ class SseService {
 
       this.eventSource.onerror = (error) => {
         console.error('SSE error:', error)
-        
+
         // readyState 확인
         // 0: CONNECTING, 1: OPEN, 2: CLOSED
         if (this.eventSource.readyState === EventSource.CLOSED) {
           this.isConnected = false
-          
+
           if (onError) {
             onError(error)
           }
-          
+
           // 재연결 시도 (토큰 갱신 없이)
           this.scheduleReconnect(onMessage, onError)
         }
@@ -110,13 +110,15 @@ class SseService {
     }
 
     this.reconnectAttempts++
-    
+
     // Exponential backoff: 재연결 시도가 많을수록 대기 시간 증가
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
     const maxDelay = 30000 // 최대 30초
     const finalDelay = Math.min(delay, maxDelay)
-    
-    console.log(`Scheduling reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${finalDelay}ms...`)
+
+    console.log(
+      `Scheduling reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${finalDelay}ms...`,
+    )
 
     // 재연결 전에 토큰 갱신 (재연결 시에만, 최초 연결이 아닐 때)
     // 하지만 너무 자주 갱신하지 않도록 제한
@@ -124,7 +126,7 @@ class SseService {
 
     this.reconnectTimer = setTimeout(async () => {
       this.disconnect()
-      
+
       // 재연결 시 토큰 갱신 (제한적으로)
       if (shouldRefresh) {
         try {
@@ -133,7 +135,7 @@ class SseService {
           console.error('Token refresh failed during reconnect:', err)
         }
       }
-      
+
       await this.connect(onMessage, onError)
     }, finalDelay)
   }
@@ -179,4 +181,3 @@ class SseService {
 
 // 싱글톤 인스턴스
 export const sseService = new SseService()
-
