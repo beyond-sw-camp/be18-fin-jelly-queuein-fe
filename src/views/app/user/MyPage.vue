@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import { userApi } from '@/api/iam/userApi.js'
 
 import InputText from 'primevue/inputtext'
@@ -67,18 +68,49 @@ function onFileSelected(e) {
 // 데이터 로딩
 // ===============================
 async function loadMe() {
-  const res = await userApi.getMe()
-  me.value = res.data
+  try {
+    const res = await userApi.getMe()
 
-  form.value.userName = res.data.userName
-  form.value.email = res.data.email
+    if (!res?.data) {
+      ElMessage.error('사용자 정보를 불러올 수 없습니다.')
+      return
+    }
 
-  rawPhone.value = res.data.phone || ''
+    me.value = res.data
 
-  // birth 문자열 → Date 객체 변환
-  if (res.data.birth) {
-    const d = new Date(res.data.birth)
-    if (!isNaN(d)) form.value.birth = d
+    form.value.userName = res.data.userName || ''
+    form.value.email = res.data.email || ''
+
+    rawPhone.value = res.data.phone || ''
+
+    // birth 문자열 → Date 객체 변환
+    if (res.data.birth) {
+      const d = new Date(res.data.birth)
+      if (!isNaN(d)) {
+        form.value.birth = d
+      }
+    }
+  } catch (error) {
+    console.error('사용자 정보 조회 실패:', error)
+
+    let errorMessage = '사용자 정보를 불러오는데 실패했습니다.'
+
+    if (error.response) {
+      const status = error.response.status
+      const data = error.response.data
+
+      if (status === 401) {
+        errorMessage = data?.message || '로그인이 필요합니다.'
+      } else if (status === 404) {
+        errorMessage = data?.message || '사용자 정보를 찾을 수 없습니다.'
+      } else {
+        errorMessage = data?.message || `사용자 정보를 불러오는데 실패했습니다. (${status})`
+      }
+    } else if (error.request) {
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.'
+    }
+
+    ElMessage.error(errorMessage)
   }
 }
 
@@ -89,20 +121,46 @@ onMounted(loadMe)
 // ===============================
 async function saveMyInfo() {
   try {
+    // 유효성 검사
+    if (!form.value.userName || form.value.userName.trim() === '') {
+      ElMessage.warning('이름을 입력해주세요.')
+      return
+    }
+
     form.value.phone = rawPhone.value
 
     const payload = {
-      userName: form.value.userName,
-      phone: form.value.phone,
+      userName: form.value.userName.trim(),
+      phone: form.value.phone || '',
       birth: form.value.birth ? form.value.birth.toISOString().slice(0, 10) : null,
     }
 
     await userApi.updateMe(payload)
-    alert('내 정보가 수정되었습니다.')
-    loadMe()
+    ElMessage.success('내 정보가 수정되었습니다.')
+    await loadMe()
   } catch (e) {
-    console.error(e)
-    alert('수정 중 오류가 발생했습니다.')
+    console.error('정보 수정 실패:', e)
+
+    let errorMessage = '정보 수정에 실패했습니다.'
+
+    if (e.response) {
+      const status = e.response.status
+      const data = e.response.data
+
+      if (status === 400) {
+        errorMessage = data?.message || '입력 정보가 올바르지 않습니다.'
+      } else if (status === 403) {
+        errorMessage = data?.message || '정보 수정 권한이 없습니다.'
+      } else if (status === 409) {
+        errorMessage = data?.message || '이미 사용 중인 정보입니다.'
+      } else {
+        errorMessage = data?.message || `정보 수정에 실패했습니다. (${status})`
+      }
+    } else if (e.request) {
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.'
+    }
+
+    ElMessage.error(errorMessage)
   }
 }
 

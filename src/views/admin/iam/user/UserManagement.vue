@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { userApi } from '@/api/iam/userApi.js'
 import UserCreateDialog from '@/components/iam/UserCreateDialog.vue'
 
@@ -61,11 +62,19 @@ async function loadUsers() {
 
     const res = await userApi.searchUsers(params)
 
-    users.value = res.data.content
-    total.value = res.data.totalElements
+    if (res?.data) {
+      users.value = res.data.content || []
+      total.value = res.data.totalElements || 0
+    } else {
+      console.warn('응답 데이터 형식이 올바르지 않습니다.')
+      users.value = []
+      total.value = 0
+    }
   } catch (e) {
     console.error('[UserManagement] 사용자 조회 실패:', e)
-    alert('사용자 목록 조회 중 오류가 발생했습니다.')
+    ElMessage.error('사용자 목록을 불러오는데 실패했습니다.')
+    users.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -109,9 +118,37 @@ async function confirmDelete(userId) {
   if (!confirm('정말 삭제하시겠습니까?')) return
 
   try {
+    if (!userId || isNaN(userId)) {
+      ElMessage.warning('유효하지 않은 사용자 ID입니다.')
+      return
+    }
+
     await userApi.deleteUser(userId)
+    ElMessage.success('사용자가 삭제되었습니다.')
     await loadUsers() // 삭제 후 목록 재조회
   } catch (e) {
+    console.error('사용자 삭제 실패:', e)
+
+    let errorMessage = '사용자 삭제에 실패했습니다.'
+
+    if (e.response) {
+      const status = e.response.status
+      const data = e.response.data
+
+      if (status === 403) {
+        errorMessage = data?.message || '사용자 삭제 권한이 없습니다.'
+      } else if (status === 404) {
+        errorMessage = data?.message || '사용자를 찾을 수 없습니다.'
+      } else if (status === 409) {
+        errorMessage = data?.message || '사용자를 삭제할 수 없는 상태입니다.'
+      } else {
+        errorMessage = data?.message || `사용자 삭제에 실패했습니다. (${status})`
+      }
+    } else if (e.request) {
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.'
+    }
+
+    ElMessage.error(errorMessage)
     console.error('[UserManagement] 사용자 삭제 실패:', e)
     alert('사용자 삭제 중 오류가 발생했습니다.')
   }

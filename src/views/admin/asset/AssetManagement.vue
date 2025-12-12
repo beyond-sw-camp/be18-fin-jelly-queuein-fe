@@ -140,6 +140,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import api from '@/api/axios'
 import { assetApi } from '@/api/assetApi'
 
@@ -250,27 +251,41 @@ function mapSortField(field) {
 }
 
 async function loadAssets() {
-  const params = {
-    page: page.value,
-    size: size.value,
-    root: building.value || null,
-    oneDepth: location.value || null,
-    categoryId: category.value || null,
-    type: type.value || null,
-    status: status.value || null,
-    keyword: keyword.value || null,
-  }
+  try {
+    const params = {
+      page: page.value,
+      size: size.value,
+      root: building.value || null,
+      oneDepth: location.value || null,
+      categoryId: category.value || null,
+      type: type.value || null,
+      status: status.value || null,
+      keyword: keyword.value || null,
+    }
 
-  // 정렬 파라미터 추가 (Spring Data JPA 형식)
-  if (sortField.value) {
-    const direction = sortOrder.value === 1 ? 'asc' : 'desc'
-    const mappedField = mapSortField(sortField.value)
-    params.sort = `${mappedField},${direction}`
-  }
+    // 정렬 파라미터 추가 (Spring Data JPA 형식)
+    if (sortField.value) {
+      const direction = sortOrder.value === 1 ? 'asc' : 'desc'
+      const mappedField = mapSortField(sortField.value)
+      params.sort = `${mappedField},${direction}`
+    }
 
-  const res = await api.get('/assets/descendants', { params })
-  assets.value = res.data.content
-  total.value = res.data.totalElements
+    const res = await api.get('/assets/descendants', { params })
+
+    if (res?.data) {
+      assets.value = res.data.content || []
+      total.value = res.data.totalElements || 0
+    } else {
+      console.warn('응답 데이터 형식이 올바르지 않습니다.')
+      assets.value = []
+      total.value = 0
+    }
+  } catch (error) {
+    console.error('자원 목록 조회 실패:', error)
+    ElMessage.error('자원 목록을 불러오는데 실패했습니다.')
+    assets.value = []
+    total.value = 0
+  }
 }
 
 function onSort(event) {
@@ -282,22 +297,84 @@ function onSort(event) {
 
 async function confirmDelete() {
   try {
+    if (!deleteTarget.value?.assetId) {
+      ElMessage.warning('삭제할 자원을 선택해주세요.')
+      showDeleteModal.value = false
+      return
+    }
+
     await assetApi.delete(deleteTarget.value.assetId)
+    ElMessage.success('자원이 삭제되었습니다.')
     showDeleteModal.value = false
-    loadAssets()
+    await loadAssets()
   } catch (err) {
-    alert(err.response?.data?.message || '삭제 실패')
+    console.error('자원 삭제 실패:', err)
+
+    let errorMessage = '자원 삭제에 실패했습니다.'
+
+    if (err.response) {
+      const status = err.response.status
+      const data = err.response.data
+
+      if (status === 403) {
+        errorMessage = data?.message || '자원 삭제 권한이 없습니다.'
+      } else if (status === 404) {
+        errorMessage = data?.message || '자원을 찾을 수 없습니다.'
+      } else if (status === 409) {
+        errorMessage = data?.message || '자원을 사용 중이어서 삭제할 수 없습니다.'
+      } else {
+        errorMessage = data?.message || `자원 삭제에 실패했습니다. (${status})`
+      }
+    } else if (err.request) {
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.'
+    }
+
+    ElMessage.error(errorMessage)
   }
 }
 
 async function confirmMove(newParentName) {
   try {
-    await assetApi.move(moveTarget.value.assetId, newParentName)
-    alert('자원이 이동되었습니다.')
+    if (!moveTarget.value?.assetId) {
+      ElMessage.warning('이동할 자원을 선택해주세요.')
+      closeMoveModal()
+      return
+    }
+
+    if (!newParentName || newParentName.trim() === '') {
+      ElMessage.warning('부모 자원명을 입력해주세요.')
+      return
+    }
+
+    await assetApi.move(moveTarget.value.assetId, newParentName.trim())
+    ElMessage.success('자원이 이동되었습니다.')
     closeMoveModal()
-    loadAssets()
+    await loadAssets()
   } catch (err) {
-    alert(err.response?.data?.message || '이동 실패')
+    console.error('자원 이동 실패:', err)
+
+    let errorMessage = '자원 이동에 실패했습니다.'
+
+    if (err.response) {
+      const status = err.response.status
+      const data = err.response.data
+
+      if (status === 400) {
+        errorMessage = data?.message || '요청 정보가 올바르지 않습니다.'
+      } else if (status === 403) {
+        errorMessage = data?.message || '자원 이동 권한이 없습니다.'
+      } else if (status === 404) {
+        errorMessage = data?.message || '자원을 찾을 수 없습니다.'
+      } else if (status === 409) {
+        errorMessage = data?.message || '이동할 수 없는 상태입니다.'
+      } else {
+        errorMessage = data?.message || `자원 이동에 실패했습니다. (${status})`
+      }
+    } else if (err.request) {
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.'
+    }
+
+    ElMessage.error(errorMessage)
   }
 }
 

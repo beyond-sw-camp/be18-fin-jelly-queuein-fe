@@ -22,6 +22,7 @@
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -40,8 +41,25 @@ const modalOpen = ref(false)
 const reservationDetail = ref(null)
 
 async function fetchWeekReservations(start) {
-  const res = await reservationApi.getWeeklyReservations(start)
-  return res.data
+  try {
+    if (!start) {
+      console.error('시작 날짜가 없습니다.')
+      return { timeSlots: [] }
+    }
+
+    const res = await reservationApi.getWeeklyReservations(start)
+
+    if (res?.data) {
+      return res.data
+    } else {
+      console.warn('응답 데이터 형식이 올바르지 않습니다.')
+      return { timeSlots: [] }
+    }
+  } catch (error) {
+    console.error('주간 예약 조회 실패:', error)
+    ElMessage.error('예약 정보를 불러오는데 실패했습니다.')
+    return { timeSlots: [] }
+  }
 }
 
 /* 예약 상태별 옅은 색상 매핑 */
@@ -367,34 +385,64 @@ function hexToRgba(hex, alpha) {
 ------------------------------------ */
 const openDetailModal = async (reservationId) => {
   try {
+    if (!reservationId || isNaN(reservationId)) {
+      ElMessage.warning('유효하지 않은 예약 ID입니다.')
+      return
+    }
+
     const res = await reservationApi.getReservationDetail(reservationId)
+
+    if (!res?.data) {
+      ElMessage.error('예약 정보를 불러올 수 없습니다.')
+      return
+    }
+
     const d = res.data
 
     reservationDetail.value = {
       id: d.reservationId,
-      name: d.assetName,
-      status: d.reservationStatus,
-      usage: d.reservationStatus,
-      isApproved: d.isApproved,
-      reserver: d.applicantName,
-      approver: d.respondentName,
-      assetStatus: d.assetStatus,
-      date: d.date,
+      name: d.assetName || '',
+      status: d.reservationStatus || '',
+      usage: d.reservationStatus || '',
+      isApproved: d.isApproved ?? false,
+      reserver: d.applicantName || '',
+      approver: d.respondentName || '',
+      assetStatus: d.assetStatus || '',
+      date: d.date || '',
 
-      startAt: d.startAt,
-      endAt: d.endAt,
-      actualStartAt: d.actualStartAt,
-      actualEndAt: d.actualEndAt,
+      startAt: d.startAt || '',
+      endAt: d.endAt || '',
+      actualStartAt: d.actualStartAt || '',
+      actualEndAt: d.actualEndAt || '',
 
-      participants: d.attendants,
+      participants: d.attendants || [],
 
-      reason: d.reason,
-      note: d.description,
+      reason: d.reason || '',
+      note: d.description || '',
     }
 
     modalOpen.value = true
   } catch (err) {
     console.error('상세 조회 실패:', err)
+
+    let errorMessage = '예약 상세 정보를 불러오는데 실패했습니다.'
+
+    if (err.response) {
+      const status = err.response.status
+      const data = err.response.data
+
+      if (status === 404) {
+        errorMessage = data?.message || '예약을 찾을 수 없습니다.'
+      } else if (status === 403) {
+        errorMessage = data?.message || '예약 조회 권한이 없습니다.'
+      } else {
+        errorMessage = data?.message || `예약 상세 정보를 불러오는데 실패했습니다. (${status})`
+      }
+    } else if (err.request) {
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.'
+    }
+
+    ElMessage.error(errorMessage)
   }
 }
 
@@ -403,7 +451,13 @@ const openDetailModal = async (reservationId) => {
 ------------------------------------ */
 const handleStart = async (id) => {
   try {
+    if (!id || isNaN(id)) {
+      ElMessage.warning('유효하지 않은 예약 ID입니다.')
+      return
+    }
+
     await reservationApi.startUsing(id)
+    ElMessage.success('사용이 시작되었습니다.')
     modalOpen.value = false
     const api = calendarRef.value?.getApi()
     if (api) {
@@ -414,12 +468,41 @@ const handleStart = async (id) => {
     }
   } catch (err) {
     console.error('사용 시작 실패:', err)
+
+    let errorMessage = '사용 시작에 실패했습니다.'
+
+    if (err.response) {
+      const status = err.response.status
+      const data = err.response.data
+
+      if (status === 400) {
+        errorMessage = data?.message || '요청 정보가 올바르지 않습니다.'
+      } else if (status === 403) {
+        errorMessage = data?.message || '사용 시작 권한이 없습니다.'
+      } else if (status === 404) {
+        errorMessage = data?.message || '예약을 찾을 수 없습니다.'
+      } else if (status === 409) {
+        errorMessage = data?.message || '예약 상태가 변경되었습니다.'
+      } else {
+        errorMessage = data?.message || `사용 시작에 실패했습니다. (${status})`
+      }
+    } else if (err.request) {
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.'
+    }
+
+    ElMessage.error(errorMessage)
   }
 }
 
 const handleEnd = async (id) => {
   try {
+    if (!id || isNaN(id)) {
+      ElMessage.warning('유효하지 않은 예약 ID입니다.')
+      return
+    }
+
     await reservationApi.endUsing(id)
+    ElMessage.success('사용이 종료되었습니다.')
     modalOpen.value = false
     const api = calendarRef.value?.getApi()
     if (api) {
@@ -430,12 +513,41 @@ const handleEnd = async (id) => {
     }
   } catch (err) {
     console.error('사용 종료 실패:', err)
+
+    let errorMessage = '사용 종료에 실패했습니다.'
+
+    if (err.response) {
+      const status = err.response.status
+      const data = err.response.data
+
+      if (status === 400) {
+        errorMessage = data?.message || '요청 정보가 올바르지 않습니다.'
+      } else if (status === 403) {
+        errorMessage = data?.message || '사용 종료 권한이 없습니다.'
+      } else if (status === 404) {
+        errorMessage = data?.message || '예약을 찾을 수 없습니다.'
+      } else if (status === 409) {
+        errorMessage = data?.message || '예약 상태가 변경되었습니다.'
+      } else {
+        errorMessage = data?.message || `사용 종료에 실패했습니다. (${status})`
+      }
+    } else if (err.request) {
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.'
+    }
+
+    ElMessage.error(errorMessage)
   }
 }
 
 const handleCancel = async (id) => {
   try {
+    if (!id || isNaN(id)) {
+      ElMessage.warning('유효하지 않은 예약 ID입니다.')
+      return
+    }
+
     await reservationApi.cancel(id)
+    ElMessage.success('예약이 취소되었습니다.')
     modalOpen.value = false
     const api = calendarRef.value?.getApi()
     if (api) {
@@ -446,6 +558,29 @@ const handleCancel = async (id) => {
     }
   } catch (err) {
     console.error('예약 취소 실패:', err)
+
+    let errorMessage = '예약 취소에 실패했습니다.'
+
+    if (err.response) {
+      const status = err.response.status
+      const data = err.response.data
+
+      if (status === 400) {
+        errorMessage = data?.message || '요청 정보가 올바르지 않습니다.'
+      } else if (status === 403) {
+        errorMessage = data?.message || '예약 취소 권한이 없습니다.'
+      } else if (status === 404) {
+        errorMessage = data?.message || '예약을 찾을 수 없습니다.'
+      } else if (status === 409) {
+        errorMessage = data?.message || '예약 상태가 변경되어 취소할 수 없습니다.'
+      } else {
+        errorMessage = data?.message || `예약 취소에 실패했습니다. (${status})`
+      }
+    } else if (err.request) {
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크를 확인해주세요.'
+    }
+
+    ElMessage.error(errorMessage)
   }
 }
 
