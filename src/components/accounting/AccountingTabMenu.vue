@@ -72,7 +72,7 @@ watch(
   width: 100%;
 }
 
-/* ⭐ Element Plus 기본 탭 스타일과 동일하게 설정 */
+/* Element Plus 기본 탭 스타일과 동일하게 설정 */
 .accounting-tabs :deep(.el-tabs__item) {
   flex: 1;
   text-align: center;

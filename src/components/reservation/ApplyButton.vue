@@ -3,7 +3,7 @@
     <button class="apply-btn" @click="goSchedule">
       신청하기
     </button>
-  </div>  
+  </div>
 </template>
 
 <script setup>

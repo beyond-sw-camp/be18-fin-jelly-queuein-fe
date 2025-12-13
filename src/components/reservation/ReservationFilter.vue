@@ -162,7 +162,7 @@ watch(
   padding-right: 12px !important;
 }
 
-/* 🔥 반응형: 화면이 좁아지면 3등분 */
+/* 반응형: 화면이 좁아지면 3등분 */
 @media (max-width: 1200px) {
   .filter-row > .el-col {
     flex: 1 1 calc(33.33% - 12px); /* 한 줄에 3개 */
@@ -176,7 +176,7 @@ watch(
   }
 }
 
-/* 🔥 모바일: 1개씩 */
+/* 모바일: 1개씩 */
 @media (max-width: 600px) {
   .filter-row > .el-col {
     flex: 1 1 100%; /* 한 줄에 하나 */

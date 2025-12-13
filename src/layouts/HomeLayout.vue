@@ -11,7 +11,7 @@ import AccountingTabs from '@/components/accounting/AccountingTabMenu.vue'
 import ChatWidget from '@/components/chat/ChatWidget.vue'
 
 /* ---------------------------
-   🔥 경로 기반 탭 자동 표시
+   경로 기반 탭 자동 표시
 --------------------------- */
 const route = useRoute()
 
@@ -26,7 +26,7 @@ const currentTabType = computed(() => {
 })
 
 /* ---------------------------
-   🔥 사이드바 동작 (고정 + hover)
+   사이드바 동작 (고정 + hover)
 --------------------------- */
 const isFixedOpen = ref(false)
 const isHoverOpen = ref(false)
@@ -46,7 +46,7 @@ function closeHover() {
 }
 
 /* ---------------------------
-   🔥 페이지 전환 효과
+   페이지 전환 효과
 --------------------------- */
 const previousPath = ref(null)
 const transitionName = ref('fade')
@@ -117,7 +117,7 @@ function onTransitionEnter() {
       @close-sidebar="isFixedOpen = false"
     />
 
-    <!-- 🔥 헤더 바로 아래 탭 메뉴 -->
+    <!-- 헤더 바로 아래 탭 메뉴 -->
     <div v-if="currentTabType" class="tab-wrapper">
       <ReservationTabs v-if="currentTabType === 'reservation'" />
       <AccountingTabs v-if="currentTabType === 'accounting'" />
@@ -151,7 +151,7 @@ function onTransitionEnter() {
 .tab-wrapper {
   background: white;
 
-  /* 🔥 모든 padding 제거 → 탭이 상단에 딱 붙음 */
+  /* 모든 padding 제거 → 탭이 상단에 딱 붙음 */
   padding: 0;
 
   /* 정산 탭처럼 탭만 표시되도록 */
