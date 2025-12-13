@@ -198,28 +198,28 @@ watch(
 
     <!-- 통계 카드 -->
     <div class="stats-grid">
-      <Card class="stat-card users">
+      <Card class="stat-card users" @click="router.push('/admin/users')">
         <template #content>
           <div class="stat-content">
             <div class="stat-icon">
               <i class="pi pi-users"></i>
             </div>
-            <div class="stat-info" @click="router.push('/admin/users')">
+            <div class="stat-info">
               <div class="stat-value">{{ stats.totalUsers }}</div>
               <div class="stat-label">전체 사용자</div>
             </div>
-            <Button icon="pi pi-arrow-right" text rounded @click="router.push('/admin/users')" />
+            <Button icon="pi pi-arrow-right" text rounded @click.stop="router.push('/admin/users')" />
           </div>
         </template>
       </Card>
 
-      <Card class="stat-card reservations">
+      <Card class="stat-card reservations" @click="router.push('/admin/reservations/applied')">
         <template #content>
           <div class="stat-content">
             <div class="stat-icon">
               <i class="pi pi-calendar"></i>
             </div>
-            <div class="stat-info" @click="router.push('/admin/reservations/applied')">
+            <div class="stat-info">
               <div class="stat-value">{{ stats.totalReservations }}</div>
               <div class="stat-label">전체 예약</div>
             </div>
@@ -227,19 +227,19 @@ watch(
               icon="pi pi-arrow-right"
               text
               rounded
-              @click="router.push('/admin/reservations/applied')"
+              @click.stop="router.push('/admin/reservations/applied')"
             />
           </div>
         </template>
       </Card>
 
-      <Card class="stat-card pending">
+      <Card class="stat-card pending" @click="router.push('/admin/reservations/applied')">
         <template #content>
           <div class="stat-content">
             <div class="stat-icon">
               <i class="pi pi-clock"></i>
             </div>
-            <div class="stat-info" @click="router.push('/admin/reservations/applied')">
+            <div class="stat-info">
               <div class="stat-value">{{ stats.pendingReservations }}</div>
               <div class="stat-label">대기중인 예약</div>
             </div>
@@ -247,23 +247,23 @@ watch(
               icon="pi pi-arrow-right"
               text
               rounded
-              @click="router.push('/admin/reservations/applied')"
+              @click.stop="router.push('/admin/reservations/applied')"
             />
           </div>
         </template>
       </Card>
 
-      <Card class="stat-card assets">
+      <Card class="stat-card assets" @click="router.push('/admin/assets')">
         <template #content>
           <div class="stat-content">
             <div class="stat-icon">
               <i class="pi pi-box"></i>
             </div>
-            <div class="stat-info" @click="router.push('/admin/assets')">
+            <div class="stat-info">
               <div class="stat-value">{{ stats.totalAssets }}</div>
               <div class="stat-label">전체 자원</div>
             </div>
-            <Button icon="pi pi-arrow-right" text rounded @click="router.push('/admin/assets')" />
+            <Button icon="pi pi-arrow-right" text rounded @click.stop="router.push('/admin/assets')" />
           </div>
         </template>
       </Card>
@@ -271,7 +271,7 @@ watch(
 
     <!-- 빠른 액션 -->
     <div class="actions-grid">
-      <Card class="action-card">
+      <Card class="action-card" @click="router.push('/admin/users')">
         <template #title>
           <div class="card-title">
             <i class="pi pi-users"></i>
@@ -285,13 +285,13 @@ watch(
               label="사용자 관리"
               icon="pi pi-arrow-right"
               outlined
-              @click="router.push('/admin/users')"
+              @click.stop="router.push('/admin/users')"
             />
           </div>
         </template>
       </Card>
 
-      <Card class="action-card">
+      <Card class="action-card" @click="router.push('/admin/roles')">
         <template #title>
           <div class="card-title">
             <i class="pi pi-shield"></i>
@@ -307,21 +307,21 @@ watch(
                 icon="pi pi-arrow-right"
                 outlined
                 severity="info"
-                @click="router.push('/admin/roles')"
+                @click.stop="router.push('/admin/roles')"
               />
               <Button
                 label="권한 관리"
                 icon="pi pi-arrow-right"
                 outlined
                 severity="help"
-                @click="router.push('/admin/permissions/list')"
+                @click.stop="router.push('/admin/permissions/list')"
               />
             </div>
           </div>
         </template>
       </Card>
 
-      <Card class="action-card">
+      <Card class="action-card" @click="router.push('/admin/assets')">
         <template #title>
           <div class="card-title">
             <i class="pi pi-box"></i>
@@ -336,13 +336,13 @@ watch(
               icon="pi pi-arrow-right"
               outlined
               severity="success"
-              @click="router.push('/admin/assets')"
+              @click.stop="router.push('/admin/assets')"
             />
           </div>
         </template>
       </Card>
 
-      <Card class="action-card">
+      <Card class="action-card" @click="router.push('/admin/accounting/usage-history')">
         <template #title>
           <div class="card-title">
             <i class="pi pi-chart-line"></i>
@@ -357,7 +357,7 @@ watch(
               icon="pi pi-arrow-right"
               outlined
               severity="warning"
-              @click="router.push('/admin/accounting/usage-history')"
+              @click.stop="router.push('/admin/accounting/usage-history')"
             />
           </div>
         </template>
@@ -365,7 +365,7 @@ watch(
     </div>
 
     <!-- 사용법 가이드 -->
-    <Card class="guide-card">
+    <Card class="guide-card" @click="router.push('/admin/guide')">
       <template #title>
         <div class="card-title">
           <i class="pi pi-book"></i>
@@ -379,7 +379,7 @@ watch(
             label="사용법 위키 보기"
             icon="pi pi-external-link"
             outlined
-            @click="router.push('/admin/guide')"
+            @click.stop="router.push('/admin/guide')"
           />
         </div>
       </template>
@@ -482,7 +482,6 @@ watch(
 
 .stat-info {
   flex: 1;
-  cursor: pointer;
 }
 
 .stat-value {
@@ -512,6 +511,7 @@ watch(
   transition:
     transform 0.2s,
     box-shadow 0.2s;
+  cursor: pointer;
 }
 
 .action-card:hover {
@@ -557,6 +557,15 @@ watch(
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.guide-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .guide-card :deep(.p-card-title) {
