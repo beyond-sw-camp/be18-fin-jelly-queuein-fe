@@ -23,6 +23,8 @@ const loading = ref(false)
 
 // 펼침 여부 roleId → boolean
 const expanded = ref({})
+// 권한 설명 표시 여부 permissionId → boolean
+const hoveredPermission = ref(null)
 
 // 역할 생성/수정 다이얼로그 상태
 const showDialog = ref(false)
@@ -227,12 +229,24 @@ function navigateToUsersWithRole(roleName) {
           <Transition name="perm-expand">
             <div v-if="expanded[role.roleId]" class="perm-list-wrapper">
               <div class="perm-list">
-                <Chip
+                <div
                   v-for="p in role.permissions"
                   :key="p.permissionId"
-                  :label="p.permissionName"
-                  class="perm-chip"
-                />
+                  class="perm-item"
+                  @mouseenter="hoveredPermission = p.permissionId"
+                  @mouseleave="hoveredPermission = null"
+                >
+                  <Chip
+                    :label="p.permissionName"
+                    class="perm-chip"
+                  />
+                  <div
+                    v-if="p.permissionDescription && hoveredPermission === p.permissionId"
+                    class="perm-description"
+                  >
+                    {{ p.permissionDescription }}
+                  </div>
+                </div>
               </div>
             </div>
           </Transition>
@@ -387,9 +401,57 @@ function navigateToUsersWithRole(roleName) {
 
 .perm-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
   margin-top: 12px;
+}
+
+.perm-item {
+  position: relative;
+  width: 100%;
+}
+
+.perm-description {
+  display: block;
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 8px;
+  font-size: 12px;
+  color: white;
+  z-index: 100;
+  white-space: normal;
+  width: 200px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  line-height: 1.5;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.perm-description::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 6px solid #3b82f6;
 }
 
 /* 권한 목록 확장/축소 전환 애니메이션 */
