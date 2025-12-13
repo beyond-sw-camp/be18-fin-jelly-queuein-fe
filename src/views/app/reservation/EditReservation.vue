@@ -24,15 +24,15 @@
     <!-- 예약 시간 선택 -->
     <div class="time-section">
       <h2>예약 시간 선택</h2>
-      <TimeBar 
-        :blocks="timeBlocks" 
+      <TimeBar
+        :blocks="timeBlocks"
         v-model="selectedHours"
       />
     </div>
 
     <!-- 선택된 참여자 표시
     <div v-if="selectedUsers.length" class="selected-users">
-      선택된 참여자: 
+      선택된 참여자:
       <span v-for="user in selectedUsers" :key="user.id" class="user-chip">
         {{ user.name }}
       </span>
@@ -67,9 +67,9 @@ const router = useRouter()
 const route = useRoute()
 
 // 목록 페이지에서 전달한 assetId와 date → params 로 변경!
-const assetId = Number(route.query.assetId) 
+const assetId = Number(route.query.assetId)
 
-const selectedDate = ref(route.query.date) 
+const selectedDate = ref(route.query.date)
 const assetName = route.query.assetName?.toString() ?? ""
 
 // 자원 정보
@@ -88,7 +88,7 @@ const note = ref("")
 // -------------------------------
 //  예약 가능 시간 조회 API
 // -------------------------------
-const today = new Date().toLocaleDateString('en-CA')  
+const today = new Date().toLocaleDateString('en-CA')
 
 const rawDate = route.query.date
 const initialDate =

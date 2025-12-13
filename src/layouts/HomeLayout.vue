@@ -6,7 +6,6 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 
-import ReservationTabs from '@/components/reservation/ReservationTab.vue'
 import AccountingTabs from '@/components/accounting/AccountingTabMenu.vue'
 import ChatWidget from '@/components/chat/ChatWidget.vue'
 
@@ -118,9 +117,8 @@ function onTransitionEnter() {
     />
 
     <!-- 헤더 바로 아래 탭 메뉴 -->
-    <div v-if="currentTabType" class="tab-wrapper">
-      <ReservationTabs v-if="currentTabType === 'reservation'" />
-      <AccountingTabs v-if="currentTabType === 'accounting'" />
+    <div v-if="currentTabType === 'accounting'" class="tab-wrapper">
+      <AccountingTabs />
     </div>
 
     <!-- 메인 컨텐츠 -->

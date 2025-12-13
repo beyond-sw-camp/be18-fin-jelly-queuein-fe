@@ -1,14 +1,7 @@
 <template>
   <div class="reservable-assets-wrapper">
     <div class="tabs-full-row">
-      <ReservationTabs
-        @change="
-          (type) => {
-            selectedFilters.assetType = type
-            refreshTable()
-          }
-        "
-      />
+      <ReservationTabs />
     </div>
 
     <div class="header-row">
