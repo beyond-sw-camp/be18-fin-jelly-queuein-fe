@@ -1,12 +1,13 @@
 <!-- file: src/views/admin/iam/role/RoleManagement.vue -->
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { roleApi } from '@/api/iam/roleApi.js'
 
 import IamTabs from '@/components/iam/IamTabs.vue'
 
 const route = useRoute()
+const router = useRouter()
 
 // PrimeVue
 import Card from 'primevue/card'
@@ -206,9 +207,9 @@ async function deleteRole(role) {
         <template #content>
           <p class="role-desc">{{ role.roleDescription }}</p>
 
-          <!-- 펼침/접기 버튼 -->
+          <!-- 권한 펼침/접기 -->
           <div class="perm-header" @click="toggleExpand(role.roleId)">
-            <span>Permissions</span>
+            <span>권한 {{ role.permissions?.length || 0 }}개</span>
             <i :class="expanded[role.roleId] ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
           </div>
 
@@ -321,14 +322,54 @@ async function deleteRole(role) {
   margin-bottom: 10px;
 }
 
+.perm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #DBEAFE;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 12px;
+}
+
+.perm-header:hover {
+  background: #bfdbfe;
+}
+
+.perm-header span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3B82F6;
+}
+
+.perm-header i {
+  font-size: 14px;
+  color: #3B82F6;
+}
+
 .perm-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: 12px;
 }
 
 .perm-chip {
-  background: #f0f0f0;
+  background: #DBEAFE;
+  color: #3B82F6;
+  border: none;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+}
+
+/* PrimeVue Chip 스타일 오버라이드 */
+.perm-chip :deep(.p-chip-text) {
+  color: #3B82F6;
+  font-weight: 500;
 }
 
 .dialog-body {

@@ -6,7 +6,7 @@ import { hasRole } from '@/utils/role'
 import NotificationDropdown from '@/components/notification/NotificationDropdown.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
-// Vue 3 + Vite 표준: 로고 이미지 import
+// 로고 이미지 import
 import logoUrl from '@/assets/icons/logo.svg'
 
 const route = useRoute()
@@ -23,7 +23,6 @@ const showLogoutModal = ref(false)
 // 검색 가능한 메뉴 목록 (권한별)
 const searchableMenus = computed(() => {
   const menus = []
-  const role = localStorage.getItem('role') || ''
   const isAdminOrManager = hasRole('MANAGER')
   const isAdminOnly = hasRole('ADMIN')
 
