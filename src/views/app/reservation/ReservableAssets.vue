@@ -1,5 +1,7 @@
 <template>
   <div class="reservable-assets-wrapper">
+    <LoadingSpinner :visible="isLoading" message="예약 가능 자원 목록을 불러오는 중입니다." />
+
     <div class="tabs-full-row">
       <ReservationTabs />
     </div>
@@ -30,6 +32,7 @@
 import ReservationTabs from '@/components/reservation/ReservationTab.vue'
 import ReservationFilters from '@/components/reservation/ReservationFilter.vue'
 import ReservationTable from '@/components/reservation/ReservableAssetsTable.vue'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
@@ -52,6 +55,7 @@ const selectedFilters = ref({
 
 const tableData = ref([])
 const total = ref(0)
+const isLoading = ref(false)
 
 // 🔹 UserReservation 방식: handleFilterChange 정의
 const handleFilterChange = (filters) => {
@@ -77,6 +81,7 @@ async function fetchReservableAssets() {
       return
     }
 
+    isLoading.value = true
     const params = { ...selectedFilters.value }
 
     // 빈 값 제거
@@ -101,6 +106,8 @@ async function fetchReservableAssets() {
     ElMessage.error('예약 가능 자원을 불러오는데 실패했습니다.')
     tableData.value = []
     total.value = 0
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -143,7 +150,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
-  padding-bottom: 20px;
+  padding-bottom: 24px;
   border-bottom: 2px solid #e5e7eb;
 }
 
@@ -155,6 +162,6 @@ onMounted(() => {
 }
 
 .tabs-full-row {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 </style>

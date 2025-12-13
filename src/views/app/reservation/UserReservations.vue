@@ -1,5 +1,7 @@
 <template>
   <div>
+    <LoadingSpinner :visible="isLoading" message="예약 정보를 불러오는 중입니다." />
+
     <!-- 헤더 -->
     <div class="header-row">
       <h2>사용자 예약 내용 조회</h2>
@@ -90,6 +92,7 @@ import { useRoute, onBeforeRouteUpdate } from 'vue-router'
 import ReservationFilters from '@/components/reservation/ReservationFilter.vue'
 import ReservationDetailModal from '@/components/reservation/ReservationDetailModal.vue'
 import StatusTag from '@/components/reservation/ReservationStatus.vue'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { reservationApi } from '@/api/reservationApi'
 
 const route = useRoute()
@@ -495,7 +498,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
-  padding-bottom: 20px;
+  padding-bottom: 24px;
   border-bottom: 2px solid #e5e7eb;
 }
 

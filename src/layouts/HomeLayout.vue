@@ -168,8 +168,8 @@ function onTransitionEnter() {
   overflow-y: auto;
   overflow-x: hidden; /* 슬라이드 애니메이션을 위한 overflow-x 숨김 */
 
-  /* 화면 내용은 적당히 padding 유지 */
-  padding: 20px;
+  /* 화면 내용은 적당히 padding 유지 - 더 넓은 간격 */
+  padding: 32px;
   background: white;
   box-sizing: border-box;
 

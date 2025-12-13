@@ -86,6 +86,16 @@ async function loadUsers() {
 
 // 마운트 시 데이터 로드
 onMounted(() => {
+  // 쿼리 파라미터에서 역할 필터 적용
+  if (route.query.role) {
+    const roleValue = Array.isArray(route.query.role) ? route.query.role[0] : route.query.role
+    // roleOptions에서 해당 역할 찾기
+    const roleOption = roleOptions.find(opt => opt.value === roleValue)
+    if (roleOption) {
+      search.value.roleName = roleOption.value
+    }
+  }
+
   // 이전 경로 확인 (permission에서 온 경우 재로드)
   const prevPath = sessionStorage.getItem('previousRoutePath')
   if (prevPath && prevPath !== '/admin/users' && prevPath.startsWith('/admin/permissions')) {
@@ -106,10 +116,40 @@ watch(
     // 사용자 페이지로 이동할 때 (다른 페이지에서 온 경우)
     if (newPath === '/admin/users' && oldPath && oldPath !== '/admin/users') {
       console.log('[UserManagement] 경로 변경 감지:', { from: oldPath, to: newPath })
+      // 쿼리 파라미터에서 역할 필터 적용
+      if (route.query.role) {
+        const roleValue = Array.isArray(route.query.role) ? route.query.role[0] : route.query.role
+        const roleOption = roleOptions.find(opt => opt.value === roleValue)
+        if (roleOption) {
+          search.value.roleName = roleOption.value
+        }
+      }
       // Transition 완료를 기다림 (300ms + 약간의 여유)
       await new Promise((resolve) => setTimeout(resolve, 350))
       await nextTick()
       loadUsers()
+    }
+  },
+  { immediate: false },
+)
+
+// 쿼리 파라미터 변경 감지 (같은 페이지에서 쿼리만 변경된 경우)
+watch(
+  () => route.query.role,
+  (newRole) => {
+    if (route.path === '/admin/users') {
+      if (newRole) {
+        const roleValue = Array.isArray(newRole) ? newRole[0] : newRole
+        const roleOption = roleOptions.find(opt => opt.value === roleValue)
+        if (roleOption) {
+          search.value.roleName = roleOption.value
+          loadUsers()
+        }
+      } else {
+        // role 쿼리가 없으면 필터 초기화
+        search.value.roleName = null
+        loadUsers()
+      }
     }
   },
   { immediate: false },

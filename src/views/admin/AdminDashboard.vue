@@ -7,6 +7,7 @@ import { assetApi } from '@/api/assetApi.js'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
 // 3D 효과를 위한 ref
 const statCards = ref([])
@@ -185,6 +186,8 @@ watch(
 
 <template>
   <div class="admin-dashboard">
+    <LoadingSpinner :visible="loading" message="대시보드 데이터를 불러오는 중입니다." />
+
     <!-- 환영 메시지 -->
     <div class="welcome-section">
       <h1 class="welcome-title">
@@ -389,14 +392,15 @@ watch(
 
 <style scoped>
 .admin-dashboard {
-  padding: 24px;
+  padding: 32px;
   max-width: 1400px;
   margin: 0 auto;
+  min-height: calc(100vh - 70px);
 }
 
 /* 환영 섹션 */
 .welcome-section {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .welcome-title {
@@ -425,9 +429,9 @@ watch(
 /* 통계 카드 그리드 */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
 }
 
 .stat-card {
@@ -449,7 +453,8 @@ watch(
 .stat-content {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
+  padding: 4px;
 }
 
 .stat-icon {
@@ -500,9 +505,9 @@ watch(
 /* 액션 그리드 */
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
 }
 
 .action-card {
@@ -535,7 +540,8 @@ watch(
 .action-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  padding: 4px;
 }
 
 .action-content p {

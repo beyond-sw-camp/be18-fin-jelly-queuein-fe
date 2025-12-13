@@ -122,18 +122,20 @@ const calendarOptions = computed(() => ({
   views: {
     timeGridDay: {
       slotMinTime: '00:00:00',
-      slotMaxTime: '24:00:00',
+      slotMaxTime: '25:00:00', // exclusive end time이므로 24:00까지 표시하려면 25:00 필요
       slotDuration: '00:30:00',
-      contentHeight: 'auto',
+      scrollTime: '00:00:00',
+      height: 'auto',
     },
     timeGridWeek: {
       slotMinTime: '00:00:00',
-      slotMaxTime: '24:00:00',
+      slotMaxTime: '25:00:00', // exclusive end time이므로 24:00까지 표시하려면 25:00 필요
       slotDuration: '00:30:00',
-      contentHeight: 'auto',
+      scrollTime: '00:00:00',
+      height: 'auto',
     }
   },
-  contentHeight: 'auto',
+  height: 'auto',
   displayEventTime: false,
   eventOverlap: false,
   slotEventOverlap: false,
@@ -848,8 +850,8 @@ const onMiniCalendarEventClick = (event) => {
   padding: 20px;
   max-width: 1920px;
   margin: 0 auto;
-  height: calc(100vh - 120px);
-  overflow: hidden;
+  min-height: calc(100vh - 120px);
+  overflow: visible;
   align-items: flex-start;
 }
 
@@ -858,8 +860,8 @@ const onMiniCalendarEventClick = (event) => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  height: calc(100vh - 160px);
+  overflow: visible;
+  min-height: calc(100vh - 160px);
 }
 
 .calendar-container {
@@ -870,17 +872,17 @@ const onMiniCalendarEventClick = (event) => {
 .calendar-card {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
 }
 
 .calendar-content-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow: visible;
   padding: 16px;
 }
 
@@ -922,17 +924,18 @@ const onMiniCalendarEventClick = (event) => {
   padding: 0;
   background: #fafafa;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   min-height: 0;
   display: flex;
   flex-direction: column;
   position: relative;
-  height: 100%;
-  max-height: calc(100vh - 300px);
+  min-height: 100%;
+  /* max-height 제거하여 모든 시간 슬롯이 표시되도록 함 */
 }
 
 .calendar-wrapper :deep(.fc) {
-  height: 100% !important;
+  height: auto !important;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -940,27 +943,42 @@ const onMiniCalendarEventClick = (event) => {
 .calendar-wrapper :deep(.fc-view-harness) {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
-  max-height: 100%;
+  /* max-height 제거하여 모든 시간 슬롯이 표시되도록 함 */
 }
 
 .calendar-wrapper :deep(.fc-scroller) {
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch;
-  max-height: calc(100vh - 300px);
+  /* max-height 제거하여 모든 시간 슬롯이 표시되도록 함 */
+  height: auto !important;
 }
 
 .calendar-wrapper :deep(.fc-timegrid-body) {
   overflow: visible;
+  height: auto !important;
+}
+
+.calendar-wrapper :deep(.fc-scrollgrid-body) {
+  overflow: visible;
+  height: auto !important;
+}
+
+.calendar-wrapper :deep(.fc-scroller-liquid-absolute) {
+  position: relative !important;
+  height: auto !important;
 }
 
 .calendar-wrapper :deep(.fc-timegrid-body .fc-scroller) {
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch;
-  max-height: calc(100vh - 300px);
+  /* max-height 제거하여 모든 시간 슬롯이 표시되도록 함 */
+  /* 높이를 자동으로 계산하여 24:00까지 모든 슬롯이 표시되도록 함 */
+  height: auto !important;
+  min-height: calc(25 * 60px); /* 25시간 * 60px (각 슬롯 높이) = 24:00까지 표시 */
 }
 
 /* FullCalendar 한국어 스타일 개선 */

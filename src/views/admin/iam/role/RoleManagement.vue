@@ -163,6 +163,16 @@ async function deleteRole(role) {
   await roleApi.deleteRole(role.roleId)
   loadRoles()
 }
+
+// --------------------------------------------------
+// 사용자 목록으로 이동 (역할 필터 적용)
+// --------------------------------------------------
+function navigateToUsersWithRole(roleName) {
+  router.push({
+    path: '/admin/users',
+    query: { role: roleName }
+  })
+}
 </script>
 
 <template>
@@ -198,7 +208,7 @@ async function deleteRole(role) {
         </template>
 
         <template #subtitle>
-          <div class="sub-info">
+          <div class="sub-info" @click="navigateToUsersWithRole(role.roleName)" @click.stop>
             <i class="pi pi-users"></i>
             {{ role.userCount }} 명
           </div>
@@ -315,6 +325,17 @@ async function deleteRole(role) {
   display: flex;
   align-items: center;
   gap: 6px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.sub-info:hover {
+  color: #3b82f6;
+}
+
+.sub-info:hover i {
+  color: #3b82f6;
 }
 
 .role-desc {
