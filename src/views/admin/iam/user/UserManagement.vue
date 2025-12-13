@@ -28,9 +28,9 @@ const showCreate = ref(false)
 
 // 검색 조건
 const search = ref({
-  keyword: '',
-  role: null,
-  status: null,
+  userName: '',
+  email: '',
+  roleName: null,
 })
 
 const roleOptions = [
@@ -41,11 +41,6 @@ const roleOptions = [
   { label: 'General', value: 'GENERAL' },
 ]
 
-const statusOptions = [
-  { label: '전체', value: null },
-  { label: 'Active', value: true },
-  { label: 'Inactive', value: false },
-]
 
 // --------------------------------------------------
 // 사용자 목록 조회 (정상 버전)
@@ -54,11 +49,20 @@ async function loadUsers() {
   try {
     loading.value = true
 
+    // 사원명으로만 검색
+    const searchKeyword = search.value.userName?.trim() || ''
+
     const params = {
-      keyword: search.value.keyword || null,
-      roleName: search.value.role,
-      active: search.value.status,
+      userName: searchKeyword || null,
+      roleName: search.value.roleName || null,
     }
+
+    // 빈 값은 제거
+    Object.keys(params).forEach((key) => {
+      if (params[key] === null || params[key] === '') {
+        delete params[key]
+      }
+    })
 
     const res = await userApi.searchUsers(params)
 
@@ -167,7 +171,7 @@ function onRowClick(event) {
   ) {
     return
   }
-  
+
   const user = event.data
   if (user) {
     viewUserDetail(user)
@@ -239,27 +243,25 @@ const roleTagStyle = {
 
     <!-- Filters -->
     <section class="filters">
-      <InputText v-model="search.keyword" placeholder="사용자 검색하기" class="input" />
-
       <Dropdown
-        v-model="search.role"
+        v-model="search.roleName"
         :options="roleOptions"
         optionLabel="label"
         optionValue="value"
         placeholder="전체 역할"
-        class="input"
+        class="input role-dropdown"
       />
 
-      <Dropdown
-        v-model="search.status"
-        :options="statusOptions"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="전체 상태"
-        class="input"
-      />
+      <div class="search-group">
+        <InputText
+          v-model="search.userName"
+          placeholder="사원명으로 검색"
+          class="input search-input"
+          @keydown.enter="loadUsers"
+        />
 
-      <Button label="조회" @click="loadUsers" />
+        <Button label="검색" @click="loadUsers" />
+      </div>
     </section>
 
     <!-- DataTable -->
@@ -361,11 +363,26 @@ const roleTagStyle = {
   display: flex;
   gap: 12px;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 20px;
+}
+
+.search-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .input {
   width: 200px;
+}
+
+.role-dropdown {
+  margin-right: auto;
+}
+
+.search-input {
+  width: 250px;
 }
 
 .avatar {
