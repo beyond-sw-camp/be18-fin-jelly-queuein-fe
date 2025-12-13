@@ -45,7 +45,7 @@ import ReservationTabs from '@/components/reservation/ReservationTab.vue'
 import ReservationFilters from '@/components/reservation/ReservationFilter.vue'
 import ReservationTable from '@/components/reservation/AppliedReservationTable.vue'
 import ReservationDetailModal from '@/components/reservation/ReservationApplyDetailModal.vue'
-import { Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 const handleFilterChange = (filters) => {
   selectedFilters.value = { ...filters } // 필터 전체 반영
