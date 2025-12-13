@@ -81,6 +81,16 @@ const isChangingView = ref(false) // 뷰 변경 중 플래그
 const modalOpen = ref(false)
 const reservationDetail = ref(null)
 
+// ============================================
+// 중복 호출 방지 메커니즘 (FullCalendar용)
+// ============================================
+// isLoadingEvents: 이벤트 로딩 중인지 확인 (datesSet 중복 호출 방지)
+const isLoadingEvents = ref(false)
+// lastLoadedDateRange: 마지막으로 로드한 날짜 범위 (동일 범위 중복 방지)
+const lastLoadedDateRange = ref(null)
+// isAddingEvents: 이벤트 추가 중 플래그 (addEvent로 인한 datesSet 재트리거 방지)
+const isAddingEvents = ref(false)
+
 // 날짜를 YYYY-MM-DD 형식으로 변환
 const formatDateForApi = (date) => {
   if (!date) return new Date().toISOString().slice(0, 10)
@@ -173,23 +183,56 @@ const calendarOptions = computed(() => ({
   events: [],
 
   // 날짜 변경 시 이벤트 로드
+  // 주의: FullCalendar는 addEvent() 호출 시 내부적으로 datesSet를 다시 트리거할 수 있음
+  // 이를 방지하기 위해 isAddingEvents 플래그와 날짜 범위 비교를 사용
   datesSet: async (info) => {
     const api = calendarRef.value?.getApi()
     if (!api) return
 
-    // 뷰 변경 중이면 잠시 대기 후 플래그 해제 (changeView에서 이미 로드함)
+    // Guard 1: 뷰 변경 중이면 스킵 (changeView에서 이미 로드함)
     if (isChangingView.value) {
-      // 플래그가 너무 오래 true로 남아있지 않도록 안전장치
       setTimeout(() => {
         isChangingView.value = false
       }, 1000)
       return
     }
 
-    // 주간/일간 뷰일 때는 주별 API 호출
-    if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
-      const startDate = info.startStr.slice(0, 10)
-      try {
+    // Guard 2: 이벤트 추가 중이면 스킵 (addEvent로 인한 재트리거 방지)
+    if (isAddingEvents.value) {
+      console.log('datesSet: 이벤트 추가 중이므로 스킵')
+      return
+    }
+
+    // Guard 3: 이미 로딩 중이면 스킵
+    if (isLoadingEvents.value) {
+      console.log('datesSet: 이미 로딩 중이므로 스킵')
+      return
+    }
+
+    // 현재 날짜 범위 계산
+    const currentDateRange = {
+      start: info.startStr.slice(0, 10),
+      end: info.endStr.slice(0, 10),
+      view: currentView.value
+    }
+
+    // Guard 4: 동일한 날짜 범위를 이미 로드했으면 스킵
+    if (lastLoadedDateRange.value &&
+        lastLoadedDateRange.value.start === currentDateRange.start &&
+        lastLoadedDateRange.value.end === currentDateRange.end &&
+        lastLoadedDateRange.value.view === currentDateRange.view) {
+      console.log('datesSet: 동일한 날짜 범위를 이미 로드했으므로 스킵', currentDateRange)
+      return
+    }
+
+    // 로딩 시작
+    isLoadingEvents.value = true
+    lastLoadedDateRange.value = currentDateRange
+
+    try {
+      // 주간/일간 뷰일 때는 주별 API 호출
+      if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
+        const startDate = info.startStr.slice(0, 10)
         const res = await reservationApi.getWeeklyReservations(startDate)
         const json = res.data.reservations ? res.data : res.data.data?.reservations ? res.data.data : res.data.result?.reservations ? res.data.result : null
 
@@ -197,25 +240,31 @@ const calendarOptions = computed(() => ({
           const events = convertReservationsToEvents(json)
           calendarEvents.value = events
 
+          // 이벤트 추가 중 플래그 설정 (addEvent로 인한 datesSet 재트리거 방지)
+          isAddingEvents.value = true
           api.removeAllEvents()
           events.forEach(ev => api.addEvent(ev))
-
+          // 이벤트 추가 완료 후 플래그 해제
           await nextTick()
+          isAddingEvents.value = false
+
           setTimeout(() => {
             applySlotBackgrounds()
           }, 600)
         } else {
-          // 예약이 없는 경우에도 기존 이벤트 제거
+          isAddingEvents.value = true
           api.removeAllEvents()
+          isAddingEvents.value = false
           calendarEvents.value = []
         }
-      } catch (err) {
-        console.error('주별 예약 조회 실패:', err)
-        // 에러 발생 시에도 기존 이벤트 제거하지 않음 (재시도 가능하도록)
+      } else {
+        // 월별 뷰일 때는 월별 API 호출
+        await loadCalendarEvents()
       }
-    } else {
-      // 월별 뷰일 때는 월별 API 호출
-      await loadCalendarEvents()
+    } catch (err) {
+      console.error('주별 예약 조회 실패:', err)
+    } finally {
+      isLoadingEvents.value = false
     }
   },
 
@@ -403,47 +452,63 @@ const getYearMonth = (date) => {
 /* ---------------------------
    API 호출하여 FullCalendar 갱신
 ---------------------------- */
+// 월별 뷰용 이벤트 로드 함수
+// 중복 방지: isLoadingEvents 플래그로 중복 호출 방지
 const loadCalendarEvents = async () => {
-  const yearMonth = getYearMonth(selectedDate.value)
-
-  const res = await reservationApi.getMonthlyReservations(yearMonth)
-
-  console.log("RAW AXIOS DATA:", res.data)
-
-  const json =
-    res.data.reservations
-      ? res.data
-      : res.data.data?.reservations
-      ? res.data.data
-      : res.data.result?.reservations
-      ? res.data.result
-      : null
-
-  console.log("PARSED JSON:", json)
-
-  const api = calendarRef.value.getApi()
-
-  if (!json || !json.reservations) {
-    console.warn("❗ reservations 데이터를 찾을 수 없습니다")
-    api.removeAllEvents()
+  // Guard: 이미 로딩 중이면 스킵
+  if (isLoadingEvents.value) {
+    console.log('loadCalendarEvents: 이미 로딩 중이므로 스킵')
     return
   }
 
-  const events = convertReservationsToEvents(json)
-  console.log("EVENTS:", events)
+  isLoadingEvents.value = true
 
-  // 캘린더 이벤트 저장 (미니 캘린더용)
-  calendarEvents.value = events
+  try {
+    const yearMonth = getYearMonth(selectedDate.value)
+    const res = await reservationApi.getMonthlyReservations(yearMonth)
 
-  api.removeAllEvents()
-  events.forEach(ev => api.addEvent(ev))
+    const json =
+      res.data.reservations
+        ? res.data
+        : res.data.data?.reservations
+        ? res.data.data
+        : res.data.result?.reservations
+        ? res.data.result
+        : null
 
-  // 주간/일간 뷰일 때 타임슬롯 배경색 적용
-  if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
+    const api = calendarRef.value.getApi()
+
+    if (!json || !json.reservations) {
+      console.warn("❗ reservations 데이터를 찾을 수 없습니다")
+      isAddingEvents.value = true
+      api.removeAllEvents()
+      isAddingEvents.value = false
+      return
+    }
+
+    const events = convertReservationsToEvents(json)
+
+    // 캘린더 이벤트 저장 (미니 캘린더용)
+    calendarEvents.value = events
+
+    // 이벤트 추가 중 플래그 설정 (addEvent로 인한 datesSet 재트리거 방지)
+    isAddingEvents.value = true
+    api.removeAllEvents()
+    events.forEach(ev => api.addEvent(ev))
     await nextTick()
-    setTimeout(() => {
-      applySlotBackgrounds()
-    }, 600)
+    isAddingEvents.value = false
+
+    // 주간/일간 뷰일 때 타임슬롯 배경색 적용
+    if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
+      await nextTick()
+      setTimeout(() => {
+        applySlotBackgrounds()
+      }, 600)
+    }
+  } catch (err) {
+    console.error('월별 예약 조회 실패:', err)
+  } finally {
+    isLoadingEvents.value = false
   }
 }
 
@@ -582,65 +647,44 @@ const onDateChange = async () => {
 }
 
 /* 뷰 변경 */
+// 뷰 변경 시 이벤트 로드
+// 중복 방지: isChangingView 플래그로 datesSet와의 중복 방지
 const changeView = async (view) => {
   const api = calendarRef.value.getApi()
-  const currentDate = api.getDate() // 현재 캘린더의 날짜 저장
+  if (!api) return
 
-  // 뷰 변경 중 플래그 설정
+  const currentDate = api.getDate()
+
+  // 뷰 변경 중 플래그 설정 (datesSet가 호출되지 않도록)
   isChangingView.value = true
+  // 날짜 범위 초기화 (새 뷰에서는 새로 로드해야 함)
+  lastLoadedDateRange.value = null
 
   currentView.value = view
   api.changeView(view)
-  // 뷰 변경 후 날짜 유지
   api.gotoDate(currentDate)
 
-  // 주간/일간 뷰로 변경될 때 명시적으로 예약 데이터 로드
-  if (view === 'timeGridWeek' || view === 'timeGridDay') {
-    await nextTick()
-    const startDate = api.getDate().toISOString().slice(0, 10)
-    try {
-      const res = await reservationApi.getWeeklyReservations(startDate)
-      const json = res.data.reservations ? res.data : res.data.data?.reservations ? res.data.data : res.data.result?.reservations ? res.data.result : null
-
-      if (json && json.reservations) {
-        const events = convertReservationsToEvents(json)
-        calendarEvents.value = events
-
-        api.removeAllEvents()
-        events.forEach(ev => api.addEvent(ev))
-
-        await nextTick()
-        setTimeout(() => {
-          applySlotBackgrounds()
-        }, 600)
-      } else {
-        api.removeAllEvents()
-        calendarEvents.value = []
-      }
-    } catch (err) {
-      console.error('주별 예약 조회 실패:', err)
-    } finally {
-      // 뷰 변경 완료 후 플래그 해제 (항상 해제)
-      setTimeout(() => {
-        isChangingView.value = false
-      }, 800)
-    }
-  } else {
-    // 월별 뷰로 변경될 때는 월별 데이터 로드
-    await loadCalendarEvents()
-    setTimeout(() => {
-      isChangingView.value = false
-    }, 300)
-  }
-}
-
-/* 최초 로딩 */
-onMounted(async () => {
-  // 초기 로딩 시 현재 뷰에 맞는 데이터 로드
-  if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
-    const api = calendarRef.value?.getApi()
-    if (api) {
+  try {
+    // 주간/일간 뷰로 변경될 때 명시적으로 예약 데이터 로드
+    if (view === 'timeGridWeek' || view === 'timeGridDay') {
+      await nextTick()
       const startDate = api.getDate().toISOString().slice(0, 10)
+
+      // Guard: 이미 로딩 중이면 스킵
+      if (isLoadingEvents.value) {
+        setTimeout(() => {
+          isChangingView.value = false
+        }, 500)
+        return
+      }
+
+      isLoadingEvents.value = true
+      lastLoadedDateRange.value = {
+        start: startDate,
+        end: startDate,
+        view: view
+      }
+
       try {
         const res = await reservationApi.getWeeklyReservations(startDate)
         const json = res.data.reservations ? res.data : res.data.data?.reservations ? res.data.data : res.data.result?.reservations ? res.data.result : null
@@ -649,21 +693,65 @@ onMounted(async () => {
           const events = convertReservationsToEvents(json)
           calendarEvents.value = events
 
+          // 이벤트 추가 중 플래그 설정
+          isAddingEvents.value = true
           api.removeAllEvents()
           events.forEach(ev => api.addEvent(ev))
-
           await nextTick()
+          isAddingEvents.value = false
+
           setTimeout(() => {
             applySlotBackgrounds()
           }, 600)
+        } else {
+          isAddingEvents.value = true
+          api.removeAllEvents()
+          isAddingEvents.value = false
+          calendarEvents.value = []
         }
       } catch (err) {
         console.error('주별 예약 조회 실패:', err)
+      } finally {
+        isLoadingEvents.value = false
+        setTimeout(() => {
+          isChangingView.value = false
+        }, 500)
+      }
+    } else {
+      // 월별 뷰로 변경될 때는 월별 데이터 로드
+      await loadCalendarEvents()
+      setTimeout(() => {
+        isChangingView.value = false
+      }, 300)
+    }
+  } catch (err) {
+    console.error('뷰 변경 실패:', err)
+    isChangingView.value = false
+  }
+}
+
+/* 최초 로딩 */
+// 컴포넌트 마운트 시 초기 데이터 로드
+// 중복 방지: datesSet가 자동으로 호출되므로 여기서는 스킵하거나 datesSet가 호출되기 전에만 실행
+onMounted(async () => {
+  // FullCalendar가 마운트되고 datesSet가 자동으로 호출되므로
+  // 여기서는 명시적으로 로드하지 않고 datesSet에 맡김
+  // 단, datesSet가 호출되지 않는 경우를 대비해 약간의 지연 후 확인
+  await nextTick()
+
+  // datesSet가 호출되지 않았을 경우를 대비한 안전장치
+  setTimeout(() => {
+    const api = calendarRef.value?.getApi()
+    if (api && !isLoadingEvents.value && calendarEvents.value.length === 0) {
+      // datesSet가 호출되지 않았으면 수동으로 로드
+      if (currentView.value === 'timeGridWeek' || currentView.value === 'timeGridDay') {
+        const startDate = api.getDate().toISOString().slice(0, 10)
+        lastLoadedDateRange.value = null // 강제 로드
+      } else {
+        loadCalendarEvents()
       }
     }
-  } else {
-    await loadCalendarEvents()
-  }
+  }, 500)
 })
 
 /* ------------------------------------

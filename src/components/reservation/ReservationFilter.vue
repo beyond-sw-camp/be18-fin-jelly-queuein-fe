@@ -169,7 +169,7 @@ watch(
   }
 }
 
-/* 🔥 더 좁아지면 2등분 */
+/* 더 좁아지면 2등분 */
 @media (max-width: 900px) {
   .filter-row > .el-col {
     flex: 1 1 calc(50% - 12px); /* 한 줄에 2개 */

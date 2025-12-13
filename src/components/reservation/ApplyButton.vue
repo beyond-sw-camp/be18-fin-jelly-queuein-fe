@@ -20,8 +20,8 @@ const goSchedule = () => {
 .apply-wrapper {
   margin-top: 40px;
   display: flex;
-  justify-content: center;   /* ✅ 중앙 정렬 */
-  padding-left: 0;          /* ✅ 기존 좌측 밀림 제거 */
+  justify-content: center;   /* 중앙 정렬 */
+  padding-left: 0;          /* 기존 좌측 밀림 제거 */
 }
 .apply-btn {
   background: #ffffff;

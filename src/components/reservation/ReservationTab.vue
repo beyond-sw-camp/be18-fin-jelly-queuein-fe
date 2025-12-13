@@ -30,7 +30,7 @@ function getTabNameByRoute(path) {
 }
 
 function onTabClick(tab) {
-  console.log('🖱️ 탭 클릭:', tab.props.name, '현재 경로:', route.path)
+  console.log('탭 클릭:', tab.props.name, '현재 경로:', route.path)
 
   let targetPath = ''
   switch (tab.props.name) {

@@ -59,7 +59,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '@/api/axios'
@@ -96,8 +96,18 @@ const note = ref("")
 // 예약 신청 완료 모달
 const showSuccessModal = ref(false)
 
+// ============================================
+// 중복 호출 방지 메커니즘
+// ============================================
+// isLoadingTimes: 예약 가능 시간 로딩 중인지 확인
+const isLoadingTimes = ref(false)
+// lastFetchedDate: 마지막으로 조회한 날짜 (동일 날짜 중복 방지)
+const lastFetchedDate = ref(null)
+// debounceTimer: watch debounce용 타이머
+let debounceTimer = null
+
 // -------------------------------
-// 2️⃣ 예약 가능 시간 조회 API
+// 예약 가능 시간 조회 API
 // -------------------------------
 const today = new Date().toLocaleDateString('en-CA')
 
@@ -171,18 +181,37 @@ const removeParticipant = (user) => {
     (u) => u.id !== user.id
   );
 };
-const fetchAvailableTimes = async () => {
+// ============================================
+// 예약 가능 시간 조회 (중복 방지 적용)
+// ============================================
+const fetchAvailableTimes = async (force = false) => {
+  // Guard 1: 유효성 검사
+  if (!assetId || isNaN(assetId)) {
+    console.error('유효하지 않은 assetId:', assetId)
+    return
+  }
+
+  if (!date.value) {
+    console.error('날짜가 없습니다.')
+    return
+  }
+
+  // Guard 2: 이미 로딩 중이고 force가 false면 스킵
+  if (isLoadingTimes.value && !force) {
+    console.log('fetchAvailableTimes: 이미 로딩 중이므로 스킵')
+    return
+  }
+
+  // Guard 3: 동일한 날짜를 이미 조회했고 force가 false면 스킵
+  if (lastFetchedDate.value === date.value && !force) {
+    console.log('fetchAvailableTimes: 동일한 날짜를 이미 조회했으므로 스킵', date.value)
+    return
+  }
+
+  isLoadingTimes.value = true
+  lastFetchedDate.value = date.value
+
   try {
-    if (!assetId || isNaN(assetId)) {
-      console.error('유효하지 않은 assetId:', assetId)
-      return
-    }
-
-    if (!date.value) {
-      console.error('날짜가 없습니다.')
-      return
-    }
-
     const res = await reservationApi.getAvailableTimes(assetId, date.value)
 
     if (res?.data?.timeSlots) {
@@ -195,16 +224,32 @@ const fetchAvailableTimes = async () => {
     console.error('예약 가능 시간 조회 실패:', error)
     ElMessage.error('예약 가능 시간을 불러오는데 실패했습니다.')
     timeBlocks.value = []
+    // 에러 발생 시 lastFetchedDate 초기화 (재시도 가능하도록)
+    lastFetchedDate.value = null
+  } finally {
+    isLoadingTimes.value = false
   }
 }
 
+// ============================================
+// 날짜 변경 감지 (debounce 적용)
+// ============================================
 // 날짜 변경 시 자동으로 예약 가능 시간 갱신
+// debounce: 300ms 지연으로 빠른 연속 변경 시 중복 호출 방지
 watch(
   () => date.value,
   () => {
-    if (date.value && assetId) {
-      fetchAvailableTimes()
+    if (!date.value || !assetId) return
+
+    // 이전 타이머 취소
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
     }
+
+    // 300ms 후 실행 (debounce)
+    debounceTimer = setTimeout(() => {
+      fetchAvailableTimes()
+    }, 300)
   },
 )
 
@@ -340,18 +385,28 @@ onMounted(async () => {
     ElMessage.error('사용자 정보를 불러오는데 실패했습니다.')
   }
 
-  try {
-    await fetchAvailableTimes()
-  } catch (error) {
-    console.error('초기 데이터 로딩 실패:', error)
-  }
+  // 초기 로드는 강제 실행 (watch와 중복되어도 최신 데이터 보장)
+  // watch가 이미 실행될 수 있으므로 약간의 지연을 두고 실행
+  await nextTick()
+  setTimeout(() => {
+    if (date.value && assetId) {
+      fetchAvailableTimes(true) // force: true로 강제 실행
+    }
+  }, 100)
 })
 
 
 
 // -------------------------------
-// 페이지 로딩 시 API 호출
+// 컴포넌트 언마운트 시 정리
 // -------------------------------
+onBeforeUnmount(() => {
+  // debounce 타이머 정리
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
+})
 
 </script>
 
