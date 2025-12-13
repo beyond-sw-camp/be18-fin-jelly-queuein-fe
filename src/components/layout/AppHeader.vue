@@ -338,7 +338,6 @@ const breadcrumbMap = {
   users: '유저 관리',
   roles: '역할 관리',
   permissions: '권한 관리',
-  list: '권한 관리',
   schedule: '일정 관리',
   reservation: '예약 관리',
   guide: '설명서',
