@@ -2,9 +2,16 @@
   <div>
     <LoadingSpinner :visible="isLoading" message="예약 정보를 불러오는 중입니다." />
 
+    <!-- 예약 탭 -->
+    <ReservationTabs />
+
     <!-- 헤더 -->
     <div class="header-row">
-      <h2>사용자 예약 내용 조회</h2>
+      <h2>예약 현황</h2>
+      <el-button type="primary" @click="navigateToReservableAssets">
+        <el-icon><Plus /></el-icon>
+        예약 신청
+      </el-button>
     </div>
 
     <!-- 날짜 필터 -->
@@ -87,13 +94,15 @@
 
 <script setup>
 import { ref, watch, onMounted, onActivated, onBeforeUnmount, nextTick } from 'vue'
-import { useRoute, onBeforeRouteUpdate } from 'vue-router'
+import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 
 import ReservationFilters from '@/components/reservation/ReservationFilter.vue'
 import ReservationDetailModal from '@/components/reservation/ReservationDetailModal.vue'
 import StatusTag from '@/components/reservation/ReservationStatus.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import ReservationTabs from '@/components/reservation/ReservationTab.vue'
 import { reservationApi } from '@/api/reservationApi'
+import { Plus } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
@@ -372,17 +381,23 @@ const closeModal = () => {
   modalOpen.value = false
 }
 
+// 예약 신청 페이지로 이동
+const router = useRouter()
+function navigateToReservableAssets() {
+  router.push('/app/reservations/available-assets')
+}
+
 // ============================================
 // 라우트/이벤트 감지 (중복 방지 적용)
 // ============================================
 
 // 라우트 경로 변경 감지
 // 목적: 다른 페이지에서 이 페이지로 이동할 때 데이터 갱신
-// 중복 방지: skipIfLoading으로 로딩 중이면 스킵
+// 중복 방지: 초기 로드가 완료된 후에만 실행, skipIfLoading으로 로딩 중이면 스킵
 watch(
   () => route.path,
   (newPath) => {
-    if (newPath === '/app/reservations/me' || newPath.startsWith('/app/reservations/me')) {
+    if ((newPath === '/app/reservations/me' || newPath.startsWith('/app/reservations/me')) && isInitialLoadDone) {
       page.value = 1
       fetchReservations({ skipIfLoading: true }) // 로딩 중이면 스킵
     }
@@ -392,9 +407,9 @@ watch(
 
 // 라우트 업데이트 감지 (같은 라우트에서 파라미터만 변경될 때)
 // 목적: 쿼리 파라미터 변경 시 데이터 갱신
-// 중복 방지: skipIfLoading으로 로딩 중이면 스킵
+// 중복 방지: 초기 로드가 완료된 후에만 실행, skipIfLoading으로 로딩 중이면 스킵
 onBeforeRouteUpdate((to) => {
-  if (to.path === '/app/reservations/me') {
+  if (to.path === '/app/reservations/me' && isInitialLoadDone) {
     page.value = 1
     fetchReservations({ skipIfLoading: true })
   }
@@ -402,10 +417,10 @@ onBeforeRouteUpdate((to) => {
 
 // 라우트 전환 완료 이벤트 감지
 // 목적: Transition 애니메이션 완료 후 데이터 갱신
-// 중복 방지: skipIfLoading으로 로딩 중이면 스킵
+// 중복 방지: 초기 로드가 완료된 후에만 실행, skipIfLoading으로 로딩 중이면 스킵
 const handleRouteTransitionComplete = (event) => {
   const targetPath = event?.detail?.path || route.path
-  if (targetPath === '/app/reservations/me') {
+  if (targetPath === '/app/reservations/me' && isInitialLoadDone) {
     page.value = 1
     fetchReservations({ skipIfLoading: true })
   }
@@ -413,10 +428,10 @@ const handleRouteTransitionComplete = (event) => {
 
 // 탭 변경 이벤트 감지
 // 목적: 예약 탭 클릭 시 데이터 갱신
-// 중복 방지: skipIfLoading으로 로딩 중이면 스킵
+// 중복 방지: 초기 로드가 완료된 후에만 실행, skipIfLoading으로 로딩 중이면 스킵
 const handleTabChanged = (event) => {
   const targetPath = event?.detail?.path
-  if (targetPath === '/app/reservations/me' || event?.detail?.tab === 'status') {
+  if ((targetPath === '/app/reservations/me' || event?.detail?.tab === 'status') && isInitialLoadDone) {
     page.value = 1
     fetchReservations({ skipIfLoading: true })
   }
@@ -446,9 +461,12 @@ watch(
 // Lifecycle Hooks (중복 방지 적용)
 // ============================================
 
+// 초기 로드 완료 플래그 (중복 호출 방지)
+let isInitialLoadDone = false
+
 // 컴포넌트 마운트 시 초기 데이터 로드
 // 목적: 페이지 최초 진입 시 데이터 로드
-// 중복 방지: force 옵션으로 강제 실행 (초기 로드이므로)
+// 중복 방지: 초기 로드 플래그로 한 번만 실행
 onMounted(async () => {
   await nextTick()
 
@@ -458,9 +476,12 @@ onMounted(async () => {
   window.addEventListener('reservation-tab-changed', handleTabChanged)
   window.addEventListener('route-transition-complete', handleRouteTransitionComplete)
 
-  // 초기 로드는 강제 실행 (다른 트리거와 중복되어도 최신 데이터 보장)
-  page.value = 1
-  fetchReservations({ force: true })
+  // 초기 로드는 한 번만 실행 (다른 트리거와 중복 방지)
+  if (!isInitialLoadDone) {
+    isInitialLoadDone = true
+    page.value = 1
+    fetchReservations({ force: true })
+  }
 })
 
 // keep-alive로 인한 재활성화 시 데이터 갱신
@@ -489,10 +510,15 @@ onBeforeUnmount(() => {
   // 상태 초기화
   isLoading.value = false
   lastRequestKey = null
+  isInitialLoadDone = false
 })
 </script>
 
 <style scoped>
+.reservation-page {
+  width: 100%;
+}
+
 .header-row {
   display: flex;
   justify-content: space-between;
@@ -507,6 +533,16 @@ onBeforeUnmount(() => {
   font-weight: 700;
   color: #1f2937;
   margin: 0;
+}
+
+.header-row .el-button {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .pagination {

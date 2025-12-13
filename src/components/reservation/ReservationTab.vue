@@ -3,7 +3,6 @@
     <el-tabs v-model="active" class="reservation-tabs" @tab-click="onTabClick">
       <el-tab-pane label="예약 현황" name="status" />
       <el-tab-pane label="예약 가능 자원 목록" name="available" />
-      <el-tab-pane label="예약 신청" name="createReservation" />
       <el-tab-pane label="예약 관리" name="applied" />
     </el-tabs>
   </div>
@@ -23,8 +22,6 @@ const active = ref(getTabNameByRoute(route.path))
 function getTabNameByRoute(path) {
   if (path.includes('/app/reservations/me')) return 'status'
   if (path.includes('/app/reservations/available-assets')) return 'available'
-  if (path.includes('/app/reservations/create-reservation')) return 'createReservation'
-  if (path.includes('/app/reservations/apply')) return 'createReservation'
   if (path.includes('/admin/reservations/applied')) return 'applied'
   return 'status'
 }
@@ -70,10 +67,6 @@ function onTabClick(tab) {
       targetPath = '/app/reservations/available-assets'
       router.push('/app/reservations/available-assets')
       break
-    case 'createReservation':
-      ElMessage.warning('예약할 자원을 먼저 선택해주세요.')
-      active.value = getTabNameByRoute(route.path)
-      break
     case 'applied':
       targetPath = '/admin/reservations/applied'
       router.push('/admin/reservations/applied')
@@ -94,6 +87,11 @@ watch(
 </script>
 
 <style scoped>
+.tab-full-wrapper {
+  width: 100%;
+  margin-bottom: 32px;
+}
+
 /* 탭 헤더 전체 가로폭 확장 */
 .reservation-tabs :deep(.el-tabs__header) {
   width: 100%;

@@ -138,6 +138,11 @@ function openCreatePage(asset) {
   }
 }
 
+// 예약 현황 페이지로 이동
+function navigateToMyReservations() {
+  router.push('/app/reservations/me')
+}
+
 // 초기 로드 시 호출
 onMounted(() => {
   refreshTable()
@@ -162,6 +167,6 @@ onMounted(() => {
 }
 
 .tabs-full-row {
-  margin-bottom: 32px;
+  margin-bottom: 0;
 }
 </style>

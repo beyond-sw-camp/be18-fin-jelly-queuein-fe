@@ -283,7 +283,7 @@ watch(
         </template>
         <template #content>
           <div class="action-content">
-            <p>사용자 목록 조회, 생성, 수정, 삭제</p>
+            <p>사용자 계정 조회, 생성, 수정, 삭제</p>
             <Button
               label="사용자 관리"
               icon="pi pi-arrow-right"
@@ -298,12 +298,12 @@ watch(
         <template #title>
           <div class="card-title">
             <i class="pi pi-shield"></i>
-            역할 & 권한
+            역할 & 권한 관리
           </div>
         </template>
         <template #content>
           <div class="action-content">
-            <p>역할 관리 및 권한 매핑</p>
+            <p>역할 생성/수정 및 권한 매핑 관리</p>
             <div class="action-buttons">
               <Button
                 label="역할 관리"
@@ -333,7 +333,7 @@ watch(
         </template>
         <template #content>
           <div class="action-content">
-            <p>자원 목록 조회, 생성, 수정, 삭제</p>
+            <p>자원, 카테고리, 계층 구조 관리</p>
             <Button
               label="자원 관리"
               icon="pi pi-arrow-right"
@@ -349,12 +349,12 @@ watch(
         <template #title>
           <div class="card-title">
             <i class="pi pi-chart-line"></i>
-            정산 관리
+            정산 / 사용 관리
           </div>
         </template>
         <template #content>
           <div class="action-content">
-            <p>사용 기록, 추이, 성과 분석</p>
+            <p>사용 기록 조회, 정산 분석, 통계</p>
             <Button
               label="정산 관리"
               icon="pi pi-arrow-right"

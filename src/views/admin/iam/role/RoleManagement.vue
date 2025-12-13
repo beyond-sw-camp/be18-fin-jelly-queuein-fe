@@ -223,15 +223,19 @@ function navigateToUsersWithRole(roleName) {
             <i :class="expanded[role.roleId] ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
           </div>
 
-          <!-- 펼쳐진 경우에만 Permissions 목록 표시 -->
-          <div v-if="expanded[role.roleId]" class="perm-list">
-            <Chip
-              v-for="p in role.permissions"
-              :key="p.permissionId"
-              :label="p.permissionName"
-              class="perm-chip"
-            />
-          </div>
+          <!-- 펼쳐진 경우에만 Permissions 목록 표시 (독립적인 전환) -->
+          <Transition name="perm-expand">
+            <div v-if="expanded[role.roleId]" class="perm-list-wrapper">
+              <div class="perm-list">
+                <Chip
+                  v-for="p in role.permissions"
+                  :key="p.permissionId"
+                  :label="p.permissionName"
+                  class="perm-chip"
+                />
+              </div>
+            </div>
+          </Transition>
         </template>
       </Card>
     </div>
@@ -295,10 +299,16 @@ function navigateToUsersWithRole(roleName) {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
+  /* 그리드 아이템들이 독립적으로 정렬되도록 */
+  align-items: start;
 }
 
 .role-card {
   padding: 4px 6px;
+  /* 각 카드가 독립적으로 동작하도록 격리 */
+  contain: layout style;
+  /* 카드 높이 변화가 다른 카드에 영향을 주지 않도록 */
+  align-self: start;
 }
 
 .title-box {
@@ -370,11 +380,47 @@ function navigateToUsersWithRole(roleName) {
   color: #3B82F6;
 }
 
+.perm-list-wrapper {
+  overflow: hidden;
+  margin-top: 0;
+}
+
 .perm-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
+}
+
+/* 권한 목록 확장/축소 전환 애니메이션 */
+.perm-expand-enter-active,
+.perm-expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.perm-expand-enter-from {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+.perm-expand-enter-to {
+  max-height: 500px;
+  opacity: 1;
+  margin-top: 0;
+}
+
+.perm-expand-leave-from {
+  max-height: 500px;
+  opacity: 1;
+  margin-top: 0;
+}
+
+.perm-expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
 }
 
 .perm-chip {
