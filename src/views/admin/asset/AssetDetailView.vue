@@ -68,7 +68,6 @@
       <!-- 하단 버튼들 -->
       <div class="bottom-btns">
         <button class="edit-btn" @click="goEdit">자원 수정</button>
-        <button class="history-btn">자원 수정 이력 조회</button>
       </div>
     </div>
   </div>

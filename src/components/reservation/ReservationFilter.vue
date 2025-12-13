@@ -111,7 +111,10 @@ function emitChange() {
 // 건물(0계층) 변경 시 위치 초기화 + emit
 function onBuildingChange(val) {
   filters.value.layerZero = val
-  filters.value.layerOne = '' // 위치 초기화
+  // 0계층이 "전체"로 변경되면 1계층 초기화
+  if (!val || val === '') {
+    filters.value.layerOne = '' // 위치 초기화
+  }
   emitChange()
 }
 

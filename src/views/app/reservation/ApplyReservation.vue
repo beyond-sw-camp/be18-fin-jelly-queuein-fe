@@ -2,9 +2,8 @@
   <div class="reservation-page">
     <!-- 헤더 -->
     <div class="header-row">
- 
+
     </div>
-    <ReservationTabs />
 
     <!-- 자원 예약 정보 -->
 
@@ -25,15 +24,15 @@
     <!-- 예약 시간 선택 -->
     <div class="time-section">
       <h2>예약 시간 선택</h2>
-      <TimeBar 
-        :blocks="timeBlocks" 
+      <TimeBar
+        :blocks="timeBlocks"
         v-model="selectedHours"
       />
     </div>
 
     <!-- 선택된 참여자 표시
     <div v-if="selectedUsers.length" class="selected-users">
-      선택된 참여자: 
+      선택된 참여자:
       <span v-for="user in selectedUsers" :key="user.id" class="user-chip">
         {{ user.name }}
       </span>
@@ -48,6 +47,15 @@
 
     <!-- 예약 신청 버튼 -->
     <ApplyButton @click="submitBooking" />
+
+    <!-- 예약 신청 완료 모달 -->
+    <ConfirmModal
+      v-if="showSuccessModal"
+      title="예약 신청 완료"
+      message="예약 신청이 완료되었습니다."
+      @confirm="handleSuccessConfirm"
+      @cancel="handleSuccessConfirm"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -60,7 +68,7 @@ import TimeBar from '@/components/reservation/TimeBar.vue'
 import BookingHeader from '@/components/reservation/BookingHeader.vue'
 import ParticipantModal from '@/components/reservation/ParticipantModal.vue'
 import ApplyButton from '@/components/reservation/ApplyButton.vue'
-import ReservationTabs from '@/components/reservation/ReservationTab.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import { reservationApi } from '@/api/reservationApi'
 
 const router = useRouter()
@@ -68,7 +76,7 @@ const router = useRouter()
 const route = useRoute()
 
 // 목록 페이지에서 전달한 assetId와 date → params 로 변경!
-const assetId = Number(route.query.assetId) 
+const assetId = Number(route.query.assetId)
 
 const assetName = route.query.assetName?.toString() ?? ""
 
@@ -85,10 +93,13 @@ const participantModalVisible = ref(false)
 const selectedUsers = ref([])
 const note = ref("")
 
+// 예약 신청 완료 모달
+const showSuccessModal = ref(false)
+
 // -------------------------------
 // 2️⃣ 예약 가능 시간 조회 API
 // -------------------------------
-const today = new Date().toLocaleDateString('en-CA')  
+const today = new Date().toLocaleDateString('en-CA')
 
 const rawDate = route.query.date
 const initialDate =
@@ -213,12 +224,12 @@ const timeRange = computed(() => {
 const openParticipantModal = () => participantModalVisible.value = true
 
 const onSelectParticipants = (users) => {
-  console.log("모달에서 선택된 유저들:", users); 
+  console.log("모달에서 선택된 유저들:", users);
   selectedUsers.value = users.map(u => ({
     id: u.userId,
     name: u.userName
   }));
-  console.log("BookingHeader로 전달할 selectedUsers:", selectedUsers.value); 
+  console.log("BookingHeader로 전달할 selectedUsers:", selectedUsers.value);
 };
 function toUtcIso(date, hour) {
   // date = "2025-12-03"
@@ -272,8 +283,8 @@ async function submitBooking() {
 
     await api.post(`/reservations/${assetId}/apply`, payload)
 
-    ElMessage.success('예약 신청이 완료되었습니다.')
-    router.push('/app/reservations/me')
+    // 성공 모달 표시
+    showSuccessModal.value = true
   } catch (error) {
     console.error('예약 신청 실패:', error)
 
@@ -300,6 +311,12 @@ async function submitBooking() {
 
     ElMessage.error(errorMessage)
   }
+}
+
+// 예약 신청 완료 모달 확인 처리
+function handleSuccessConfirm() {
+  showSuccessModal.value = false
+  router.push('/app/reservations/me')
 }
 
 
