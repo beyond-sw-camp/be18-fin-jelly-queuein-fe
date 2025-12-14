@@ -117,6 +117,7 @@
 
     <!-- 하단 버튼 -->
     <div class="bottom-actions">
+      <button class="dashboard-btn" @click="goDashboard">자원 대시보드</button>
       <button class="category-btn" @click="goCategory">카테고리 관리</button>
       <button class="create-btn" @click="createAsset">자원 등록</button>
     </div>
@@ -387,6 +388,12 @@ function goCategory() {
   router.push('/admin/assets/categories')
 }
 
+function goDashboard() {
+  router.push('/admin/assets/dashboard')
+}
+
+onMounted(loadAssets)
+
 function editAsset(asset) {
   router.push(`/admin/assets/${asset.assetId}/edit`)
 }
@@ -415,8 +422,6 @@ function goAssetDetail(event) {
     router.push(`/admin/assets/${row.assetId}`)
   }
 }
-
-onMounted(loadAssets)
 </script>
 
 <style scoped>
@@ -474,6 +479,21 @@ onMounted(loadAssets)
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+}
+
+.dashboard-btn {
+  padding: 10px 18px;
+  background: #00A950;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.dashboard-btn:hover {
+  background: #008f42;
 }
 
 .category-btn {
@@ -621,4 +641,5 @@ onMounted(loadAssets)
   text-align: center;
   white-space: nowrap;
 }
+
 </style>

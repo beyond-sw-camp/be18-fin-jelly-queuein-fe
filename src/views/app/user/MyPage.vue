@@ -68,6 +68,7 @@ const profileImageKey = ref(null)
 const originalProfileImageUrl = ref(null)
 const originalProfileImageKey = ref(null)
 const selectedFile = ref(null) // 선택된 파일 저장 (저장 버튼 클릭 시 업로드)
+const isImageDeleted = ref(false) // 이미지 삭제 플래그
 const isDragging = ref(false)
 const fileSizeError = ref('')
 const isUploading = ref(false)
@@ -103,6 +104,7 @@ function handleImageFile(file) {
 
   // 파일 저장 (저장 버튼 클릭 시 업로드)
   selectedFile.value = file
+  isImageDeleted.value = false // 새 이미지 선택 시 삭제 플래그 해제
 
   // FileReader로 미리보기 생성
   const reader = new FileReader()
@@ -198,15 +200,27 @@ function cancelImageChange() {
   profileImageUrl.value = originalProfileImageUrl.value
   profileImageKey.value = originalProfileImageKey.value
   selectedFile.value = null
+  isImageDeleted.value = false
+  fileSizeError.value = ''
+}
+
+function deleteImage() {
+  profileImagePreview.value = null
+  profileImageUrl.value = null
+  profileImageKey.value = null
+  selectedFile.value = null
+  isImageDeleted.value = true // 이미지 삭제 플래그 설정
   fileSizeError.value = ''
 }
 
 // 이미지가 변경되었는지 확인
 const hasImageChanged = computed(() => {
   // 새 파일이 선택되었거나, 이미 업로드된 이미지가 원본과 다른 경우
+  // 또는 이미지가 삭제된 경우 (원본은 있지만 현재는 없는 경우)
   return selectedFile.value !== null ||
          profileImageUrl.value !== originalProfileImageUrl.value ||
-         profileImageKey.value !== originalProfileImageKey.value
+         profileImageKey.value !== originalProfileImageKey.value ||
+         (originalProfileImageUrl.value !== null && profileImageUrl.value === null)
 })
 
 // 변경사항이 있는지 확인
@@ -230,6 +244,7 @@ function resetForm() {
   form.value.birth = originalData.value.birth ? new Date(originalData.value.birth) : null
   cancelImageChange()
   selectedFile.value = null
+  isImageDeleted.value = false
 }
 
 // ===============================
@@ -342,16 +357,27 @@ async function saveMyInfo() {
 
     form.value.phone = rawPhone.value
 
+    // 기본 payload 구성
     const payload = {
       userName: form.value.userName.trim(),
       phone: form.value.phone || '',
       birth: form.value.birth ? form.value.birth.toISOString().slice(0, 10) : null,
-      profileImageUrl: profileImageUrl.value || null,
-      profileImageKey: profileImageKey.value || null,
+    }
+
+    // 이미지 삭제된 경우 imageDeleted 플래그 전송
+    if (isImageDeleted.value) {
+      payload.imageDeleted = true
+    } else {
+      // 이미지가 업로드된 경우에만 profileImageUrl과 profileImageKey 포함
+      if (profileImageUrl.value && profileImageKey.value) {
+        payload.profileImageUrl = profileImageUrl.value
+        payload.profileImageKey = profileImageKey.value
+      }
     }
 
     await userApi.updateMe(payload)
     ElMessage.success('내 정보가 수정되었습니다.')
+    isImageDeleted.value = false // 저장 후 삭제 플래그 초기화
     await loadMe() // loadMe에서 원본 데이터도 업데이트됨
   } catch (e) {
     console.error('정보 수정 실패:', e)
@@ -504,6 +530,14 @@ function formatPhone(value) {
                 label="이미지 변경"
                 outlined
                 @click="openFileSelector"
+                :disabled="isUploading"
+              />
+              <Button
+                v-if="profileImagePreview || originalProfileImageUrl"
+                label="이미지 삭제"
+                outlined
+                severity="danger"
+                @click="deleteImage"
                 :disabled="isUploading"
               />
             </div>

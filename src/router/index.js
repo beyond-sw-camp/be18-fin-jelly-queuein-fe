@@ -174,6 +174,11 @@ const router = createRouter({
             { path: '', redirect: '/admin/assets/list' },
 
             {
+              path: 'dashboard',
+              component: () => import('@/views/admin/asset/AssetDashboard.vue'),
+              meta: { title: '자원 대시보드', minRole: 'MANAGER' },
+            },
+            {
               path: 'list',
               component: () => import('@/views/admin/asset/AssetManagement.vue'),
               meta: { title: '자원 목록 조회', minRole: 'MANAGER' },

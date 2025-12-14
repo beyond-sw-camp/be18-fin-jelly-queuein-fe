@@ -23,6 +23,7 @@
     "@primevue/themes": "^4.5.0",
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",
+    "echarts": "^6.0.0",
     "element-plus": "^2.11.9",
     "pinia": "^3.0.3",
     "primeflex": "^4.0.0",
