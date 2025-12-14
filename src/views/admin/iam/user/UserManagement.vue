@@ -318,7 +318,15 @@ const roleTagStyle = {
       <!-- 프로필 -->
       <Column header="프로필">
         <template #body="{ data }">
-          <div class="avatar">{{ firstLetter(data.userName) }}</div>
+          <div class="avatar">
+            <img
+              v-if="data.profileImageUrl"
+              :src="data.profileImageUrl"
+              :alt="data.userName"
+              class="avatar-image"
+            />
+            <span v-else>{{ firstLetter(data.userName) }}</span>
+          </div>
         </template>
       </Column>
 
@@ -434,6 +442,15 @@ const roleTagStyle = {
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   border-radius: 50%;
 }
 
