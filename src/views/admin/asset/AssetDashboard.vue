@@ -44,10 +44,10 @@ import * as echarts from 'echarts'
 // 차트 타입 정의
 const chartTypes = [
   { value: 'tree', label: '트리', icon: 'ri-file-tree-line' },
-  { value: 'floorplan', label: '평면도', icon: 'ri-building-line' }
+  { value: 'treemap', label: '트리맵', icon: 'ri-node-tree' }
 ]
 
-const selectedChartType = ref('tree')
+const selectedChartType = ref('treemap')
 const chartContainerRef = ref(null)
 let chartInstance = null
 const isLoading = ref(false)
@@ -60,6 +60,61 @@ function selectChartType(type) {
   updateChart()
 }
 
+// 자원 상세 정보를 재귀적으로 조회하여 비용 정보 추가
+async function enrichTreeWithCosts(nodes) {
+  if (!nodes || nodes.length === 0) return nodes
+
+  // 병렬로 모든 자원의 상세 정보 조회 (성능 최적화)
+  const assetIds = []
+  function collectAssetIds(nodes) {
+    for (const node of nodes) {
+      if (node.assetId) {
+        assetIds.push(node.assetId)
+      }
+      if (node.children && node.children.length > 0) {
+        collectAssetIds(node.children)
+      }
+    }
+  }
+  collectAssetIds(nodes)
+
+  // 모든 자원의 상세 정보를 병렬로 조회
+  const detailPromises = assetIds.map(id =>
+    assetApi.getDetail(id).catch(err => {
+      // 조회 실패 시 null 반환
+      console.warn(`자원 ${id} 상세 조회 실패:`, err)
+      return null
+    })
+  )
+  const detailResults = await Promise.all(detailPromises)
+
+  // assetId를 키로 하는 맵 생성
+  const costMap = new Map()
+  detailResults.forEach((res, index) => {
+    if (res?.data && assetIds[index]) {
+      costMap.set(assetIds[index], {
+        costPerHour: Number(res.data.costPerHour) || 0,
+        periodCost: Number(res.data.periodCost) || 0
+      })
+    }
+  })
+
+  // 트리 데이터에 비용 정보 추가
+  function addCostsToNodes(nodes) {
+    return nodes.map(node => {
+      const costs = costMap.get(node.assetId) || { costPerHour: 0, periodCost: 0 }
+      return {
+        ...node,
+        costPerHour: costs.costPerHour,
+        periodCost: costs.periodCost,
+        children: node.children ? addCostsToNodes(node.children) : undefined
+      }
+    })
+  }
+
+  return addCostsToNodes(nodes)
+}
+
 // 트리 데이터 로드
 async function loadData() {
   if (isLoading.value) return
@@ -67,7 +122,11 @@ async function loadData() {
   isLoading.value = true
   try {
     const res = await assetApi.getTree()
-    treeData.value = res?.data || []
+    const rawTreeData = res?.data || []
+
+    // 비용 정보를 추가하기 위해 각 자원의 상세 정보 조회
+    treeData.value = await enrichTreeWithCosts(rawTreeData)
+
     await nextTick()
     updateChart()
   } catch (error) {
@@ -121,11 +180,11 @@ async function updateChart() {
       case 'tree':
         option = getTreeOption()
         break
-      case 'floorplan':
-        option = await getFloorplanOption()
+      case 'treemap':
+        option = getTreemapOption()
         break
       default:
-        option = getTreeOption()
+        option = getTreemapOption()
     }
 
     chartInstance.setOption(option, true)
@@ -179,171 +238,126 @@ function getTreeOption() {
   }
 }
 
-// 평면도 옵션 (SVG 사용)
-async function getFloorplanOption() {
-  try {
-    let svg = null
+// 트리맵 옵션 (obama 스타일 - 비용 총합)
+function getTreemapOption() {
+  const data = convertToTreemapData(treeData.value)
 
-    // 방법 1: public 폴더에서 로드 시도 (권장)
-    try {
-      const publicResponse = await fetch('/MacOdrum-LV5-floorplan-web.svg')
-      if (publicResponse.ok) {
-        svg = await publicResponse.text()
+  return {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(info) {
+        const data = info.data
+        if (!data) return ''
+        const name = data.name || info.name
+        const totalCost = data.totalCost || 0
+        const costPerHour = data.costPerHour || 0
+        const periodCost = data.periodCost || 0
+        const childCount = data.childCount || 0
+
+        return [
+          '<div style="font-weight: bold; margin-bottom: 8px; color: #fff;">' +
+          echarts.format.encodeHTML(name) + '</div>',
+          '<div style="margin-bottom: 4px;">총 비용: ' + echarts.format.addCommas(totalCost) + '원</div>',
+          costPerHour > 0 ? '<div style="margin-bottom: 4px;">시간당 비용: ' + echarts.format.addCommas(costPerHour) + '원</div>' : '',
+          periodCost > 0 ? '<div style="margin-bottom: 4px;">고정비: ' + echarts.format.addCommas(periodCost) + '원</div>' : '',
+          childCount > 0 ? '<div>하위 자원: ' + childCount + '개</div>' : ''
+        ].filter(Boolean).join('')
       }
-    } catch (e) {
-      console.warn('public 폴더에서 SVG 로드 실패:', e)
-    }
-
-    // 방법 2: assets 폴더에서 ?raw로 로드 시도
-    if (!svg) {
-      try {
-        const svgModule = await import('@/assets/img/MacOdrum-LV5-floorplan-web.svg?raw')
-        svg = svgModule.default || svgModule
-      } catch (importError) {
-        console.warn('assets 폴더에서 SVG import 실패:', importError)
-      }
-    }
-
-    if (!svg || typeof svg !== 'string') {
-      throw new Error('SVG 파일을 로드할 수 없습니다. public 폴더에 MacOdrum-LV5-floorplan-web.svg 파일을 넣어주세요.')
-    }
-
-    // SVG가 유효한지 확인
-    const svgTrimmed = svg.trim()
-    if (!svgTrimmed.startsWith('<?xml') && !svgTrimmed.startsWith('<svg')) {
-      throw new Error('유효하지 않은 SVG 형식입니다')
-    }
-
-    echarts.registerMap('floorplan', { svg: svg })
-
-    // 최상위 부모 자원 추출 (신이빌딩 5층의 최상위 자원들)
-    const topLevelAssets = treeData.value || []
-
-    // regions 생성: SVG의 name 속성과 자원 이름 매핑
-    const regions = topLevelAssets.map(asset => {
-      // 자원 이름을 SVG name 형식으로 변환 (공백을 언더스코어로, 소문자로)
-      // 예: "세미나실" -> "seminar_room" 또는 자원 이름 그대로 사용
-      const svgName = asset.name.toLowerCase().replace(/\s+/g, '_')
-
-      return {
-        name: svgName, // SVG의 name 속성과 매칭
-        tooltip: {
-          formatter: [
-            `<div style="font-weight: bold; margin-bottom: 4px;">${asset.name}</div>`,
-            `<div>자원 ID: ${asset.assetId}</div>`,
-            asset.children && asset.children.length > 0
-              ? `<div>하위 자원: ${asset.children.length}개</div>`
-              : ''
-          ].filter(Boolean).join('')
-        },
-        itemStyle: {
-          color: '#e3f2fd',
-          borderColor: '#2196f3',
-          borderWidth: 2
-        },
-        emphasis: {
-          itemStyle: {
-            color: '#bbdefb',
-            borderColor: '#00A950',
-            borderWidth: 3
-          },
-          label: {
-            show: true,
-            formatter: asset.name,
-            textBorderColor: '#fff',
-            textBorderWidth: 2
-          }
-        },
-        select: {
-          itemStyle: {
-            color: '#90caf9',
-            borderColor: '#00A950',
-            borderWidth: 3
-          },
-          label: {
-            show: true,
-            formatter: asset.name,
-            textBorderColor: '#fff',
-            textBorderWidth: 2
+    },
+    series: [{
+      name: '자원 비용',
+      type: 'treemap',
+      top: 10,
+      bottom: 10,
+      left: 10,
+      right: 10,
+      label: {
+        show: true,
+        formatter: '{b}',
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#fff',
+        textShadowBlur: 3,
+        textShadowColor: 'rgba(0,0,0,0.8)',
+        overflow: 'break'
+      },
+      labelLayout: function(params) {
+        if (params.rect.width < 5 || params.rect.height < 5) {
+          return {
+            fontSize: 0
           }
         }
-      }
-    })
-
-    return {
-      tooltip: {
-        trigger: 'item',
-        formatter: function(params) {
-          if (params.name) {
-            // 매핑된 자원 정보 표시
-            const asset = topLevelAssets.find(a =>
-              a.name.toLowerCase().replace(/\s+/g, '_') === params.name
-            )
-            if (asset) {
-              return [
-                `<div style="font-weight: bold; margin-bottom: 4px;">${asset.name}</div>`,
-                `<div>자원 ID: ${asset.assetId}</div>`,
-                asset.children && asset.children.length > 0
-                  ? `<div>하위 자원: ${asset.children.length}개</div>`
-                  : ''
-              ].filter(Boolean).join('')
-            }
-            return params.name
-          }
-          return '평면도'
+        return {
+          fontSize: Math.min(Math.sqrt(params.rect.width * params.rect.height) / 10, 16)
         }
       },
-      geo: {
-        map: 'floorplan',
-        roam: true,
-        selectedMode: 'multiple',
-        layoutCenter: ['50%', '50%'],
-        layoutSize: '95%',
-        tooltip: {
-          show: true
-        },
+      upperLabel: {
+        show: true,
+        height: 30,
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: '#fff',
+        textShadowBlur: 3,
+        textShadowColor: 'rgba(0,0,0,0.8)',
+        formatter: function(params) {
+          const data = params.data
+          if (!data) return ''
+          const totalCost = data.totalCost || 0
+          if (totalCost > 0) {
+            return echarts.format.addCommas(totalCost) + '원'
+          }
+          return ''
+        }
+      },
+      itemStyle: {
+        borderColor: 'rgba(100, 100, 200, 0.2)',
+        borderWidth: 2,
+        borderRadius: 5
+      },
+      emphasis: {
         itemStyle: {
-          color: '#f5f5f5',
-          borderColor: '#999',
-          borderWidth: 1
+          borderColor: '#00A950',
+          borderWidth: 4
         },
-        emphasis: {
+        label: {
+          fontSize: 14
+        }
+      },
+      levels: [
+        {
+          // 최상위 레벨: 집단별 색상은 itemStyle에서 이미 설정됨
           itemStyle: {
-            color: null,
-            borderColor: '#00A950',
-            borderWidth: 3
-          },
-          label: {
-            show: true,
-            textBorderColor: '#fff',
-            textBorderWidth: 2
+            borderWidth: 3,
+            gapWidth: 3,
+            borderRadius: 5,
+            shadowBlur: 20,
+            shadowColor: 'rgba(20, 20, 40, 0.5)'
           }
         },
-        select: {
+        {
+          // 두 번째 레벨
           itemStyle: {
-            color: '#00A950',
-            borderColor: '#00A950',
-            borderWidth: 2
-          },
-          label: {
-            show: true,
-            textBorderColor: '#fff',
-            textBorderWidth: 2
+            borderWidth: 2,
+            gapWidth: 1,
+            borderRadius: 5,
+            shadowBlur: 5,
+            shadowColor: 'rgba(20, 20, 40, 0.3)'
           }
         },
-        regions: regions
-      }
-    }
-  } catch (error) {
-    console.error('평면도 로드 실패:', error)
-    return {
-      title: {
-        text: '평면도를 불러올 수 없습니다',
-        left: 'center',
-        top: 'center',
-        textStyle: { color: '#999', fontSize: 16 }
-      }
-    }
+        {
+          // 세 번째 레벨 이하
+          upperLabel: {
+            show: false
+          },
+          itemStyle: {
+            borderWidth: 0,
+            gapWidth: 0,
+            borderRadius: 1
+          }
+        }
+      ],
+      data: data
+    }]
   }
 }
 
@@ -355,8 +369,102 @@ function convertToTreeData(treeNodes) {
   return treeNodes.map(node => ({
     name: node.name,
     value: countChildren(node),
+    assetId: node.assetId,
     children: node.children ? convertToTreeData(node.children) : undefined
   }))
+}
+
+// 색상 유틸리티: HEX 색상을 밝게 또는 어둡게 조정
+function adjustColorBrightness(hex, percent) {
+  const num = parseInt(hex.replace('#', ''), 16)
+  const r = Math.min(255, Math.max(0, (num >> 16) + percent))
+  const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + percent))
+  const b = Math.min(255, Math.max(0, (num & 0x0000FF) + percent))
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')
+}
+
+// 트리맵 데이터 변환 (비용 총합 계산)
+function convertToTreemapData(treeNodes, parentPath = [], depth = 0, parentColor = null) {
+  const result = []
+
+  // 최상위 레벨(집단)별 기본 색상 팔레트
+  const baseColors = [
+    '#5793f3', // 파란색
+    '#d14a61', // 빨간색
+    '#fd9c35', // 주황색
+    '#675bba', // 보라색
+    '#fec42c', // 노란색
+    '#dd4444', // 진한 빨간색
+    '#d4df5a', // 연두색
+    '#cd4870', // 분홍색
+    '#00A950', // 녹색
+    '#8ba3f5', // 밝은 파란색
+    '#4ecdc4', // 청록색
+    '#ff6b6b', // 산호색
+    '#95e1d3', // 민트색
+    '#f38181', // 연한 빨간색
+    '#a8e6cf'  // 연한 녹색
+  ]
+
+  for (let i = 0; i < treeNodes.length; i++) {
+    const node = treeNodes[i]
+    const currentPath = [...parentPath, node.name]
+    const hasChildren = node.children && node.children.length > 0
+
+    // 비용 계산: costPerHour + periodCost
+    const costPerHour = Number(node.costPerHour) || Number(node.cost_per_hour) || Number(node.pricePerHour) || 0
+    const periodCost = Number(node.periodCost) || Number(node.period_cost) || Number(node.fixedCost) || 0
+    const nodeCost = costPerHour + periodCost
+
+    // 색상 결정: 최상위 레벨은 기본 색상, 하위는 부모 색상 기반으로 변형
+    let nodeColor
+    if (depth === 0) {
+      // 최상위 레벨: 집단별 고유 색상
+      nodeColor = baseColors[i % baseColors.length]
+    } else if (parentColor) {
+      // 하위 레벨: 부모 색상을 기반으로 약간 밝게 또는 어둡게 조정
+      // 깊이에 따라 밝기 조정 (깊을수록 약간 어둡게)
+      const brightnessAdjust = -10 * depth + (i % 3) * 5 // -10 ~ +10 범위
+      nodeColor = adjustColorBrightness(parentColor, brightnessAdjust)
+    } else {
+      // 폴백
+      nodeColor = baseColors[i % baseColors.length]
+    }
+
+    // 하위 자원들의 비용 합산
+    let totalCost = nodeCost
+    let childCount = 0
+    let childrenData = []
+
+    if (hasChildren) {
+      childrenData = convertToTreemapData(node.children, currentPath, depth + 1, nodeColor)
+      const childCost = childrenData.reduce((sum, child) => sum + (child.totalCost || 0), 0)
+      totalCost += childCost
+      childCount = countChildren(node)
+    }
+
+    // 비용이 0이면 자식 수를 값으로 사용 (최소 1)
+    const value = totalCost > 0 ? totalCost : (childCount > 0 ? childCount : 1)
+
+    const treemapNode = {
+      name: node.name,
+      value: value,
+      totalCost: totalCost,
+      costPerHour: costPerHour,
+      periodCost: periodCost,
+      childCount: childCount,
+      assetId: node.assetId,
+      path: currentPath.join('/'),
+      id: node.assetId?.toString() || `node_${i}_${Date.now()}`,
+      itemStyle: {
+        color: nodeColor
+      },
+      children: hasChildren ? childrenData : undefined
+    }
+
+    result.push(treemapNode)
+  }
+  return result
 }
 
 
@@ -377,23 +485,11 @@ function setupChartEvents() {
 
   chartInstance.off('click')
   chartInstance.on('click', function(params) {
-    // 트리 차트의 경우
+    // 차트 클릭 시 자원 상세 페이지로 이동
     if (params.data && params.data.assetId) {
       setTimeout(() => {
         window.location.href = `/admin/assets/${params.data.assetId}`
       }, 0)
-    }
-    // 평면도 차트의 경우
-    if (params.componentType === 'geo' && params.name) {
-      const topLevelAssets = treeData.value || []
-      const asset = topLevelAssets.find(a =>
-        a.name.toLowerCase().replace(/\s+/g, '_') === params.name
-      )
-      if (asset && asset.assetId) {
-        setTimeout(() => {
-          window.location.href = `/admin/assets/${asset.assetId}`
-        }, 0)
-      }
     }
   })
 }

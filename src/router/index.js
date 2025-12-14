@@ -176,7 +176,7 @@ const router = createRouter({
             {
               path: 'dashboard',
               component: () => import('@/views/admin/asset/AssetDashboard.vue'),
-              meta: { title: '자원 대시보드', minRole: 'MANAGER' },
+              meta: { title: '대시보드', minRole: 'MANAGER' },
             },
             {
               path: 'list',

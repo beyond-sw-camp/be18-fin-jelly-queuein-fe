@@ -249,8 +249,8 @@ async function loadYears() {
 ================================ */
 async function loadTargetByYear() {
   try {
-    const { data } = await api.get("/accounting/usage-history/years");
-    yearList.value = data.years;
+    const { data } = await api.get(`/accounting/usage-targets/${viewYear.value}`);
+    viewTargetRate.value = data.targetRate;
   } catch (e) {
     console.error("연도별 목표 조회 실패:", e);
     viewTargetRate.value = 0;

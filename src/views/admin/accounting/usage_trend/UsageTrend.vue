@@ -96,7 +96,6 @@ const selectedCompareYear = ref(currentYear)    // 올해
 const assetName = ref("")
 
 const dataAssetName = ref("")
-const summary = ref({})
 
 // ECharts 인스턴스
 const mainChartRef = ref(null)
@@ -387,7 +386,7 @@ function updateUsageTimeChart(data) {
 function updateIncreaseRateChart(rate) {
   if (!increaseRateChart) return
 
-  const value = rate || summary.value.usageRateIncrease || 40
+  const value = rate || 0
   const option = {
     tooltip: {
       trigger: 'item',
@@ -466,7 +465,6 @@ async function loadData() {
 
     // 데이터 반영
     dataAssetName.value = data.asset.assetName
-    summary.value = data.summary
 
     const labels = data.monthlyData.map(m => {
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -478,20 +476,30 @@ async function loadData() {
     await nextTick()
     updateMainChart(labels, baseValues, compareValues)
 
-    // 하단 차트 데이터 (현재는 mock 데이터, 추후 API 연동 필요)
-    updateUsageCountChart({
-      categories: ['회의실 A', '회의실 B', '회의실 C'],
-      baseYear: [120, 100, 80],
-      compareYear: [80, 60, 50]
-    })
+    // 하단 차트 데이터 - API에서 받은 데이터 사용
+    if (data.popularByCount) {
+      const baseYearCount = data.popularByCount.baseYear || []
+      const compareYearCount = data.popularByCount.compareYear || []
+      updateUsageCountChart({
+        categories: baseYearCount.map(item => item.assetName).slice(0, 3),
+        baseYear: baseYearCount.map(item => item.count).slice(0, 3),
+        compareYear: compareYearCount.map(item => item.count).slice(0, 3)
+      })
+    }
 
-    updateUsageTimeChart({
-      categories: ['회의실 A', '회의실 B', '회의실 C'],
-      baseYear: [240, 200, 160],
-      compareYear: [160, 120, 100]
-    })
+    if (data.popularByTime) {
+      const baseYearTime = data.popularByTime.baseYear || []
+      const compareYearTime = data.popularByTime.compareYear || []
+      updateUsageTimeChart({
+        categories: baseYearTime.map(item => item.assetName).slice(0, 3),
+        baseYear: baseYearTime.map(item => Math.round(item.totalMinutes / 60)).slice(0, 3), // 분을 시간으로 변환
+        compareYear: compareYearTime.map(item => Math.round(item.totalMinutes / 60)).slice(0, 3)
+      })
+    }
 
-    updateIncreaseRateChart(summary.value.usageRateIncrease)
+    // 사용 증가율 - actualUsageIncrease 사용
+    const increaseRate = data.actualUsageIncrease ? Math.round(data.actualUsageIncrease * 100) : 0
+    updateIncreaseRateChart(increaseRate)
 
   } catch (err) {
     console.error("API 오류:", err)

@@ -1,6 +1,12 @@
 <template>
   <div class="asset-wrapper">
-    <h2 class="page-title">자원 목록 조회</h2>
+    <div class="page-header">
+      <h2 class="page-title">자원 목록 조회</h2>
+      <button class="dashboard-header-btn" @click="goDashboard">
+        <i class="ri-dashboard-line"></i>
+        대시보드
+      </button>
+    </div>
 
     <!-- 상단 필터 영역 -->
     <div class="filters">
@@ -430,10 +436,40 @@ function goAssetDetail(event) {
   overflow-x: auto; /* 가로 스크롤 허용 */
 }
 
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
 .page-title {
   font-size: 22px;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin: 0;
+}
+
+.dashboard-header-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #00A950;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+  font-size: 14px;
+}
+
+.dashboard-header-btn:hover {
+  background: #008f42;
+}
+
+.dashboard-header-btn i {
+  font-size: 18px;
 }
 
 /* 필터 영역 */
