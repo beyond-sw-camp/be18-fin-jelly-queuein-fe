@@ -156,9 +156,6 @@ function onTransitionEnter() {
   /* 모든 padding 제거 → 탭이 상단에 딱 붙음 */
   padding: 0;
 
-  /* 정산 탭처럼 탭만 표시되도록 */
-  border-bottom: 1px solid #e5e7eb;
-
   /* 화면 꽉 차게 */
   width: 100%;
   box-sizing: border-box;
