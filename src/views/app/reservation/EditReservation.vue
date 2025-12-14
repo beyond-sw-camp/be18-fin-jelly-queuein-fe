@@ -8,7 +8,7 @@
     <!-- 자원 예약 정보 -->
     <h2>자원 예약</h2>
     <BookingHeader
-      :assetName="assetInfo?.assetName || assetName"
+      :assetName="assetName"
       v-model:date="date"
       v-model:note="note"
       :reserver="currentUserName"
@@ -17,16 +17,10 @@
       @add="openParticipantModal"
     />
 
-
-
-
     <!-- 예약 시간 선택 -->
     <div class="time-section">
       <h2>예약 시간 선택</h2>
-      <TimeBar
-        :blocks="timeBlocks"
-        v-model="selectedHours"
-      />
+      <TimeBar :blocks="timeBlocks" v-model="selectedHours" />
     </div>
 
     <!-- 선택된 참여자 표시
@@ -48,7 +42,7 @@
     <ApplyButton @click="submitBooking" />
   </div>
 </template>
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -67,21 +61,17 @@ const route = useRoute()
 // 목록 페이지에서 전달한 assetId와 date → params 로 변경!
 const assetId = Number(route.query.assetId)
 
-const selectedDate = ref(route.query.date)
-const assetName = route.query.assetName?.toString() ?? ""
-
-// 자원 정보
-const assetInfo = ref<any>(null)
+const assetName = route.query.assetName?.toString() ?? ''
 
 // 예약 가능 시간
-const timeBlocks = ref<any[]>([])
-const selectedHours = ref<number[]>([])
-console.log("route.query.date =", route.query.date)
+const timeBlocks = ref([])
+const selectedHours = ref([])
+console.log('route.query.date =', route.query.date)
 
 // 참여자
 const participantModalVisible = ref(false)
-const selectedUsers = ref<{ id: number; name: string }[]>([])
-const note = ref("")
+const selectedUsers = ref([])
+const note = ref('')
 
 // -------------------------------
 //  예약 가능 시간 조회 API
@@ -89,19 +79,17 @@ const note = ref("")
 const today = new Date().toLocaleDateString('en-CA')
 
 const rawDate = route.query.date
-const initialDate =
-  Array.isArray(rawDate) ? rawDate[0] : rawDate
+const initialDate = Array.isArray(rawDate) ? rawDate[0] : rawDate
 
 const date = ref(initialDate || today)
 const onSelectParticipants = (users) => {
-  selectedUsers.value = users.map(u => ({
-    id: u.userId,         // 서버로 보낼 값
-    name: u.userName      // 화면에 보여줄 값
+  selectedUsers.value = users.map((u) => ({
+    id: u.userId, // 서버로 보낼 값
+    name: u.userName, // 화면에 보여줄 값
   }))
 }
 // console.log("받은 값:", users);
 // console.log("저장 직전:", users.map(u => ({ id: u.userId, name: u.userName })));
-
 
 function convertToTimeBlocks(apiData) {
   try {
@@ -111,7 +99,7 @@ function convertToTimeBlocks(apiData) {
     }
 
     const blocks = []
-    const availableHours = new Set<number>()
+    const availableHours = new Set()
 
     apiData.timeSlots.forEach((slot) => {
       try {
@@ -200,7 +188,6 @@ watch(
   },
 )
 
-
 // -------------------------------
 // 선택 시간 → 시간 문자열로 변환
 // -------------------------------
@@ -209,16 +196,15 @@ const timeRange = computed(() => {
   const start = Math.min(...selectedHours.value)
   const end = Math.max(...selectedHours.value) + 1
 
-  return `${String(start).padStart(2,'0')}:00 ~ ${String(end).padStart(2,'0')}:00`
+  return `${String(start).padStart(2, '0')}:00 ~ ${String(end).padStart(2, '0')}:00`
 })
 
 // 모달
-const openParticipantModal = () => participantModalVisible.value = true
-
+const openParticipantModal = () => (participantModalVisible.value = true)
 
 function toUtcIso(date, hour) {
-  const local = new Date(`${date}T${String(hour).padStart(2, "0")}:00:00+09:00`);
-  return local.toISOString();
+  const local = new Date(`${date}T${String(hour).padStart(2, '0')}:00:00+09:00`)
+  return local.toISOString()
 }
 
 // -------------------------------
@@ -315,7 +301,7 @@ async function submitBooking() {
     ElMessage.error(errorMessage)
   }
 }
-const currentUserName = ref("")
+const currentUserName = ref('')
 const currentUserId = ref(null)
 onMounted(async () => {
   try {
@@ -339,12 +325,9 @@ onMounted(async () => {
   }
 })
 
-
-
 // -------------------------------
 // 페이지 로딩 시 API 호출
 // -------------------------------
-
 </script>
 
 <style scoped>
