@@ -169,11 +169,17 @@ function resizeCharts() {
 function updateMainChart(labels, baseValues, compareValues) {
   if (!mainChart) return
 
+  // 각 연도별로 고유한 이름 보장 (문자열로 명시적 변환)
+  const baseYearName = String(selectedBaseYear.value)
+  const compareYearName = String(selectedCompareYear.value)
+
   // legend의 selected(등장여부) option을 만들어서 차트에 적용
+  // 각 범례 항목이 독립적으로 작동하도록 명시적으로 설정
   const legendSelected = {
-    [selectedBaseYear.value]: mainChartVisible.value[selectedBaseYear.value],
-    [selectedCompareYear.value]: mainChartVisible.value[selectedCompareYear.value],
+    [baseYearName]: mainChartVisible.value[selectedBaseYear.value] !== false,
+    [compareYearName]: mainChartVisible.value[selectedCompareYear.value] !== false,
   }
+  
   const option = {
     tooltip: {
       trigger: 'axis',
@@ -182,7 +188,7 @@ function updateMainChart(labels, baseValues, compareValues) {
       }
     },
     legend: {
-      data: [selectedBaseYear.value, selectedCompareYear.value],
+      data: [baseYearName, compareYearName],
       selected: legendSelected,
       top: 10,
       right: 20,
@@ -222,7 +228,7 @@ function updateMainChart(labels, baseValues, compareValues) {
     },
     series: [
       {
-        name: selectedBaseYear.value,
+        name: baseYearName,
         type: 'line',
         data: baseValues,
         smooth: false,
@@ -250,7 +256,7 @@ function updateMainChart(labels, baseValues, compareValues) {
         }
       },
       {
-        name: selectedCompareYear.value,
+        name: compareYearName,
         type: 'line',
         data: compareValues,
         smooth: false,
@@ -280,6 +286,8 @@ function updateMainChart(labels, baseValues, compareValues) {
     ]
   }
 
+  // 범례 선택 상태를 명시적으로 설정하기 위해 notMerge를 사용
+  // 하지만 범례와 시리즈는 완전히 교체하여 각 항목이 독립적으로 작동하도록 보장
   mainChart.setOption(option, true)
 }
 
@@ -289,11 +297,39 @@ function updateMainChart(labels, baseValues, compareValues) {
 function onMainChartLegendSelectChanged(params) {
   // params.selected: { [legend name]: true/false }
   const selectedStates = params.selected
-  // 갱신
-  mainChartVisible.value = {
-    [selectedBaseYear.value]: !!selectedStates[selectedBaseYear.value],
-    [selectedCompareYear.value]: !!selectedStates[selectedCompareYear.value]
+  
+  // 각 연도별로 고유한 이름 보장 (문자열로 명시적 변환)
+  const baseYearName = String(selectedBaseYear.value)
+  const compareYearName = String(selectedCompareYear.value)
+  
+  // 각 범례 항목의 선택 상태를 독립적으로 확인
+  const baseYearSelected = selectedStates[baseYearName] !== undefined 
+    ? !!selectedStates[baseYearName] 
+    : mainChartVisible.value[selectedBaseYear.value] !== false
+  const compareYearSelected = selectedStates[compareYearName] !== undefined 
+    ? !!selectedStates[compareYearName] 
+    : mainChartVisible.value[selectedCompareYear.value] !== false
+  
+  // 현재 선택된 시리즈 수 계산
+  const visibleCount = (baseYearSelected ? 1 : 0) + (compareYearSelected ? 1 : 0)
+  
+  // 최소 하나의 시리즈가 항상 보이도록 보장
+  if (visibleCount === 0) {
+    // 선택된 시리즈가 없으면 이전 상태로 되돌림
+    // 차트 옵션을 이전 상태로 다시 설정하여 선택 상태 복원
+    if (mainChartLastLabels.length > 0) {
+      updateMainChart([...mainChartLastLabels], [...mainChartLastBase], [...mainChartLastCompare])
+    }
+    // mainChartVisible.value는 변경하지 않음 (이미 이전 값이 유지됨)
+    return
   }
+  
+  // 정상적인 경우에만 상태 갱신 (각 연도별로 독립적으로)
+  mainChartVisible.value = {
+    [selectedBaseYear.value]: baseYearSelected,
+    [selectedCompareYear.value]: compareYearSelected
+  }
+  
   // 차트 option 다시 설정 (labels/data 등은 그대로, visible만 조정)
   // 다시 그릴 때 loadData를 새로 부르지 않고, 차트만 조정: 현재 차트 데이터 기억 필요
   // best effort로, data를 store
@@ -446,7 +482,14 @@ function updateIncreaseRateChart(rate) {
 
   const option = {
     tooltip: {
-      show: false
+      trigger: 'item',
+      formatter: (params) => {
+        if (params.name === '증가율') {
+          return `${params.name}: ${formattedLabel}`
+        } else {
+          return `${params.name}: ${params.value}%`
+        }
+      }
     },
     series: [
       {
@@ -455,8 +498,6 @@ function updateIncreaseRateChart(rate) {
         radius: ['45%', '75%'],
         center: ['50%', '50%'],
         avoidLabelOverlap: false,
-        silent: true,
-        animation: false,
         itemStyle: {
           borderRadius: 8,
           borderColor: '#fff',
@@ -470,6 +511,20 @@ function updateIncreaseRateChart(rate) {
           fontWeight: 'bold',
           color: '#333',
           fontFamily: 'Arial, sans-serif'
+        },
+        emphasis: {
+          scale: true,
+          scaleSize: 5,
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          },
+          label: {
+            show: true,
+            fontSize: 48,
+            fontWeight: 'bold'
+          }
         },
         labelLine: {
           show: false
