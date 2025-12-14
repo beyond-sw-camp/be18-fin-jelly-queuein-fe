@@ -483,12 +483,24 @@ function updateIncreaseRateChart(rate) {
   const option = {
     tooltip: {
       trigger: 'item',
+      // "기타" segment에는 tooltip 자체가 안 보이도록
+      show: true,
       formatter: (params) => {
         if (params.name === '증가율') {
-          return `${params.name}: ${formattedLabel}`
-        } else {
-          return `${params.name}: ${params.value}%`
+          // 값 표기는 부호 포함, 소수점 1자리까지
+          let displayValue = typeof value === 'number'
+            ? (Math.abs(value) < 1 && value !== 0
+                ? value.toFixed(1)
+                : Number.isInteger(value)
+                  ? value
+                  : value.toFixed(1)
+              )
+            : '0'
+          // '증가율' 세그먼트는 실제 증가율 값을 보여준다 (+/- 등)
+          return `증가율: ${displayValue}%`
         }
+        // 기타는 아무 반응도 없게! (반응형, 툴팁 모두 제거)
+        return ''
       }
     },
     series: [
@@ -512,20 +524,6 @@ function updateIncreaseRateChart(rate) {
           color: '#333',
           fontFamily: 'Arial, sans-serif'
         },
-        emphasis: {
-          scale: true,
-          scaleSize: 5,
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.5)'
-          },
-          label: {
-            show: true,
-            fontSize: 48,
-            fontWeight: 'bold'
-          }
-        },
         labelLine: {
           show: false
         },
@@ -535,6 +533,18 @@ function updateIncreaseRateChart(rate) {
             name: '증가율',
             itemStyle: {
               color: fillColor
+            },
+            emphasis: {
+              scale: true,
+              scaleSize: 5,
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              },
+              label: {
+                show: false
+              }
             }
           },
           {
@@ -542,9 +552,33 @@ function updateIncreaseRateChart(rate) {
             name: '기타',
             itemStyle: {
               color: '#E8E8F0'
-            }
+            },
+            emphasis: {
+              // 완전히 모든 hover/interactivity OFF
+              disabled: true,
+              scale: false,
+              scaleSize: 1,
+              itemStyle: {
+                shadowBlur: 0,
+                shadowOffsetX: 0,
+                shadowColor: 'transparent'
+              },
+              label: {
+                show: false
+              }
+            },
+            tooltip: {
+              show: false
+            },
+            // 완전히 상호작용 끔 (ECharts 5.x+)
+            // 이 속성으로 마우스 이벤트 자체도 컷
+            silent: true,
+            selected: false // 혹시나 클릭 선택 없음 명시
           }
-        ]
+        ],
+        // 가장 마지막으로 강조된 파이 조각 위에 이미지를 올려서 가릴 수 있는 이펙트 방지
+        // (echarts 5.x+ 에서 hoverLayer 속성 지원)
+        // hoverLayer: false (기본값이 false이긴 함)
       }
     ]
   }
