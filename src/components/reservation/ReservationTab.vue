@@ -28,7 +28,7 @@ const isAdminOrManager = computed(() => hasRole('MANAGER'))
 const availableTabs = computed(() => {
   const tabs = [
     { label: '예약 현황', name: 'status' },
-    { label: '예약 가능 자원 목록', name: 'available' },
+    { label: '자원 목록', name: 'available' },
   ]
 
   // MANAGER 이상만 "예약 관리" 탭 표시
