@@ -6,16 +6,6 @@ import Button from 'primevue/button'
 import api from '@/api/axios'
 
 // ------------------
-// 타입 정의 (백엔드 DTO 기반)
-// ------------------
-interface User {
-  userId: number
-  userName: string
-  email: string
-  avatarUrl?: string
-}
-
-// ------------------
 // Props & Emits
 // ------------------
 const props = defineProps({
@@ -23,23 +13,20 @@ const props = defineProps({
   width: { type: String, default: '360px' }
 })
 
-const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'select', users: User[]): void
-}>()
+const emit = defineEmits(['close', 'select'])
 
 // ------------------
 // 상태
 // ------------------
-const users = ref<User[]>([])     // 🔹 검색 결과
+const users = ref([])     // 🔹 검색 결과
 const keyword = ref('')
-const selectedIds = ref<number[]>([])  // 선택된 유저 ID들
-const selectedUserObjects = ref<User[]>([])
+const selectedIds = ref([])  // 선택된 유저 ID들
+const selectedUserObjects = ref([])
 
 // ------------------
 // Debounce + API 호출
 // ------------------
-let timer: any = null
+let timer = null
 
 watch(keyword, (val) => {
   if (timer) clearTimeout(timer)
@@ -50,7 +37,7 @@ watch(keyword, (val) => {
 })
 
 // 검색 결과가 들어와도 기존 선택 유지
-const fetchUsers = async (keyword: string) => {
+const fetchUsers = async (keyword) => {
   if (!keyword) {
     users.value = []
     return
@@ -85,7 +72,7 @@ const filteredUsers = computed(() => {
 // ------------------
 // 선택 토글
 // ------------------
-const toggleSelect = (user: User) => {
+const toggleSelect = (user) => {
   const idx = selectedIds.value.indexOf(user.userId)
 
   if (idx === -1) {

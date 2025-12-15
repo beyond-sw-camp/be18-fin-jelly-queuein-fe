@@ -23,8 +23,11 @@
             available: blocks[h-1]?.type === 'available',
             reserved: blocks[h-1]?.type === 'reserved',
             selected: selected.includes(h-1),
-            dragging: isDragging && isInDragRange(h-1)
+            dragging: isDragging && isInDragRange(h-1),
+            'click-start': clickStartIndex === h-1,
+            'click-end': clickEndIndex === h-1
           }"
+          :data-hour-index="h-1"
           @mousedown="onMouseDown(h-1, $event)"
           @mouseenter="onMouseEnter(h-1)"
           @mouseup="onMouseUp"
@@ -64,7 +67,13 @@ watch(() => props.modelValue, val => selected.value = [...(val || [])])
 const isDragging = ref(false)
 const dragStart = ref(null)
 const dragEnd = ref(null)
-const isClick = ref(true) // 클릭인지 드래그인지 구분
+const hasDragged = ref(false) // 실제로 드래그가 발생했는지 추적
+const mouseDownTime = ref(0)
+const mouseDownPosition = ref({ x: 0, y: 0 })
+
+// 클릭 기반 범위 선택 상태
+const clickStartIndex = ref(null)
+const clickEndIndex = ref(null)
 
 // 예약 블록인지 확인
 const isReserved = (h) => {
@@ -84,12 +93,17 @@ const onMouseDown = (h, event) => {
   if (isReserved(h)) return
   
   event.stopPropagation()
-  event.preventDefault()
   
+  // 드래그 시작 시 클릭 선택 리셋
+  resetClickSelection()
+  
+  // 드래그 상태 초기화
   isDragging.value = true
-  isClick.value = true
+  hasDragged.value = false
   dragStart.value = h
   dragEnd.value = h
+  mouseDownTime.value = Date.now()
+  mouseDownPosition.value = { x: event.clientX, y: event.clientY }
   
   // 마우스가 블록 밖으로 나가도 계속 추적
   document.addEventListener('mousemove', onDocumentMouseMove)
@@ -100,7 +114,13 @@ const onMouseDown = (h, event) => {
 const onDocumentMouseMove = (event) => {
   if (!isDragging.value) return
   
-  isClick.value = false // 드래그 중이면 클릭이 아님
+  // 마우스가 충분히 이동했는지 확인 (드래그로 간주)
+  const moveDistance = Math.abs(event.clientX - mouseDownPosition.value.x) + 
+                       Math.abs(event.clientY - mouseDownPosition.value.y)
+  
+  if (moveDistance > 3) {
+    hasDragged.value = true // 실제 드래그 발생
+  }
   
   // 마우스 위치에 해당하는 블록 찾기
   const blocks = document.querySelectorAll('.time-blocks .block')
@@ -121,14 +141,33 @@ const onDocumentMouseMove = (event) => {
 
 // 문서 전체 마우스 업
 const onDocumentMouseUp = () => {
-  if (isDragging.value) {
+  const wasDragging = isDragging.value
+  const didDrag = hasDragged.value
+  
+  if (wasDragging) {
     isDragging.value = false
     dragStart.value = null
     dragEnd.value = null
+    
+    // 실제로 드래그가 발생했으면 클릭 선택 리셋
+    if (didDrag) {
+      resetClickSelection()
+    }
   }
+  
+  // 약간의 지연 후 hasDragged 리셋 (클릭 이벤트 처리 후)
+  setTimeout(() => {
+    hasDragged.value = false
+  }, 10)
   
   document.removeEventListener('mousemove', onDocumentMouseMove)
   document.removeEventListener('mouseup', onDocumentMouseUp)
+}
+
+// 클릭 선택 리셋
+const resetClickSelection = () => {
+  clickStartIndex.value = null
+  clickEndIndex.value = null
 }
 
 // 블록 위에서 마우스 이동
@@ -143,59 +182,58 @@ const onMouseEnter = (h) => {
 const onBlockClick = (h, event) => {
   event.stopPropagation()
   
-  // 드래그가 끝난 후 클릭 이벤트가 발생하는 경우 무시
-  if (!isClick.value) {
-    isClick.value = true
+  // 실제로 드래그가 발생했으면 클릭 무시
+  if (hasDragged.value) {
     return
   }
   
-  if (isReserved(h)) return
-  
-  // 단일 클릭: 토글
-  if (selected.value.includes(h)) {
-    selected.value = selected.value.filter(v => v !== h)
-  } else {
-    // 범위 선택 모드: 시작 시간과 끝 시간 클릭
-    if (selected.value.length === 0) {
-      // 첫 번째 클릭: 시작 시간
-      selected.value = [h]
-    } else {
-      // 두 번째 클릭: 끝 시간 (범위 선택)
-      const start = Math.min(...selected.value)
-      const end = Math.max(...selected.value)
-      
-      if (h < start) {
-        // 새로운 시작 시간이 더 작으면 범위 확장
-        const range = []
-        for (let i = h; i <= end; i++) {
-          if (!isReserved(i)) range.push(i)
-        }
-        selected.value = range
-      } else if (h > end) {
-        // 새로운 끝 시간이 더 크면 범위 확장
-        const range = []
-        for (let i = start; i <= h; i++) {
-          if (!isReserved(i)) range.push(i)
-        }
-        selected.value = range
-      } else {
-        // 범위 내 클릭: 해당 시간만 토글
-        if (selected.value.includes(h)) {
-          selected.value = selected.value.filter(v => v !== h)
-        } else {
-          selected.value.push(h)
-          selected.value.sort((a, b) => a - b)
-        }
-      }
-    }
+  // 드래그 중이면 클릭 무시
+  if (isDragging.value) {
+    return
   }
   
-  emit('update:modelValue', selected.value)
+  // 예약 불가능한 블록 클릭 무시
+  if (isReserved(h)) return
+  
+  // 클릭 기반 범위 선택 로직
+  if (clickStartIndex.value === null) {
+    // 첫 번째 클릭: 시작 블록 설정
+    clickStartIndex.value = h
+    clickEndIndex.value = null
+    selected.value = [h]
+    emit('update:modelValue', selected.value)
+  } else if (clickEndIndex.value === null) {
+    // 두 번째 클릭: 끝 블록 설정 (범위 완성)
+    clickEndIndex.value = h
+    
+    // 시작과 끝 사이의 모든 블록 선택 (앞뒤 방향 모두 지원)
+    const start = Math.min(clickStartIndex.value, clickEndIndex.value)
+    const end = Math.max(clickStartIndex.value, clickEndIndex.value)
+    
+    const range = []
+    for (let i = start; i <= end; i++) {
+      if (!isReserved(i)) {
+        range.push(i)
+      }
+    }
+    
+    selected.value = range
+    emit('update:modelValue', selected.value)
+  } else {
+    // 세 번째 클릭: 리셋하고 새 범위 시작
+    clickStartIndex.value = h
+    clickEndIndex.value = null
+    selected.value = [h]
+    emit('update:modelValue', selected.value)
+  }
 }
 
 // 드래그로 선택 업데이트
 const updateSelectionFromDrag = () => {
   if (dragStart.value === null || dragEnd.value === null) return
+  
+  // 드래그 중에는 클릭 선택 리셋
+  resetClickSelection()
   
   const start = Math.min(dragStart.value, dragEnd.value)
   const end = Math.max(dragStart.value, dragEnd.value)
@@ -213,10 +251,18 @@ const updateSelectionFromDrag = () => {
 
 // 마우스 업
 const onMouseUp = () => {
-  if (isDragging.value) {
+  const wasDragging = isDragging.value
+  const didDrag = hasDragged.value
+  
+  if (wasDragging) {
     isDragging.value = false
     dragStart.value = null
     dragEnd.value = null
+    
+    // 실제로 드래그가 발생했으면 클릭 선택 리셋
+    if (didDrag) {
+      resetClickSelection()
+    }
   }
 }
 
@@ -274,6 +320,21 @@ const onMouseUp = () => {
 .block.dragging {
   background: #9bc497;
   opacity: 0.8;
+}
+
+.block.click-start {
+  background: #7ba678;
+  box-shadow: 0 0 0 2px #5a8a57;
+}
+
+.block.click-end {
+  background: #7ba678;
+  box-shadow: 0 0 0 2px #5a8a57;
+}
+
+.block.click-start.click-end {
+  background: #5a8a57;
+  box-shadow: 0 0 0 3px #4a7a47;
 }
 
 .divider {
