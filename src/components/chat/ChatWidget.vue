@@ -30,7 +30,7 @@
           <input
             v-model="input"
             type="text"
-            placeholder="무엇을 도와드릴까요?"
+            placeholder="질문을 입력하세요"
             :disabled="loading"
           />
           <button type="submit" :disabled="!input.trim() || loading">
@@ -44,12 +44,17 @@
 
 <script setup>
 import { ref, nextTick } from 'vue'
-import { chatbotApi } from '@/api/chatbotApi'
+import { processChatbotMessage, INITIAL_GREETING, FALLBACK_MESSAGE } from '@/utils/chatbot'
 
 const open = ref(false)
 const input = ref('')
 const loading = ref(false)
-const messages = ref([{ role: 'bot', content: '안녕하세요! 자원 예약/상태/위치 등을 물어보세요.' }])
+const messages = ref([
+  {
+    role: 'bot',
+    content: INITIAL_GREETING,
+  },
+])
 
 const scrollRef = ref(null)
 
@@ -73,14 +78,13 @@ const send = async () => {
   await nextTick(scrollToBottom)
 
   try {
-    const res = await chatbotApi.ask(text)
-    const answer = res?.data ?? '아직 지원하지 않는 요청입니다. 다시 질문해 주세요.'
+    const answer = await processChatbotMessage(text)
     messages.value.push({ role: 'bot', content: answer })
   } catch (err) {
     console.error('챗봇 오류:', err)
     messages.value.push({
       role: 'bot',
-      content: '아직 지원하지 않는 요청입니다. 다시 질문해 주세요.',
+      content: FALLBACK_MESSAGE,
     })
   } finally {
     loading.value = false
